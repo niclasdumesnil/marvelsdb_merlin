@@ -286,10 +286,11 @@ class Oauth2Controller extends Controller
 
 		if ($meta){
 			// if meta is set, we only allow valid json
+			// Add Determination
 			try {
 				$meta_json = json_decode($meta);
 				if ($meta_json && isset($meta_json->aspect)) {
-					if ($meta_json->aspect == "leadership" || $meta_json->aspect == "protection" || $meta_json->aspect == "justice" || $meta_json->aspect == "aggression" || $meta_json->aspect == "pool") {
+					if ($meta_json->aspect == "leadership" || $meta_json->aspect == "protection" || $meta_json->aspect == "justice" || $meta_json->aspect == "aggression" || $meta_json->aspect == "pool" || $meta_json->aspect == "determination") {
 
 					} else {
 						return false;

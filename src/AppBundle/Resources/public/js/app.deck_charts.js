@@ -5,7 +5,7 @@
 			drillUpText: 'X'
 		}
 	});
-
+	// Add Determination
 	var faction_colors = {
 		leadership: '#2b80c5',
 		aggression: '#cc3038',
@@ -13,6 +13,7 @@
 		basic: '#808080',
 		justice: '#c0c000',
 		pool: '#d074ac',
+		determination: '#493f64',
 		hero: '#AB006A'
 	};
 

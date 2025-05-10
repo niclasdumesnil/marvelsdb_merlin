@@ -389,11 +389,12 @@ class SocialController extends Controller
 		);
 		$params['sort_'.$sort] = ' selected="selected"';
 		$params['factions'] = $dbh->executeQuery(
+			// Add Determination
 			"SELECT
 			f.name,
 			f.code
 			from faction f
-			where f.code IN ('justice', 'aggression', 'leadership', 'protection', 'pool')
+			where f.code IN ('justice', 'aggression', 'leadership', 'protection', 'pool', 'determination')
 			order by f.name asc")
 			->fetchAll();
 		$params['faction_selected'] = $faction_code;
@@ -461,11 +462,12 @@ class SocialController extends Controller
 
 		$dbh = $this->getDoctrine()->getConnection();
 		$factions = $dbh->executeQuery(
+			// Add Determination
 			"SELECT
 			f.name,
 			f.code
 			from faction f
-			where f.code IN ('justice', 'aggression', 'leadership', 'protection', 'pool')
+			where f.code IN ('justice', 'aggression', 'leadership', 'protection', 'pool', 'determination')
 			order by f.name asc")
 			->fetchAll();
 

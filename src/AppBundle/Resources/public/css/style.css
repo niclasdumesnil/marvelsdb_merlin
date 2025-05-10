@@ -780,6 +780,10 @@ div.site-slogan {
 	background-color: #d074ac !important;
 	color: white !important;
 }
+.bg-determination {
+	background-color: #493f64 !important;
+	color: white !important;
+}
 
 
 .faint-faction a, .faint-faction span {
@@ -804,6 +808,9 @@ div.site-slogan {
 	background-color: rgba(212, 126, 178, 0.2) !important;
 }
 
+.faint-determination {
+	background-color: rgba(193, 179, 230, 0.2) !important;
+}
 .fg-leadership {
 	color: #3499eb !important;
 }
@@ -821,6 +828,9 @@ div.site-slogan {
 }
 .fg-pool {
 	color: #d47eb2 !important;
+}
+.fg-determination {
+	color: #493f64 !important;
 }
 
 .border-leadership {
@@ -841,6 +851,9 @@ div.site-slogan {
 }
 .border-pool {
 	border-color: #d074ac !important;
+}
+.border-determination {
+	border-color: #493f64 !important;
 }
 
 .icon-guardian, .icon-mystic, .icon-seeker, .icon-rogue, .icon-survivor {
