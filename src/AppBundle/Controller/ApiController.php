@@ -72,7 +72,8 @@ class ApiController extends Controller
 					"known" => intval($real),
 					"total" => $max,
 					"url" => $this->get('router')->generate('cards_list', array('pack_code' => $pack->getCode()), UrlGeneratorInterface::ABSOLUTE_URL),
-					"id" => $pack->getId()
+					"id" => $pack->getId(),
+					"pack_type"=> $pack-> getPackType() 
 			);
 		}
 

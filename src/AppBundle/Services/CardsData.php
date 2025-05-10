@@ -111,6 +111,8 @@ class CardsData
 					"number" => $pack->getPosition(),
 					"available" => $pack->getDateRelease() ? $pack->getDateRelease()->format('Y-m-d') : '',
 					"known" => intval($real),
+					"creator" => $pack->getCreator() ?? "FFG",
+					"status" => $pack->getStatus() ?? "Official",
 					"total" => $max,
 					"url" => $this->router->generate('cards_list', array('pack_code' => $pack->getCode()), UrlGeneratorInterface::ABSOLUTE_URL),
 			);
@@ -620,6 +622,7 @@ class CardsData
 				}
 			}
 		}
+		$cardinfo['pack_type'] = $card->getPack()->getPackType();
 
 		return $cardinfo;
 	}

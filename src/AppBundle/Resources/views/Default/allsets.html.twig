@@ -1,5 +1,36 @@
 <ol>
+		<h3>FFG</h3>
 		{% for pack in data %}
-		<li><a {% if pack.available == false %}class="card-preview" title="Not yet released"{% endif %} href="{{ pack.url }}">{{ pack.name }}</a><span> {% if pack.available == false %}({{pack.known}} cards){% endif %}</span></li>
+		{% if pack.creator == 'FFG' %} 
+		 <li><a href="{{ pack.url }}">{{ pack.name }} {% endif %} </a><span> {% if pack.available == false %}({{pack.known}} cards){% endif %}</span></li>
 		{% endfor %}
+		<h3>Fan made</h3>
+		{% for pack in data %}
+		{% if pack.creator == 'Merlin' %} 
+		<li><a title={{pack.name}} href="{{ pack.url }}">{{ pack.name }}
+		 <span style="font-size: 10px; color: white; background-color: rgb(18, 120, 216); display: inline-flex;
+  			align-items: center; border-radius: 8px; padding: 2px 12px;">{{pack.creator ?? 'FFG'}}
+		</span>
+		{% if pack.status == "beta" %}
+			<span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
+  			align-items: center; border-radius: 8px; padding: 2px 12px ;">{{pack.status ?? 'Official'}}
+			</span>
+			{% endif %} 
+		{% endif %} 	
+		{% if pack.creator == 'Hax' %} 
+		<li><a title={{pack.name}} href="{{ pack.url }}">{{ pack.name }}
+		<span style="font-size: 10px; color: white; background-color: rgb(158, 14, 187); display: inline-flex;
+  		align-items: center; border-radius: 8px; padding: 2px 12px;">{{pack.creator ?? 'FFG'}}
+		</span>
+		{% endif %} 
+		</a><span> </span></li>
+		{% endfor %}
+		{# {% if app.user != "" %} 
+			{% if app.user.donation == "1" %} 
+				<h3>Beta</h3>
+				{% for pack in data %}
+				{% if pack.environment == "beta" %}<li><a class="card-preview" title={{pack.environment}} href="{{ pack.url }}">{{ pack.name }} {% endif %} {% if pack.environment == "beta" %} {% include 'AppBundle:Default:environment-badge.html.twig' %} {% endif %} </a><span> {% if pack.available == false %}({{pack.known}} cards){% endif %}</span></li>
+				{% endfor %}
+			{% endif %}
+		{% endif %} #}
 </ol>

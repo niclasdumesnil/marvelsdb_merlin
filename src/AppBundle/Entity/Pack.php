@@ -23,7 +23,8 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
 		return $this->name;
 	}
 	
-    /**
+    
+       /**
      * @var integer
      */
     private $id;
@@ -67,6 +68,17 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
      * @var \DateTime
      */
     private $dateRelease;
+
+    /**
+     * @var string
+     */
+    private $creator;
+
+    /**
+     * @var string
+     */
+    private $status;
+
 
     /**
      * @var \Doctrine\Common\Collections\Collection
@@ -282,6 +294,54 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
     {
         return $this->dateRelease;
     }
+
+/**
+     * Set creator
+     *
+     * @param string $creator
+     *
+     * @return Pack
+     */
+    public function setCreator($creator)
+    {
+        $this->creator = $creator;
+
+        return $this;
+    }
+
+    /**
+     * Get creator
+     *
+     * @return string
+     */
+    public function getCreator()
+    {
+        return $this->creator;
+    }
+
+    /* Set Status
+     *
+     * @param string $status
+     *
+     * @return Pack
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    /**
+     * Get status
+     *
+     * @return string
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
 
     /**
      * Add card

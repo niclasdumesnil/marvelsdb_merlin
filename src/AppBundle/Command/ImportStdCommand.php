@@ -537,7 +537,9 @@ class ImportStdCommand extends ContainerAwareCommand
 			], [
 				'pack_type_code'
 			], [
-					'cgdb_id'
+					'cgdb_id',
+					'creator',
+					'status'
 			]);
 			if($pack) {
 				$result[] = $pack;

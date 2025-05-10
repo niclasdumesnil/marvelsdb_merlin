@@ -60,7 +60,13 @@ AppBundle\Entity\Pack:
             type: date
             nullable: true
             column: date_release
+        creator:
+            type: text
+            nullable: true
+        status:
+            type: text
+            nullable: true
     uniqueConstraints:
         pack_code_idx:
-            columns: [ code ]
+            columns: [code]
             
