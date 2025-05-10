@@ -461,6 +461,7 @@ class CardsData
 		}
 		$qb->addOrderBy('c.name');
 		$qb->addOrderBy('c.code');
+		//$qb->andWhere("p.status is null or p.status = 'official' ");
 		$rows = $repo->getResult($qb);
 
 		return $rows;
@@ -622,7 +623,8 @@ class CardsData
 				}
 			}
 		}
-		$cardinfo['pack_type'] = $card->getPack()->getPackType();
+		$cardinfo['status'] = $card->getPack()->getStatus();
+		$cardinfo['creator'] = $card->getPack()->getCreator();
 
 		return $cardinfo;
 	}

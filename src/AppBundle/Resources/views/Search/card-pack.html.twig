@@ -1,1 +1,14 @@
-<div class="card-pack">{{ card.pack_name }} #{{ card.position }}.{% if card.card_set_code is defined %} {{ card.card_set_name }} #{{ card.set_position }}{% if card.quantity > 1 %}-{{card.set_position+card.quantity-1}}{% endif %}.{% endif %}</div>
+<div class="card-pack"><hr><//hr> {{ card.pack_name }} #{{ card.position }}.   
+{% if card.card_set_code is defined %}
+    {% if card.creator != "" %}
+		<span style="font-size: 12px; color: white; background-color: rgb(18, 120, 216); display: inline-flex;
+  		align-items: center; padding: 2px 24px ;">{{card.card_set_name ?? 'FFG'}}
+    {% else %}
+        {# </span> {{ card.card_set_name }} #{{ card.set_position }} #}
+        <span style="font-size: 12px; color: white; background-color: rgb(2, 2, 2); display: inline-flex;
+  		align-items: center; padding: 2px 24px ;">{{card.card_set_name ?? 'FFG'}}
+    {% endif %}
+    {% if card.quantity > 1 %}-{{card.set_position+card.quantity-1}}
+    {% endif %}
+{% endif %}
+</div>
