@@ -73,6 +73,23 @@ class ImportStdCommand extends ContainerAwareCommand
 		$this->collections['Faction2'] = $this->collections['Faction'];
 		$output->writeln("Done.");
 
+		// factions fan made
+
+		$output->writeln("Importing Fan made Classes...");
+		$factionsFileInfo = $this->getFileInfo($path, 'factions_fanmade.json');
+		$imported = $this->importFactionsJsonFile($factionsFileInfo);
+		if(count($imported)) {
+			$question = new ConfirmationQuestion("Do you confirm? (Y/n) ", true);
+			if(!$helper->ask($input, $output, $question)) {
+				die();
+			}
+		}
+		
+		$this->em->flush();
+		$this->loadCollection('Faction');
+		$this->collections['Faction2'] = $this->collections['Faction'];
+		$output->writeln("Done.");
+		
 		// types
 
 		$output->writeln("Importing Types...");
@@ -103,7 +120,7 @@ class ImportStdCommand extends ContainerAwareCommand
 		$this->loadCollection('Subtype');
 		$output->writeln("Done.");
 
-	// packtypes
+		// packtypes
 
 		$output->writeln("Importing PackTypes...");
 		$packtypesFileInfo = $this->getFileInfo($path, 'packtypes.json');
@@ -117,6 +134,23 @@ class ImportStdCommand extends ContainerAwareCommand
 		$this->em->flush();
 		$this->loadCollection('Packtype');
 		$output->writeln("Done.");
+
+		// packtypes fan made
+	
+		$output->writeln("Importing Fan made PackTypes...");
+		$packtypesFileInfo = $this->getFileInfo($path, 'packtypes_fanmade.json');
+		$imported = $this->importPacktypesJsonFile($packtypesFileInfo);
+		if(count($imported)) {
+			$question = new ConfirmationQuestion("Do you confirm? (Y/n) ", true);
+			if(!$helper->ask($input, $output, $question)) {
+				die();
+			}
+		}
+		
+		$this->em->flush();
+		$this->loadCollection('Packtype');
+		$output->writeln("Done.");
+		
 
 		$output->writeln("Importing CardsetTypes...");
 		$cardsettypesFileInfo = $this->getFileInfo($path, 'settypes.json');
@@ -146,6 +180,22 @@ class ImportStdCommand extends ContainerAwareCommand
 		$this->loadCollection('Cardset');
 		$output->writeln("Done.");
 
+		// card sets Fan made
+
+		$output->writeln("Importing FM Card Sets...");
+		
+		$setsFileInfo = $this->getFileInfo($path, 'sets_fanmade.json');
+		$imported = $this->importCardSetsJsonFile($setsFileInfo);
+		if(count($imported)) {
+			$question = new ConfirmationQuestion("Do you confirm? (Y/n) ", true);
+			if(!$helper->ask($input, $output, $question)) {
+				die();
+			}
+		}
+		$this->em->flush();
+		$this->loadCollection('Cardset');
+		$output->writeln("Done.");
+		
 		// second, packs
 
 		$output->writeln("Importing Packs...");
@@ -162,6 +212,21 @@ class ImportStdCommand extends ContainerAwareCommand
 		$this->loadCollection('Pack');
 		$output->writeln("Done.");
 
+		// packs Fan Made
+
+		$packsFileInfo = $this->getFileInfo($path, 'packs_fanmade.json');
+		$imported = $this->importPacksJsonFile($packsFileInfo);
+		$question = new ConfirmationQuestion("Do you confirm? (Y/n) ", true);
+		if(count($imported)) {
+			$question = new ConfirmationQuestion("Do you confirm? (Y/n) ", true);
+			if(!$helper->ask($input, $output, $question)) {
+				die();
+			}
+		}
+		$this->em->flush();
+		$this->loadCollection('Pack');
+		$output->writeln("Done.");
+		
 		// third, cards
 
 		$output->writeln("Importing Cards...");
