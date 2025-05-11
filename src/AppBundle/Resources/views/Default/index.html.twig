@@ -4,8 +4,8 @@
 {% block body %}
 
 <div class="main container">
-<h1 class="site-title hidden-xs">MARVELCDB</h1>
-<div class="site-slogan">Deckbuilder and Card Database for the Marvel Champions LCG</div>
+<h1 class="site-title hidden-xs">FAN MADE MCDB</h1>
+<div class="site-slogan">Deckbuilder and Card Database with Custom Content for the Marvel Champions LCG</div>
 </div> <!-- .container -->
 
 <style>
@@ -103,12 +103,14 @@
 </div>
 
 <div class="main container">
-	<h3>Recent Pack Releases</h3>
+	<h3>Recent Fan made Pack Releases</h3>
 	<ul>
 		{% for pack in packs %}
+		{% if pack.creator == 'Merlin' %} 
 		<li>
-			{{pack.name}}
+			{{pack.name}} by {{pack.creator}}
 		</li>
+		{% endif %} 
 		{% endfor %}
 	</ul>
 </div> <!-- .container -->
