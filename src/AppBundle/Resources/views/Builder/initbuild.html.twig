@@ -51,7 +51,7 @@
 				<h4>Hero</h4>
 				<div style="display: flex; flex-wrap: wrap;">
 				{% for hero in all_heroes %}
-					{% if hero.code != '70301a' and hero.code != '70401a' and hero.code != '70501a' and hero.code != '70601a' and hero.code != '70701a'%}
+					{% if hero.pack.creator != 'Merlin' %} 
 						{% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
 						{%endif%}
 				{% endfor %}
@@ -60,7 +60,7 @@
 					<br></br><h4>Fan made Hero</h4>
 					<div style="display: flex; flex-wrap: wrap;">
 					{% for hero in all_heroes %}
-						{% if hero.code == '70301a' or hero.code == '70401a' or hero.code == '70501a' or hero.code == '70601a' or hero.code == '70701a'%}
+						{% if hero.pack.creator == 'Merlin' %} 
 							{% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
 						{%endif%}
 					{% endfor %}

@@ -1,7 +1,7 @@
 {% if card.is_unique == true %}<span class="icon-unique"></span> {% endif %}
 <a href="{{ card.url }}" class="card-name card-tip{% if card.available == false %} card-preview{% endif %}{% if card.spoiler is defined and not show_spoilers %} spoiler{% endif %}" data-code="{{ card.code }}">{{ card.name }}{% include 'AppBundle:Search:card-stage.html.twig' %}
 </a>
-{% if card.status == "sealed" %}
+{% if card.status == "released" %}
 	<span style="font-size: 12px; color: white; background-color: rgb(0, 48, 27); display: inline-flex;
   	align-items: center; border-radius: 12px; padding: 2px 12px 2px;">{{card.status ?? 'Official'}}
 	</span>
