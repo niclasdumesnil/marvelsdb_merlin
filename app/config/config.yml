@@ -10,11 +10,9 @@ parameters:
     locale: en
     locale_names:
         en: English
-        es: Español
         fr: Francais
     supported_locales:
         - en
-        - es
         - fr
     default_locale: en
 
@@ -116,7 +114,6 @@ jms_i18n_routing:
     strategy: custom
     hosts:
         en: "%website_url%"
-        es: "www.es.%website_url%" 
         fr: "www.fr.%website_url%" 
     redirect_to_host: true
     
