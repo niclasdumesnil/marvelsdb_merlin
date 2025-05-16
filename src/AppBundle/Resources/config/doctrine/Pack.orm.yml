@@ -66,6 +66,12 @@ AppBundle\Entity\Pack:
         status:
             type: text
             nullable: true
+        theme:
+            type: text
+            nullable: true
+        visibility:
+            type: text
+            nullable: true
     uniqueConstraints:
         pack_code_idx:
             columns: [code]

@@ -113,6 +113,8 @@ class CardsData
 					"known" => intval($real),
 					"creator" => $pack->getCreator() ?? "FFG",
 					"status" => $pack->getStatus() ?? "Official",
+					"theme" => $pack->getTheme() ?? "Marvel",
+					"visibility" => $pack->getVisibility() ?? "true",
 					"total" => $max,
 					"url" => $this->router->generate('cards_list', array('pack_code' => $pack->getCode()), UrlGeneratorInterface::ABSOLUTE_URL),
 			);
@@ -625,6 +627,8 @@ class CardsData
 		}
 		$cardinfo['status'] = $card->getPack()->getStatus();
 		$cardinfo['creator'] = $card->getPack()->getCreator();
+		$cardinfo['theme'] = $card->getPack()->getTheme();
+		$cardinfo['visibility'] = $card->getPack()->getVisibility();
 
 		return $cardinfo;
 	}

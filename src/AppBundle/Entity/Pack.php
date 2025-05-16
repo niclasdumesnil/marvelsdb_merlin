@@ -79,6 +79,16 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
      */
     private $status;
 
+    /**
+     * @var string
+     */
+    private $theme;
+
+    /**
+     * @var string
+     */
+    private $visibility;
+
 
     /**
      * @var \Doctrine\Common\Collections\Collection
@@ -295,7 +305,7 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
         return $this->dateRelease;
     }
 
-/**
+    /**
      * Set creator
      *
      * @param string $creator
@@ -319,7 +329,8 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
         return $this->creator;
     }
 
-    /* Set Status
+    /**
+     * Set Status
      *
      * @param string $status
      *
@@ -333,6 +344,7 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
     }
 
     /**
+     *
      * Get status
      *
      * @return string
@@ -340,6 +352,55 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
     public function getStatus()
     {
         return $this->status;
+    }
+
+
+    /**
+     * Set theme
+     *
+     * @param string $theme
+     *
+     * @return Pack
+     */
+    public function SetTheme($theme)
+    {
+        $this->theme = $theme;
+
+        return $this;
+    }
+
+    /**
+     * Get theme
+     *
+     * @return string
+     */
+    public function getTheme()
+    {
+        return $this->theme;
+    }
+
+    /**
+     * Set pack visibility
+     *
+     * @param string $visibility
+     *
+     * @return Pack
+     */
+    public function SetVisibility($visibility)
+    {
+        $this->visibility = $visibility;
+
+        return $this;
+    }
+
+    /**
+     * Get private
+     *
+     * @return string
+     */
+    public function GetVisibility()
+    {
+        return $this->visibility;
     }
 
 

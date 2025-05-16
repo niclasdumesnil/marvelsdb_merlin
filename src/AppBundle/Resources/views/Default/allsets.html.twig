@@ -11,7 +11,7 @@
 		 <span style="font-size: 10px; color: white; background-color: rgb(18, 120, 216); display: inline-flex;
   			align-items: center; border-radius: 8px; padding: 2px 12px;">{{pack.creator ?? 'FFG'}}
 		</span>
-		{% if pack.status == "beta" %}
+		{% if pack.status == "beta" or pack.status == "alpha" %}
 			<span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
   			align-items: center; border-radius: 8px; padding: 2px 12px ;">{{pack.status ?? 'Official'}}
 			</span>
@@ -25,12 +25,18 @@
 		{% endif %} 
 		</a><span> </span></li>
 		{% endfor %}
-		{# {% if app.user != "" %} 
+		{% if app.user != "" %} 
 			{% if app.user.donation == "1" %} 
-				<h3>Beta</h3>
+				<h3>Private</h3>
 				{% for pack in data %}
-				{% if pack.environment == "beta" %}<li><a class="card-preview" title={{pack.environment}} href="{{ pack.url }}">{{ pack.name }} {% endif %} {% if pack.environment == "beta" %} {% include 'AppBundle:Default:environment-badge.html.twig' %} {% endif %} </a><span> {% if pack.available == false %}({{pack.known}} cards){% endif %}</span></li>
+					{% if pack.visibility == "false" %}
+						<li><a class="card-preview" title={{pack.name}} href="{{ pack.url }}">{{ pack.name }}
+						{% if pack.status == "beta" or pack.status == "alpha" %}
+						<span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
+  						align-items: center; border-radius: 8px; padding: 2px 12px ;">{{pack.status ?? 'Official'}} </span>
+						{% endif %}
+					{% endif %}
 				{% endfor %}
 			{% endif %}
-		{% endif %} #}
+		{% endif %}
 </ol>
