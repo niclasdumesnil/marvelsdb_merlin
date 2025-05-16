@@ -1,6 +1,5 @@
 {% import "AppBundle::macros.html.twig" as macros %}
-{% if app.user.donation == "0" %}
-{% else %}
+
 <div style="width: 360px; padding : 2px; padding-top : 10px; border : solid #dfdfdf 1px; background-color: rgba(255, 255, 255, 0.4)">
 	<div style="display: flex;">
 		<div>
@@ -20,14 +19,16 @@
 			{% endif %} 
 			</h4>
 			<span style="font-size: 10px; color:gray; padding: 2px 0px 0px">
-				<li><i>Pack : {{hero.pack.name}}</i></li>
-				<li><i>Theme : {{hero.pack.theme ?? 'Marvel'}}</i></li>
+				<li><i>Pack: {{hero.pack.name}}</i></li>
+				<li><i>Theme: {{hero.pack.theme ?? 'Marvel'}}</i></li>
 			</span>
 			{% if hero.pack.creator != "" %}
 			<span style="font-size: 10px; color: white; background-color: rgb(18, 120, 216); display: inline-flex;
   			align-items: center; padding: 2px 36px ;">by {{hero.pack.creator ?? 'Unknown'}}
-				</span>
+			</span>
+			<span style="font-size: 12px; color: rgb(216, 69, 11); text-align: right; ">{% if hero.pack.visibility == "false" %} <li><i>Private</i></li> {% endif %} </span>
 			{% endif %} 
+			
 			
 			{# Remove the comment for seeing hero.code for each hero
 				<span style="font-size: 12px; color:blue;">
@@ -54,4 +55,4 @@
 	{% endif %}
 	</div>
 </div>
-{% endif %}
+

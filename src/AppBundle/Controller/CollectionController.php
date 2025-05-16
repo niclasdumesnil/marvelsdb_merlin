@@ -25,7 +25,8 @@ class CollectionController extends Controller {
                 $categories[$pack_type] = ['label'=> $pack_type, 'packs'=> [] ];
             }
             $checked = count($oPacks) ? in_array($pack->getId(), $oPacks) : ($pack->getDateRelease() != null);
-            $categories[$pack_type]['packs'][] = ["code" => $pack->getCode(), "id" => $pack->getId(), "label" => $pack->getName(), "checked" => $checked, "future" => $pack->getDateRelease() === null];
+            $categories[$pack_type]['packs'][] = ["code" => $pack->getCode(), "id" => $pack->getId(), "label" => $pack->getName(),
+            "checked" => $checked, "future" => $pack->getDateRelease() === null, "visibility" => $pack->getVisibility() ];
         }
         return $this->render('AppBundle:Collection:collection.html.twig', [
             'pagetitle' =>  "My Collection",

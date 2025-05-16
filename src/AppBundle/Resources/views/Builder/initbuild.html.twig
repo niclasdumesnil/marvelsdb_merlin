@@ -51,17 +51,30 @@
 				<h4>Hero</h4>
 				<div style="display: flex; flex-wrap: wrap;">
 				{% for hero in all_heroes %}
-					{% if hero.pack.creator != 'Merlin' %} 
+					{{hero.pack.creator}}
+					{% if hero.pack.creator == '' %} 
 						{% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
 						{%endif%}
 				{% endfor %}
 				</div>
+
+				<br></br><h4>Fan made Hero</h4>
+				<div style="display: flex; flex-wrap: wrap;">
+				{% for hero in all_heroes %}
+					{% if hero.pack.creator != '' and hero.pack.visibility != "false" %} 
+						{% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
+					{%endif%}
+				{% endfor %}
+				</div>
+
 				{% if app.user.donation == "1" %} 
-					<br></br><h4>Fan made Hero</h4>
+					<br></br><h4>Private Fan made Hero</h4>
 					<div style="display: flex; flex-wrap: wrap;">
 					{% for hero in all_heroes %}
-						{% if hero.pack.creator == 'Merlin' %} 
+						{% if hero.pack.creator != '' %} 
+						{% if hero.pack.visibility == "false" %} 
 							{% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
+						{%endif%}
 						{%endif%}
 					{% endfor %}
 					</div>
