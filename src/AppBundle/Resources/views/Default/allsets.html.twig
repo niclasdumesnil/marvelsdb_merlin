@@ -46,12 +46,14 @@
 							align-items: center; border-radius: 8px; padding: 2px 12px;">{{pack.creator ?? 'FFG'}}
 						</span>
 						{% endif %} 
+
 						{% if pack.creator == 'Hax' %} 
 						<li><a title={{pack.name}} href="{{ pack.url }}">{{ pack.name }}
 						<span style="font-size: 10px; color: white; background-color: rgb(158, 14, 187); display: inline-flex;
 						align-items: center; border-radius: 8px; padding: 2px 12px;">{{pack.creator ?? 'FFG'}}
 						</span>
 						{% endif %} 
+
 						{% if pack.creator != 'Hax' and pack.creator != 'Merlin' %} 
 						<li><a title={{pack.name}} href="{{ pack.url }}">{{ pack.name }}
 						<span style="font-size: 10px; color: white; background-color: rgb(6, 138, 98); display: inline-flex;
@@ -63,7 +65,9 @@
 						<span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
   						align-items: center; border-radius: 8px; padding: 2px 12px ;">{{pack.status ?? 'Official'}} </span>
 						{% endif %}
+						</li>
 					{% endif %}
+					</a>
 				{% endfor %}
 			{% endif %}
 		{% endif %}
