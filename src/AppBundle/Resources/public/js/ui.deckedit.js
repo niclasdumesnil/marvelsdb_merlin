@@ -109,7 +109,8 @@ ui.build_faction_selector = function build_faction_selector() {
 	faction_codes.push('basic');
 
 	faction_codes.forEach(function(faction_code) {
-		if (faction_code == "hero" || faction_code == "encounter"){
+		// ajout du filtre pour campaign
+		if (faction_code == "hero" || faction_code == "encounter" || faction_code == "campaign" ){
 			return;
 		}
 		var example = app.data.cards.find({"faction_code": faction_code})[0];
