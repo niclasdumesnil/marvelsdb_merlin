@@ -784,8 +784,11 @@ ui.update_list_template = function update_list_template() {
  * @memberOf ui
  */
 ui.build_row = function build_row(card) {
-    // Filtre : ne pas afficher la carte si sa visibilité est false et que l'utilisateur n'est pas donateur
-    if (card.visibility === "false" && (!app.user || app.user.donation === "0")) { 
+    
+	console.log('donation:', app.user.donation);
+
+	// Filtre : ne pas afficher la carte si sa visibilité est false et que l'utilisateur n'est pas donateur
+    if (card.visibility === "false" && app.user.donation === "0") { 
         return $('');
     }
     

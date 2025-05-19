@@ -7,6 +7,9 @@
 	{% endjavascripts %}
 	<script type="text/javascript">
 	app.deck && app.deck.init({{ deck|json_encode|raw }});
+	var app = app || {};
+	app.user = app.user || {};
+	app.user.donation = "{{ donation|e('js') }}";
 	$( document ).ready(function() {
 		app.deck_history && app.deck_history.init({{ deck.history|json_encode|raw }});
 	});

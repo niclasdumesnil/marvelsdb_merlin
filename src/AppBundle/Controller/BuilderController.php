@@ -574,6 +574,7 @@ class BuilderController extends Controller
 			array(
 				'pagetitle' => "Deckbuilder",
 				'deck' => $deck,
+				'donation' => $this->getUser() ? $this->getUser()->getDonation() : "0",
 			)
 		);
 
