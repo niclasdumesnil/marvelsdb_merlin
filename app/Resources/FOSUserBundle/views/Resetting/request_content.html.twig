@@ -1,13 +1,13 @@
 {% trans_default_domain 'FOSUserBundle' %}
 
+{% if app.environment != 'dev' %}
 <script src="https://www.google.com/recaptcha/api.js"></script>
-
-<!-- Replace the variables below. -->
 <script>
   function onSubmit(token) {
     document.getElementById("reset-form").submit();
   }
 </script>
+{% endif %}
 
 <form id="reset-form" action="{{ path('fos_user_resetting_send_email') }}" method="POST" class="fos_user_resetting_request">
     <div>
@@ -15,12 +15,18 @@
         <input type="text" id="username" name="username" required="required" />
     </div>
     <div>
+        {% if app.environment != 'dev' %}
         <button class="g-recaptcha"
             data-sitekey="6LemwjUrAAAAAFfNrQ2jv8w-ffOdGbWSDP7qfAbG"
             data-callback='onSubmit'
             data-action='submit'>
         {{ 'resetting.request.submit'|trans }}
         </button>
+        {% else %}
+        <button type="submit">
+        {{ 'resetting.request.submit'|trans }}
+        </button>
+        {% endif %}
     </div>
 </form>
 

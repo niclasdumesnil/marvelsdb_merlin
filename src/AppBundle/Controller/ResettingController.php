@@ -74,38 +74,39 @@ class ResettingController extends BaseController
      */
     public function sendEmailAction(Request $request)
     {
-        // check recaptcha url
-        // https://www.google.com/recaptcha/api/siteverify
-        if ($request->request->get('g-recaptcha-response')) {
-            $token = $request->request->get('g-recaptcha-response');
+        // Désactive la vérification captcha en environnement dev
+        if ($this->get('kernel')->getEnvironment() !== 'dev') {
+            // check recaptcha url
+            // https://www.google.com/recaptcha/api/siteverify
+            if ($request->request->get('g-recaptcha-response')) {
+                $token = $request->request->get('g-recaptcha-response');
 
-            $url = 'https://www.google.com/recaptcha/api/siteverify';
-            $data = ['secret' => $this->container->getParameter('captcha'), 'response' => $token];
+                $url = 'https://www.google.com/recaptcha/api/siteverify';
+                $data = ['secret' => $this->container->getParameter('captcha'), 'response' => $token];
 
-            $options = [
-                'http' => [
-                    'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-                    'method' => 'POST',
-                    'content' => http_build_query($data),
-                ],
-            ];
+                $options = [
+                    'http' => [
+                        'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                        'method' => 'POST',
+                        'content' => http_build_query($data),
+                    ],
+                ];
 
-            $context = stream_context_create($options);
-            $result = file_get_contents($url, false, $context);
-            if ($result) {
-                $data = json_decode($result);
-                if ($data && $data->success) {
-                    // if we got here then its all good
+                $context = stream_context_create($options);
+                $result = file_get_contents($url, false, $context);
+                if ($result) {
+                    $data = json_decode($result);
+                    if ($data && $data->success) {
+                        // if we got here then its all good
+                    } else {
+                        return new RedirectResponse($this->generateUrl('fos_user_resetting_request'));
+                    }
                 } else {
                     return new RedirectResponse($this->generateUrl('fos_user_resetting_request'));
                 }
             } else {
                 return new RedirectResponse($this->generateUrl('fos_user_resetting_request'));
             }
-
-
-        } else {
-            return new RedirectResponse($this->generateUrl('fos_user_resetting_request'));
         }
 
         $username = $request->request->get('username');

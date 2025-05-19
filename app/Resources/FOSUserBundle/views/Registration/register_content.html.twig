@@ -1,13 +1,13 @@
 {% trans_default_domain 'FOSUserBundle' %}
 
+{% if app.environment != 'dev' %}
 <script src="https://www.google.com/recaptcha/api.js"></script>
-
-<!-- Replace the variables below. -->
 <script>
   function onSubmit(token) {
     document.getElementById("register-form").submit();
   }
 </script>
+{% endif %}
 
 {{ form_start(form, {'method': 'post', 'action': path('fos_user_registration_register'), 'attr': {'id': 'register-form', 'class': 'fos_user_registration_register'}}) }}
     {{ form_widget(form) }}
@@ -15,11 +15,17 @@
     <input type="text" name="email2" value="" style="visibility: hidden;" />
 
     <div>
+        {% if app.environment != 'dev' %}
         <button class="g-recaptcha"
-            data-sitekey="6LemwjUrAAAAAFfNrQ2jv8w"
+            data-sitekey="6LemwjUrAAAAAFfNrQ2jv8w-ffOdGbWSDP7qfAbG"
             data-callback='onSubmit'
             data-action='submit'>
         {{ 'registration.submit'|trans }}
         </button>
+        {% else %}
+        <button type="submit">
+        {{ 'registration.submit'|trans }}
+        </button>
+        {% endif %}
     </div>
 {{ form_end(form) }}

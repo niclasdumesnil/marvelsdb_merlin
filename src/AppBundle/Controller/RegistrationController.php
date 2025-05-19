@@ -91,41 +91,45 @@ class RegistrationController extends BaseController
         }
 
         // check recaptcha url
-        // https://www.google.com/recaptcha/api/siteverify
-        if ($request->request->get('g-recaptcha-response')) {
-            $token = $request->request->get('g-recaptcha-response');
+        if ($this->get('kernel')->getEnvironment() === 'dev') {
+        // En environnement dev, on saute la vérification captcha
+        } else {
 
-            $url = 'https://www.google.com/recaptcha/api/siteverify';
-            $data = ['secret' => $this->container->getParameter('captcha'), 'response' => $token];
+            // https://www.google.com/recaptcha/api/siteverify
+            if ($request->request->get('g-recaptcha-response')) {
+                $token = $request->request->get('g-recaptcha-response');
 
-            $options = [
-                'http' => [
-                    'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-                    'method' => 'POST',
-                    'content' => http_build_query($data),
-                ],
-            ];
+                $url = 'https://www.google.com/recaptcha/api/siteverify';
+                $data = ['secret' => $this->container->getParameter('captcha'), 'response' => $token];
 
-            $context = stream_context_create($options);
-            $result = file_get_contents($url, false, $context);
-            if ($result) {
-                $data = json_decode($result);
-                if ($data && $data->success && $data->score >= 0.8) {
-                    // if we got here then its all good
+                $options = [
+                    'http' => [
+                        'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                        'method' => 'POST',
+                        'content' => http_build_query($data),
+                    ],
+                ];
+
+                $context = stream_context_create($options);
+                $result = file_get_contents($url, false, $context);
+                if ($result) {
+                    $data = json_decode($result);
+                    if ($data && $data->success && $data->score >= 0.8) {
+                        // if we got here then its all good
+                    } else {
+                        return new RedirectResponse($this->generateUrl('fos_user_registration_register'));
+                    }
                 } else {
                     return new RedirectResponse($this->generateUrl('fos_user_registration_register'));
                 }
+
+
             } else {
-                return new RedirectResponse($this->generateUrl('fos_user_registration_register'));
+                return $this->render('@FOSUser/Registration/register.html.twig', array(
+                    'form' => $form->createView(),
+                ));
             }
-
-
-        } else {
-            return $this->render('@FOSUser/Registration/register.html.twig', array(
-                'form' => $form->createView(),
-            ));
         }
-
 
         if ($form->isSubmitted()) {
             if ($form->isValid()) {
