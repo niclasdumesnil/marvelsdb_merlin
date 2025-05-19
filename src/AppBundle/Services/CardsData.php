@@ -625,10 +625,10 @@ class CardsData
 				}
 			}
 		}
-		$cardinfo['status'] = $card->getPack()->getStatus();
-		$cardinfo['creator'] = $card->getPack()->getCreator();
-		$cardinfo['theme'] = $card->getPack()->getTheme();
-		$cardinfo['visibility'] = $card->getPack()->getVisibility();
+		$cardinfo['status'] = $card->getPack()->getStatus() ?? "Official";
+		$cardinfo['creator'] = $card->getPack()->getCreator() ?? "FFG";
+		$cardinfo['theme'] = $card->getPack()->getTheme() ?? "Marvel";
+		$cardinfo['visibility'] = $card->getPack()->getVisibility() ?? "true";
 
 		return $cardinfo;
 	}

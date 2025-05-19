@@ -784,38 +784,44 @@ ui.update_list_template = function update_list_template() {
  * @memberOf ui
  */
 ui.build_row = function build_row(card) {
-	var radios = '', radioTpl = _.template(
-		'<label class="btn btn-xs btn-default <%= active %>"><input type="radio" name="qty-<%= card.code %>" value="<%= i %>"><%= i %></label>'
-	);
-	var $span = $('<span>');
-	if(card.resource_physical && card.resource_physical > 0) {
-		$span.append(app.format.resource(card.resource_physical, 'physical'));
-	}
-	if(card.resource_mental && card.resource_mental > 0) {
-		$span.append(app.format.resource(card.resource_mental, 'mental'));
-	}
-	if(card.resource_energy && card.resource_energy > 0) {
-		$span.append(app.format.resource(card.resource_energy, 'energy'));
-	}
-	if(card.resource_wild && card.resource_wild > 0) {
-		$span.append(app.format.resource(card.resource_wild, 'wild'));
-	}
-	//console.log(card.name, card.maxqty, card.quantity);
-	for (var i = 0; i <= card.maxqty; i++) {
-		radios += radioTpl({
-			i: i,
-			active: (i == card.indeck ? ' active' : ''),
-			card: card
-		});
-	}
+    // Filtre : ne pas afficher la carte si sa visibilité est false et que l'utilisateur n'est pas donateur
+    if (card.visibility === "false" && (!app.user || app.user.donation === "0")) { 
+        return $('');
+    }
+    
+    console.log('card:', card);
 
-	var html = DisplayColumnsTpl({
-		radios: radios,
-		resources: $span.html(),
-		url: Routing.generate('cards_zoom', {card_code:card.code}),
-		card: card
-	});
-	return $(html);
+    var radios = '', radioTpl = _.template(
+        '<label class="btn btn-xs btn-default <%= active %>"><input type="radio" name="qty-<%= card.code %>" value="<%= i %>"><%= i %></label>'
+    );
+    var $span = $('<span>');
+    if(card.resource_physical && card.resource_physical > 0) {
+        $span.append(app.format.resource(card.resource_physical, 'physical'));
+    }
+    if(card.resource_mental && card.resource_mental > 0) {
+        $span.append(app.format.resource(card.resource_mental, 'mental'));
+    }
+    if(card.resource_energy && card.resource_energy > 0) {
+        $span.append(app.format.resource(card.resource_energy, 'energy'));
+    }
+    if(card.resource_wild && card.resource_wild > 0) {
+        $span.append(app.format.resource(card.resource_wild, 'wild'));
+    }
+    for (var i = 0; i <= card.maxqty; i++) {
+        radios += radioTpl({
+            i: i,
+            active: (i == card.indeck ? ' active' : ''),
+            card: card
+        });
+    }
+
+    var html = DisplayColumnsTpl({
+        radios: radios,
+        resources: $span.html(),
+        url: Routing.generate('cards_zoom', {card_code:card.code}),
+        card: card
+    });
+    return $(html);
 }
 
 ui.reset_list = function reset_list() {
