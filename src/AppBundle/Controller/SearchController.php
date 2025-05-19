@@ -331,8 +331,10 @@ class SearchController extends Controller
 		if ($decks == "player"){
 			$include_encounter = false;
 		}
-
-		if($q && $rows = $this->get('cards_data')->get_search_rows($conditions, $sort, false, $include_encounter))
+		
+		$donation = $this->getUser()->getDonation();
+		
+		if($q && $rows = $this->get('cards_data')->get_search_rows($conditions, $sort, false, $include_encounter, $donation ))
 		{
 			if(count($rows) == 1)
 			{

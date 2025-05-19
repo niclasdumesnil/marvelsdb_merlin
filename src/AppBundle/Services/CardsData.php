@@ -129,7 +129,7 @@ class CardsData
 		return $factions;
 	}
 
-	public function get_search_rows($conditions, $sortorder, $forceempty = false, $encounter = false)
+	public function get_search_rows($conditions, $sortorder, $forceempty = false, $encounter = false, $donation )
 	{
 		$i=0;
 
@@ -155,6 +155,12 @@ class CardsData
 		}
 		$qb->andWhere("c.hidden is null or c.hidden = false");
 
+		// Ajout du filtre pour ne pas afficher les cartes non visibles
+		if ($donation != "1") {
+			$qb->andWhere("p.visibility IS NULL OR p.visibility != 'false'");
+		}
+	
+	
 		$cheat = false;
 		foreach($conditions as $condition)
 		{
@@ -798,5 +804,6 @@ class CardsData
 				}
 			}
 
-		}
+			return array_keys($traits);
+			}
 }
