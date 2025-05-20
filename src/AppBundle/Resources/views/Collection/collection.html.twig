@@ -40,18 +40,24 @@
                             <div class="row">
                                 <div class="col-xs-6">
                                     {% for pack in category.packs|slice(0, half) %}
+                                    {% if pack.visibility == "false" and app.user.donation == "0" %}
+                                    {%else %}
                                         <label type="button" class="btn {% if pack.visibility == "false" %}btn-privatedanger{% else %}btn-default{% endif %} btn-group-vertical btn-block {% if pack.checked %}active{% endif %}" data-id="{{ pack.id }}">
                                             {{ pack.label }}
                                             {% if pack.visibility == "false" %} <b style="color:rgb(175, 169, 171);">[Private]</b> {% endif %}
                                         </label>
+                                    {% endif %}
                                     {% endfor %}
                                 </div>
                                 <div class="col-xs-6">
                                     {% for pack in category.packs|slice(half) %}
+                                    {% if pack.visibility == "false" and app.user.donation == "0" %}
+                                    {%else %}
                                         <label type="button" class="btn {% if pack.visibility == "false" %}btn-private{% else %}btn-default{% endif %} btn-group-vertical btn-block {% if pack.checked %}active{% endif %}" data-id="{{ pack.id }}">
                                             {{ pack.label }}
                                             {% if pack.visibility == "false" %}  <b style="color:rgb(175, 169, 171);">[Private]</b> {% endif %}
                                         </label>
+                                    {% endif %}
                                     {% endfor %}
                                 </div>
                             </div>
