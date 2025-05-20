@@ -20,7 +20,13 @@
             <div class="row">
                 {% for category in categories %}
                     <div class="col-md-6 col-sm-4 cycle">
-                        <label><b>{{ category.label }}</b></label>
+                        <label style="background-color:rgba(219, 198, 198, 0.55); padding: 4px 8px; border-radius: 4px;">
+                            <b
+                                {% if 'custom' in category.label|lower %}
+                                    style="color:rgb(8, 77, 151);"
+                                {% endif %}
+                            >{{ category.label }}</b>
+                        </label>
 
                         <div class="pull-right">
                             <a class="select-all" title="Select All" data-toggle="tooltip" data-container="body"><span class="fa fa-check"></span></a>
@@ -36,7 +42,7 @@
                                     {% for pack in category.packs|slice(0, half) %}
                                         <label type="button" class="btn {% if pack.visibility == "false" %}btn-privatedanger{% else %}btn-default{% endif %} btn-group-vertical btn-block {% if pack.checked %}active{% endif %}" data-id="{{ pack.id }}">
                                             {{ pack.label }}
-                                            {% if pack.visibility == "false" %}  [Private] {% endif %}
+                                            {% if pack.visibility == "false" %} <b style="color:rgb(175, 169, 171);">[Private]</b> {% endif %}
                                         </label>
                                     {% endfor %}
                                 </div>
@@ -44,7 +50,7 @@
                                     {% for pack in category.packs|slice(half) %}
                                         <label type="button" class="btn {% if pack.visibility == "false" %}btn-private{% else %}btn-default{% endif %} btn-group-vertical btn-block {% if pack.checked %}active{% endif %}" data-id="{{ pack.id }}">
                                             {{ pack.label }}
-                                            {% if pack.visibility == "false" %}  [Private] {% endif %}
+                                            {% if pack.visibility == "false" %}  <b style="color:rgb(175, 169, 171);">[Private]</b> {% endif %}
                                         </label>
                                     {% endfor %}
                                 </div>
