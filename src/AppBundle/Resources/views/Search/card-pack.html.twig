@@ -1,6 +1,6 @@
 <div class="card-pack"><hr><//hr> {{ card.pack_name }} #{{ card.position }}.   
 {% if card.card_set_code is defined %}
-    {% if card.creator != "" %}
+    {% if card.creator != "FFG" %}
 		<span style="font-size: 12px; color: white; background-color: rgb(18, 120, 216); display: inline-flex;
   		align-items: center; padding: 2px 24px ;">{{card.card_set_name ?? 'FFG'}}
     {% else %}
