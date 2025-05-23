@@ -1073,6 +1073,31 @@ deck.can_include_card = function can_include_card(card, limit_count, hard_count)
 
 	var overflow = 0;
 
+	// Vérification du nombre d'aspects si aspect_limit est défini dans une option
+	if (deck.deck_options && deck.deck_options.length) {
+		for (var i = 0; i < deck.deck_options.length; i++) {
+			var option = deck.deck_options[i];
+			if (option.aspect_limit !== undefined && option.aspect_limit !== null) {
+				// Compte le nombre d'aspects différents dans le deck (hors 'basic' et 'hero')
+				var aspects = {};
+				var cards = deck.get_cards();
+				cards.forEach(function(c) {
+					if (c.faction_code && c.faction_code !== 'basic' && c.faction_code !== 'hero') {
+						aspects[c.faction_code] = true;
+					}
+				});
+				// Ajoute l'aspect de la carte candidate si ce n'est pas basic/hero
+				if (card.faction_code && card.faction_code !== 'basic' && card.faction_code !== 'hero') {
+					aspects[card.faction_code] = true;
+				}
+				var aspectCount = Object.keys(aspects).length;
+				if (aspectCount > option.aspect_limit) {
+					return false;
+				}
+			}
+		}
+	}
+
 	if (deck.deck_options && deck.deck_options.length) {
 
 		for (var i = 0; i < deck.deck_options.length; i++){
@@ -1101,6 +1126,14 @@ deck.can_include_card = function can_include_card(card, limit_count, hard_count)
 					continue;
 				}
 			}
+
+			 // Vérification du coût
+    		if (option.cost !== undefined && option.cost !== null) {
+       			if (parseInt(card.cost, 10) > parseInt(option.cost, 10)) {
+            		continue;
+      		 	}
+    		}
+			
 
 			if (limit_count && option.use_deck_limit) {
 				// Need to include the deck limit amount for each card

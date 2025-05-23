@@ -184,6 +184,7 @@ class DeckValidationHelper
 					}
 				}
 				
+				
 				if (isset($option->uses) && $option->uses) {
 					// needs to match at least one type
 					$uses_valid = false;
@@ -221,6 +222,42 @@ class DeckValidationHelper
 						} else {
 							continue;
 						}
+					}
+				}
+
+				if (isset($option->cost) && $option->cost !== null) {
+					// Si cost est un entier, la carte doit avoir un coût inférieur ou égal à cette valeur
+					if (is_int($option->cost)) {
+						if ($card->getCost() > $option->cost) {
+							continue;
+						}
+					}
+					// Si cost est un tableau avec min et max, la carte doit avoir un coût dans cette plage
+					if (is_array($option->cost) && isset($option->cost['min']) && isset($option->cost['max'])) {
+						if ($card->getCost() < $option->cost['min'] || $card->getCost() > $option->cost['max']) {
+							continue;
+						}
+					}
+				}
+
+				if (isset($option->aspect_limit) && $option->aspect_limit !== null) {
+					// Compte le nombre d'aspects différents dans le deck (hors 'basic' et 'hero')
+					$aspects = [];
+					foreach ($deck->getSlots() as $slotCheck) {
+						$cardCheck = $slotCheck->getCard();
+						$factionCode = $cardCheck->getFaction() ? $cardCheck->getFaction()->getCode() : null;
+						if ($factionCode && $factionCode !== 'basic' && $factionCode !== 'hero') {
+							$aspects[$factionCode] = true;
+						}
+					}
+					// Ajoute l'aspect de la carte candidate si ce n'est pas basic/hero
+					$candidateFaction = $card->getFaction() ? $card->getFaction()->getCode() : null;
+					if ($candidateFaction && $candidateFaction !== 'basic' && $candidateFaction !== 'hero') {
+						$aspects[$candidateFaction] = true;
+					}
+					$aspectCount = count($aspects);
+					if ($aspectCount > $option->aspect_limit) {
+						continue;
 					}
 				}
 				
