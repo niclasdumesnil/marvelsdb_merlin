@@ -332,7 +332,11 @@ class SearchController extends Controller
 			$include_encounter = false;
 		}
 		
-		$donation = $this->getUser()->getDonation();
+		$donation = null;
+		$user = $this->getUser();
+		if ($user) {
+		    $donation = $user->getDonation();
+		}
 		
 		if($q && $rows = $this->get('cards_data')->get_search_rows($conditions, $sort, false, $include_encounter, $donation ))
 		{
