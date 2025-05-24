@@ -1,4 +1,3 @@
-
 <div class="col-sm-7">
 	<div>
 		<div class="panel panel-default border-{{ card.faction_code }} {% if card.faction2_code is defined %} border-dual {% endif %}">
@@ -27,13 +26,46 @@
 	</div>
 </div>
 <div class="col-sm-5" style="margin-bottom:2em">
-	<div class="{% if card.spoiler is defined and not show_spoilers %} spoiler{% endif %}">
-		{% if card.imagesrc %}
-		   <img src="{{ card.imagesrc }}" alt="{{ card.name }}" class="img-responsive img-vertical-card" style="margin:auto">
-		{% else %}
-		   <div class="no-image" style="margin:auto"><div class="no-image-text">No image</div></div>
-		{% endif %}
-	</div>
+    <div class="{% if card.spoiler is defined and not show_spoilers %} spoiler{% endif %}">
+        {% if card.imagesrc %}
+           {% set path_parts = card.imagesrc|split('/') %}
+           {% set filename = path_parts|last %}
+           {% set path = path_parts|slice(0, path_parts|length - 1)|join('/') %}
+           {% set imagesrc_fr = path ~ '/FR/' ~ filename %}
+            <img id="test-fr-img" src="{{ imagesrc_fr }}" style="display:none"
+            onload="document.getElementById('toggle-fr-btn').style.display='inline-block';"
+            onerror="document.getElementById('toggle-fr-btn').style.display='none';">
+            <button id="toggle-fr-btn" class="btn btn-primary" type="button" style="display:none;" onclick="toggleFR(this)">PROMO-FR</button><div style="margin-bottom: 1em;">
+            </div>
+            <img id="card-image"
+                 src="{{ card.imagesrc }}"
+                 alt="{{ card.name }}"
+                 class="img-responsive img-vertical-card"
+                 style="margin:auto">
+            <script>
+                function toggleFR(btn) {
+                    var img = document.getElementById('card-image');
+                    var p = document.getElementById('imagesrc-path');
+                    var src = img.getAttribute('src');
+                    if (!btn.classList.contains('active')) {
+                        // Passe en FR : ajoute /FR juste avant le nom du fichier
+                        var srcFR = src.replace(/\/([^\/]+)$/, '/FR/$1');
+                        img.setAttribute('src', srcFR);
+                        if (p) p.textContent = srcFR;
+                        btn.classList.add('active');
+                    } else {
+                        // Revient à l'original : retire /FR si présent
+                        var srcOrig = src.replace(/\/FR\/([^\/]+)$/, '/$1');
+                        img.setAttribute('src', srcOrig);
+                        if (p) p.textContent = srcOrig;
+                        btn.classList.remove('active');
+                    }
+                }
+            </script>
+        {% else %}
+            <div class="no-image" style="margin:auto"><div class="no-image-text">No image</div></div>
+        {% endif %}
+    </div>
 </div>
 
 {% block cardbackblock %}
