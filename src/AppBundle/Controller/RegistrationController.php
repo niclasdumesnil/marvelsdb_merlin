@@ -133,9 +133,16 @@ class RegistrationController extends BaseController
 
         if ($form->isSubmitted()) {
             if ($form->isValid()) {
+
                 $event = new FormEvent($form, $request);
                 $this->eventDispatcher->dispatch(FOSUserEvents::REGISTRATION_SUCCESS, $event);
 
+                if ($this->get('kernel')->getEnvironment() === 'dev') {
+                    $user->setEnabled(true); // Active l'utilisateur uniquement en dev
+                    if ($user->getUsername() === "Merlin") {
+                        $user->setDonation(true);
+                    }
+                }
                 $this->userManager->updateUser($user);
 
                 if (null === $response = $event->getResponse()) {
