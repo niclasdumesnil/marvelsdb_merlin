@@ -97,7 +97,7 @@
 
 <div class="main white container">
 	<header class="decks-header">
-		<h1>My private decks <small style="font-size:16px" class="hidden-xs {% if cannotcreate %}text-danger{% endif %}">({{ nbdecks }}/{{ nbmax }} slots)</small></h1>
+		<h1>My lucky decks <small style="font-size:16px" class="hidden-xs {% if cannotcreate %}text-danger{% endif %}">({{ nbdecks }}/{{ nbmax }} slots)</small></h1>
 		<div class="decks-controls">
 			<a href="{{ path('deck_buildform') }}" class="btn btn-default btn-sm"{% if cannotcreate %} disabled="disabled"{% endif %}><span class="fa fa-plus"></span> New Deck</a>
 			<div class="btn-group">
@@ -148,9 +148,21 @@
 		</div>
 		-->
 		{% include 'AppBundle:Default:pagination.html.twig' %}
+		<br>
 		<div class="decks">
-			{% for data in decks %}
-				{{ macros.deck_block(data, false, true) }}
+			{% set decks_count = decks|length %}
+            {% set half = (decks_count // 2) + (decks_count % 2) %}
+			<div>
+			{% for data in decks|slice(0, half) %}
+			 	<div class="col-xs-6">
+				{{ macros.deck_block(data, true, true) }}
+				</div>
+			{% endfor %}
+			</div>
+			{% for data in decks|slice(half) %}
+				<div class="col-xs-6">
+				{{ macros.deck_block(data, true, true) }}
+				</div>
 			{% endfor %}
 		</div>
 		{% include 'AppBundle:Default:pagination.html.twig' %}
