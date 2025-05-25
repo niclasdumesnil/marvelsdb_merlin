@@ -35,7 +35,10 @@
             <img id="test-fr-img" src="{{ imagesrc_fr }}" style="display:none"
             onload="document.getElementById('toggle-fr-btn').style.display='inline-block';"
             onerror="document.getElementById('toggle-fr-btn').style.display='none';">
-            <button id="toggle-fr-btn" class="btn btn-primary" type="button" style="display:none;" onclick="toggleFR(this)">PROMO-FR</button><div style="margin-bottom: 1em;">
+            <button id="toggle-fr-btn" class="btn btn-primary" type="button"
+            style="display:none;{% if card.imagesrc %} margin-bottom:1em;{% endif %}"
+            onclick="toggleFR(this)">PROMO-FR</button>
+            <div style="margin-bottom: 0em;">
             </div>
             <img id="card-image"
                  src="{{ card.imagesrc }}"
