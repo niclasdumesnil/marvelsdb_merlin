@@ -188,30 +188,41 @@ class BuilderController extends Controller
 		$identity = null;
 		foreach ($lines as $line) {
 			$matches = [];
-			if (preg_match('/^\s*(\d)x?([\pLl\pLu\pN"\-\.\'\!\: ]+)/u', $line, $matches)) {
+			// Nouveau format : "2x Nom de carte [CODE]"
+    		if (preg_match('/^\s*(\d+)x?\s*(.*?)\s*\[([A-Za-z0-9_]+)\]/u', $line, $matches)) {
 				$quantity = intval($matches[1]);
 				$name = trim($matches[2]);
-			} else
-			if (preg_match('/^([^\(]+).*x(\d)/', $line, $matches)) {
+				$code = trim($matches[3]);
+				$card = $em->getRepository('AppBundle:Card')->findOneBy(['code' => $code]);
+	
+    		}
+			
+			// Ancien format : "2x Nom de carte"
+			else if (preg_match('/^\s*(\d)x?([\pLl\pLu\pN"\-\.\'\!\: ]+)/u', $line, $matches)) {
+				$quantity = intval($matches[1]);
+				$name = trim($matches[2]);
+				$card = $em->getRepository('AppBundle:Card')->findOneBy(['name' => $name]);
+			}
+			else if (preg_match('/^([^\(]+).*x(\d)/', $line, $matches)) {
 				$quantity = intval($matches[2]);
 				$name = trim($matches[1]);
-			} else
-			if (empty($identity) && preg_match('/([^\(]+)/', $line, $matches)) {
+				$card = $em->getRepository('AppBundle:Card')->findOneBy(['name' => $name]);
+			}
+			else if (empty($identity) && preg_match('/([^\(]+)/', $line, $matches)) {
 				$quantity = 1;
 				$name = trim($matches[1]);
-			} else {
+				$card = $em->getRepository('AppBundle:Card')->findOneBy(['name' => $name]);
+			}
+			else {
 				continue;
 			}
-			$card = $em->getRepository('AppBundle:Card')->findOneBy(array(
-			'name' => $name
-			));
+
 			if ($card) {
 				if ($card->getType()->getCode() == "hero"){
 					$identity = $card->getCode();
-				}else {
+				} else {
 					$content[$card->getCode()] = $quantity;
 				}
-
 			}
 		}
 		return array(

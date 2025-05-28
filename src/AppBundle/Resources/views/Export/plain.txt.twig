@@ -1,6 +1,6 @@
 {{ deck.name }}
 
-{% if deck.hero %}{{ deck.hero.name }}{% endif %}
+{% if deck.hero %}1x {{ deck.hero.name }} [{{deck.hero.code}}] {% endif %}
 
 {% set first_pack = deck.included_packs|first %}
 {% set last_pack = deck.included_packs|last %}
@@ -10,13 +10,12 @@ From {{ first_pack.pack.name }}{% if first_pack.nb > 1 %} ({{ first_pack.nb }}){
 {{ first_pack.pack.name }}{% if first_pack.nb > 1 %} ({{ first_pack.nb }}){% endif %}
 {% endif %}
 
-
 {% set upgrades = deck.slots_by_type.upgrade %}
 {% if upgrades|length > 0 %}
 Upgrade{% if upgrades|length > 1 %}s{% endif %}
 
 {% for slot in upgrades %}
-{{ slot.quantity }}x {{ slot.card.name }} ({{ slot.card.pack.name }})
+{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
 {% endfor %}
 {% endif %}
 
@@ -25,7 +24,7 @@ Upgrade{% if upgrades|length > 1 %}s{% endif %}
 Event{% if events|length > 1 %}s{% endif %}
 
 {% for slot in events %}
-{{ slot.quantity }}x {{ slot.card.name }}{% if slot.card.subname %}:{{slot.card.subname}}{% endif %} ({{ slot.card.pack.name }})
+{{ slot.quantity }}x {{ slot.card.name }}{% if slot.card.subname %}:{{slot.card.subname}}{% endif %} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
 {% endfor %}
 {% endif %}
 
@@ -34,7 +33,7 @@ Event{% if events|length > 1 %}s{% endif %}
 Support{% if supports|length > 1 %}s{% endif %}
 
 {% for slot in supports %}
-{{ slot.quantity }}x {{ slot.card.name }} ({{ slot.card.pack.name }})
+{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
 {% endfor %}
 {% endif %}
 
@@ -43,7 +42,7 @@ Support{% if supports|length > 1 %}s{% endif %}
 Resource{% if resources|length > 1 %}s{% endif %}
 
 {% for slot in resources %}
-{{ slot.quantity }}x {{ slot.card.name }} ({{ slot.card.pack.name }})
+{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
 {% endfor %}
 {% endif %}
 
@@ -54,7 +53,7 @@ Resource{% if resources|length > 1 %}s{% endif %}
 {% if allies|length > 1 %}Allies{% endif %}
 
 {% for slot in allies %}
-{{ slot.quantity }}x {{ slot.card.name }} ({{ slot.card.pack.name }})
+{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
 {% endfor %}
 {% endif %}
 
@@ -65,7 +64,7 @@ Resource{% if resources|length > 1 %}s{% endif %}
 {% if side_schemes|length > 1 %}Player Side Schemes{% endif %}
 
 {% for slot in side_schemes %}
-{{ slot.quantity }}x {{ slot.card.name }} ({{ slot.card.pack.name }})
+{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
 {% endfor %}
 {% endif %}
 
