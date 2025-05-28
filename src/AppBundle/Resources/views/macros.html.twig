@@ -74,7 +74,7 @@
 {% macro decklist_block(data, compact) %}
 	<div class="box">
 		<div style="background-color: rgba(255,255,255,0.97); border-radius: 5px;">
-			<div class="bg-faction {% if data.meta.aspect is defined %}faint-{{ data.meta.aspect }}{% else %}fai2nt-basic{% endif %}" style="display: flex; align-items: stretch;">
+			<div class="bg-faction {% if data.meta.aspect is defined %}faint-{{ data.meta.aspect }}{% else %}faint-basic{% endif %}" style="display: flex; align-items: stretch;">
 				<h4 style="font-size: 1.15em; flex: 1; margin: 0; padding: 0.5rem; padding-left: 1rem; padding-right: 1rem; display: flex; align-items: center;">
 					<a href="{{ path('decklist_detail',{decklist_id:data.decklist.id,decklist_name:data.decklist.nameCanonical}) }}">{{ data.decklist.name }}</a>
 				</h4>
@@ -124,6 +124,8 @@
 	{% if single %}
 	<div class="box" style="margin-bottom: 1rem;">
 		<div style="">
+			
+			
 			<div class="deck-box-hero-and-header">
 				<div class="hero-banner" style="padding: 0.4rem;{% if data.hero_meta.colors is defined %}background-image: linear-gradient(350deg, {{data.hero_meta.colors[0]}} 48%, {{data.hero_meta.colors[2]}} 49%, {{data.hero_meta.colors[2]}} 51%, {{data.hero_meta.colors[1]}} 53%, {{data.hero_meta.colors[1]}} 100%);{% endif %}">
 					<input class="deck_select" data-id="{{data.deck.id}}" type="checkbox" style="margin: 0;">
