@@ -103,6 +103,7 @@ class CardsData
 		$list_packs = $this->doctrine->getRepository('AppBundle:Pack')->findBy(array(), array("position" => "ASC", "dateRelease" => "ASC"));
 		$packs = array();
 		foreach($list_packs as $pack) {
+	
 			$real = count($pack->getCards());
 			$max = $pack->getSize();
 			$packs[] = array(
@@ -111,6 +112,7 @@ class CardsData
 					"number" => $pack->getPosition(),
 					"available" => $pack->getDateRelease() ? $pack->getDateRelease()->format('Y-m-d') : '',
 					"known" => intval($real),
+					"type"=> $pack->getPackType()->Getcode(), 
 					"creator" => $pack->getCreator() ?? "FFG",
 					"status" => $pack->getStatus() ?? "Official",
 					"theme" => $pack->getTheme() ?? "Marvel",

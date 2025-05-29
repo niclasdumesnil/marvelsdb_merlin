@@ -1,9 +1,26 @@
 <ol>
-		<h3>FFG</h3>
-		{% for pack in data %}
-		{% if pack.creator == 'FFG' %} 
-		 <li><a href="{{ pack.url }}">{{ pack.name }} {% endif %} </a><span> {% if pack.available == false %}({{pack.known}} cards){% endif %}</span></li>
-		{% endfor %}
+	<h3>FFG</h3>
+    {% for pack in data %}
+        {% if pack.creator == 'FFG' %}
+            {% if pack.type == 'core' or pack.type == 'story' or pack.type== 'encounter' %}
+                <li>
+                    <a href="{{ pack.url }}">{{ pack.name }}</a>
+                    <span>
+                        {% if pack.available == false %}({{ pack.known }} cards){% endif %}
+                    </span>
+                </li>
+            {% else %}
+                <li style="margin-left:2em;">
+                    <a href="{{ pack.url }}">{{ pack.name }}</a>
+                    <span>
+                        {% if pack.available == false %}({{ pack.known }} cards){% endif %}
+                    </span>
+                </li>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+
+
 		<h3>Fan made</h3>
 		{% for pack in data %}
 		{% if pack.creator != 'FFG' and pack.visibility != "false" %}
