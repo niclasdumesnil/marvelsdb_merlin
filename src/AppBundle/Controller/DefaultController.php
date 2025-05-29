@@ -67,8 +67,15 @@ class DefaultController extends Controller
 		while($iterator->valid() && count($decklists_by_hero) < 10)
 		{
 			$decklist = $iterator->current();
+			$hero = $decklist->getCharacter();
+			
 			if (!isset($userCheck[$decklist->getUser()->getId()])){
-				$decklists_by_hero[] = ['hero_meta' => json_decode($decklist->getCharacter()->getMeta()), 'faction' => $decklist->getCharacter()->getFaction(), 'decklist' => $decklist, 'meta' => json_decode($decklist->getMeta()) ];
+				$decklists_by_hero[] = [
+					'hero_meta' => json_decode($hero->getMeta()),
+					'faction' => $hero->getFaction(),
+					'decklist' => $decklist,
+					'meta' => json_decode($decklist->getMeta())
+				];
 				$userCheck[$decklist->getUser()->getId()] = true;
 				$dupe_deck_list[$decklist->getId()] = true;
 			}
@@ -80,8 +87,19 @@ class DefaultController extends Controller
 		while($iterator->valid() && count($decklists_by_popular) < 8)
 		{
 			$decklist = $iterator->current();
-			if ($decklist->getCharacter()->getCode() != $card->getCode() && !isset($dupe_deck_list[$decklist->getId()])) {
-				$decklists_by_popular[] = ['hero_meta' => json_decode($decklist->getCharacter()->getMeta()), 'faction' => $decklist->getCharacter()->getFaction(), 'decklist' => $decklist, 'meta' => json_decode($decklist->getMeta()) ];
+						
+			if (
+				$decklist->getCharacter()->getCode() != $card->getCode()
+				&& !isset($dupe_deck_list[$decklist->getId()])
+				&& $decklist->getCharacter()->getPack()->GetVisibility() !="false" 
+			)
+			{
+				$decklists_by_popular[] = [
+					'hero_meta' => json_decode($decklist->getCharacter()->getMeta()),
+					'faction' => $decklist->getCharacter()->getFaction(),
+					'decklist' => $decklist,
+					'meta' => json_decode($decklist->getMeta())
+				];
 				$dupe_deck_list[$decklist->getId()] = true;
 			}
 			$iterator->next();
@@ -93,7 +111,7 @@ class DefaultController extends Controller
 		{
 			$decklist = $iterator->current();
 			if (!isset($userCheck[$decklist->getUser()->getId()])){
-				if ($decklist->getCharacter()->getCode() != $card->getCode() && !isset($dupe_deck_list[$decklist->getId()])) {
+				if ($decklist->getCharacter()->getCode() != $card->getCode() && !isset($dupe_deck_list[$decklist->getId()]) && $decklist->getCharacter()->getPack()->GetVisibility() !="false" ) {
 					$decklists_by_recent[] = ['hero_meta' => json_decode($decklist->getCharacter()->getMeta()), 'faction' => $decklist->getCharacter()->getFaction(), 'decklist' => $decklist, 'meta' => json_decode($decklist->getMeta()) ];
 					$userCheck[$decklist->getUser()->getId()] = true;
 					$dupe_deck_list[$decklist->getId()] = true;
