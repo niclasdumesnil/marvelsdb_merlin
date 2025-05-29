@@ -9,8 +9,9 @@
 		{% if pack.creator != 'FFG' and pack.visibility != "false" %}
 
 		{% set creator_colors = {
-    		'Merlin': 'rgb(18, 120, 216)',
-   			'Hax': 'rgb(158, 14, 187)'
+    		'titi': 'rgb(18, 120, 216)',
+   			'toto': 'rgb(158, 14, 187)',
+			'default': 'rgb(3, 88, 84)'
 		} %}
 		
 		{% set creator_labels = {
@@ -20,7 +21,7 @@
 
 		<li>
 			<a title="{{ pack.name }}" href="{{ pack.url }}">{{ pack.name }}
-				{% set color = creator_colors[pack.creator] ?? 'rgb(6, 138, 98)' %}
+				{% set color = creator_colors[pack.creator] ?? 'rgb(18, 120, 216)' %}
 				{% set label = creator_labels[pack.creator] ?? (pack.creator ?? 'Unknown') %}
 				<span style="font-size: 10px; color: white; background-color: {{ color }}; display: inline-flex;
 					align-items: center; border-radius: 8px; padding: 2px 12px;">{{ label }}</span>
@@ -41,10 +42,7 @@
 				{% for pack in data %}
 					{% if pack.visibility == "false" %}
 
-						{% set creator_colors = {
-						'Merlin': 'rgb(18, 120, 216)',
-						'Hax': 'rgb(158, 14, 187)'
-						} %}
+						
 					
 						{% set creator_labels = {
 							'Merlin': 'Merlin',
@@ -53,7 +51,7 @@
 
 						<li>
 							<a title="{{ pack.name }}" href="{{ pack.url }}">{{ pack.name }}
-								{% set color = creator_colors[pack.creator] ?? 'rgb(6, 138, 98)' %}
+								{% set color = creator_colors[pack.creator] ?? 'rgb(18, 120, 216)' %}
 								{% set label = creator_labels[pack.creator] ?? (pack.creator ?? 'Unknown') %}
 								<span style="font-size: 10px; color: white; background-color: {{ color }}; display: inline-flex;
 									align-items: center; border-radius: 8px; padding: 2px 12px;">{{ label }}</span>
