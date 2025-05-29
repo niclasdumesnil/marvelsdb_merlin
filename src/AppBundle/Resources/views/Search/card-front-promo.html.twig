@@ -1,7 +1,7 @@
 {% set imagesrc_original = card.imagesrc %}
 {% set imagesrc = imagesrc_original %}
 {% set fr_imagesrc = '' %}
-{% set fr_exists = false %}
+{% set unique_id = card.id %}
 {% if app.request.locale == 'fr' %}
     {# Remplace le chemin par la version FR si elle existe #}
     {% set path_parts = imagesrc|split('/') %}
@@ -9,8 +9,8 @@
     {% set path = path_parts|slice(0, path_parts|length - 1)|join('/') %}
     {% set fr_imagesrc = path ~ '/FR/' ~ filename %}
     <img src="{{ fr_imagesrc }}" style="display:none"
-         onload="window['fr_exists_{{ card.id }}']=true;document.getElementById('card-image-{{ card.id }}').setAttribute('src', '{{ fr_imagesrc }}');"
-         onerror="window['fr_exists_{{ card.id }}']=false;">
+         onload="window['fr_exists_{{ unique_id }}']=true;document.getElementById('card-image-{{ unique_id }}').setAttribute('src', '{{ fr_imagesrc }}');"
+         onerror="window['fr_exists_{{ unique_id }}']=false;">
 {% endif %}
 
 <div class="col-sm-5" style="margin-bottom:2em">
@@ -22,7 +22,6 @@
         {% set path_parts = imagesrc_original|split('/') %}
         {% set filename = path_parts|last %}
         {% set path = path_parts|slice(0, path_parts|length - 1)|join('/') %}
-        {% set unique_id = card.id %}
         {% if imagesrc %}
             {# Images cachées pour vérifier l'existence des promos #}
             {% for btn in promo_buttons %}
@@ -41,11 +40,11 @@
             {% for btn in promo_buttons %}
                 <button id="toggle-{{ btn.dir }}-btn-{{ unique_id }}" class="btn btn-primary promo-toggle-btn" type="button"
                     style="display:none; margin-bottom:1em; position: relative; z-index: 10;"
-                    onclick="togglePromo(this, '{{ btn.dir }}', '{{ unique_id }}')">{{ btn.label }}</button>
+                    onclick="togglePromo{{ unique_id }}(this, '{{ btn.dir }}', '{{ unique_id }}')">{{ btn.label }}</button>
             {% endfor %}
             <div style="margin-bottom: 0em;"></div>
             <script>
-                function togglePromo(btn, dir, uniqueId) {
+                function togglePromo{{ unique_id }}(btn, dir, uniqueId) {
                     var img = document.getElementById('card-image-' + uniqueId);
                     var p = document.getElementById('imagesrc-path-' + uniqueId);
                     var src = img.getAttribute('src');
@@ -67,7 +66,7 @@
                     } else {
                         // Revient à l'original (FR si locale fr ET fichier existe, sinon original)
                         {% if app.request.locale == 'fr' %}
-                        if (window['fr_exists_{{ card.id }}']) {
+                        if (window['fr_exists_{{ unique_id }}']) {
                             img.setAttribute('src', '{{ fr_imagesrc }}');
                             if (p) p.textContent = '{{ fr_imagesrc }}';
                         } else {
