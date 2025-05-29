@@ -1,5 +1,6 @@
 {% set imagesrc_original = card.imagesrc %}
 {% set imagesrc = imagesrc_original %}
+{% set fr_imagesrc = '' %}
 {% if app.request.locale == 'fr' %}
     {# Remplace le chemin par la version FR si elle existe #}
     {% set path_parts = imagesrc|split('/') %}
@@ -61,9 +62,14 @@
                             if (allBtns[i] !== btn) allBtns[i].classList.remove('active');
                         }
                     } else {
-                        // Revient à l'original (déjà fait plus haut)
+                        // Revient à l'original (FR si locale fr, sinon original)
+                        {% if app.request.locale == 'fr' and fr_imagesrc %}
+                        img.setAttribute('src', '{{ fr_imagesrc }}');
+                        if (p) p.textContent = '{{ fr_imagesrc }}';
+                        {% else %}
                         img.setAttribute('src', '{{ imagesrc }}');
                         if (p) p.textContent = '{{ imagesrc }}';
+                        {% endif %}
                         btn.classList.remove('active');
                     }
                 }
