@@ -63,7 +63,7 @@
                         }
                     } else {
                         // Revient à l'original (FR si locale fr, sinon original)
-                        {% if app.request.locale == 'fr' and fr_imagesrc %}
+                        {% if app.request.locale == 'fr' %}
                         img.setAttribute('src', '{{ fr_imagesrc }}');
                         if (p) p.textContent = '{{ fr_imagesrc }}';
                         {% else %}
