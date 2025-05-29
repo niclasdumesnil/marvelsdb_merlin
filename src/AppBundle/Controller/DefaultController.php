@@ -51,10 +51,10 @@ class DefaultController extends Controller
 		$weeks_since = ($diff / (60 * 60 * 24 * 7));
 		if ($weeks_since >= 0 && $weeks_since < count($cards)) {
 			$card = $cards[$weeks_since];
-			if (!$card->getMeta()) {
+			if (!$card->getMeta() || $card->getPack()->GetVisibility()) {
 				$card = $cards[$weeks_since - 1];
 			}
-			if (!$card->getMeta()) {
+			if (!$card->getMeta() || $card->getPack()->GetVisibility()) {
 				$card = $cards[$weeks_since - 2];
 			}
 		} else {
@@ -117,9 +117,37 @@ class DefaultController extends Controller
 		$cards_offset = [0,10,20];
 		if ($days_since >= 0) {
 			$card_offset = $cards_offset[$days_since % 3] + (floor($days_since / 3));
-			$cards = $this->getDoctrine()->getRepository('AppBundle:Card')->findBy(['card_set' => null, 'duplicate_of' => null], ['id' => 'ASC'], 1, $card_offset);
+			$cards = $this->getDoctrine()->getRepository('AppBundle:Card')->findBy(
+				['card_set' => null, 'duplicate_of' => null], ['id' => 'ASC'], 1, $card_offset
+			);
 			if (count($cards) > 0) {
 				$card_of_the_day = $cards[0];
+				// Vérifie que la carte n'est pas privée et que son pack est visible
+				if (
+					(method_exists($card_of_the_day, 'GetVisibility') && $card_of_the_day->GetVisibility()) ||
+					(method_exists($card_of_the_day->getPack(), 'GetVisibility') && $card_of_the_day->getPack()->GetVisibility())
+				) {
+					// Cherche la carte suivante non privée et visible
+					$found = false;
+					for ($i = $card_offset + 1; $i < $card_offset + 10 && !$found; $i++) {
+						$next_cards = $this->getDoctrine()->getRepository('AppBundle:Card')->findBy(
+							['card_set' => null, 'duplicate_of' => null], ['id' => 'ASC'], 1, $i
+						);
+						if (count($next_cards) > 0) {
+							$next_card = $next_cards[0];
+							if (
+								(!method_exists($next_card, 'GetVisibility') || !$next_card->GetVisibility()) &&
+								(!method_exists($next_card->getPack(), 'GetVisibility') || !$next_card->getPack()->GetVisibility())
+							) {
+								$card_of_the_day = $next_card;
+								$found = true;
+							}
+						}
+					}
+					if (!$found) {
+						throw new \Exception("Ran out of public cards for card of the day.");
+					}
+				}
 			} else {
 				throw new \Exception("Ran out of heroes for spotlight.");
 			}
