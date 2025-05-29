@@ -117,7 +117,9 @@
 				<select class="form-control" name="e" id="e">
 					<option value="">any</option>
 					{% for pack in packs %}
-					<option value="{{ pack.code }}">{{ pack.name }}</option>
+						{% if pack.visibility != "false" or (app.user and app.user.donation) %}
+							<option value="{{ pack.code }}">{{ pack.name }}</option>
+						{% endif %}
 					{% endfor %}
 				</select>
 			</div>
@@ -285,7 +287,7 @@
 </div>
 
 </fieldset>
-
+{# mise en commentaire en attendant d'améliorer la recherche par set 
 <fieldset>
 <legend>Encounter Cards</legend>
 <div class="row">
@@ -299,6 +301,7 @@
 		</div>
 </div>
 </fieldset>
+#}
 
 
 <fieldset>
