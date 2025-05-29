@@ -479,6 +479,11 @@ class SocialController extends Controller
 		foreach($all_heroes as $hero) {
 			$unique_key = $hero->getCardSet()->getCode();
 
+			// Exclure les héros dont le pack n'est pas visible
+			if ($hero->getPack()->GetVisibility()) {
+				continue;
+			}
+
 			if (!$hero->getMeta()) {
 				continue;
 			}
@@ -586,7 +591,17 @@ class SocialController extends Controller
 		while($iterator->valid())
 		{
 			$decklist = $iterator->current();
-			$decklists[] = ['hero_meta' => json_decode($decklist->getCharacter()->getMeta()), 'faction' => $decklist->getCharacter()->getFaction(), 'decklist' => $decklist, 'meta' => json_decode($decklist->getMeta()) ];
+			$hero = $decklist->getCharacter();
+	
+			// Exclure si visibilité false
+			if ($hero->getPack()->GetVisibility() !="false") {
+				$decklists[] = [
+					'hero_meta' => json_decode($hero->getMeta()),
+					'faction' => $hero->getFaction(),
+					'decklist' => $decklist,
+					'meta' => json_decode($decklist->getMeta())
+				];
+			}
 			$iterator->next();
 		}
 
