@@ -1,0 +1,67 @@
+
+<div class="col-sm-5" style="margin-bottom:2em">
+    <div class="{% if card.spoiler is defined and not show_spoilers %} spoiler{% endif %}">
+        {% set promo_buttons = [
+    {'label': 'PROMO-FR', 'dir': 'promo-FR'},
+    {'label': 'PROMO-EN', 'dir': 'promo-EN'}
+] %}
+{% set path_parts = card.imagesrc|split('/') %}
+{% set filename = path_parts|last %}
+{% set path = path_parts|slice(0, path_parts|length - 1)|join('/') %}
+
+{% set unique_id = card.id %}
+{% if card.imagesrc %}
+    {# Images cachées pour vérifier l'existence des promos #}
+    {% for btn in promo_buttons %}
+        {% set promo_src = path ~ '/' ~ btn.dir ~ '/' ~ filename %}
+        <img id="test-{{ btn.dir }}-img-{{ unique_id }}" src="{{ promo_src }}" style="display:none"
+            onload="document.getElementById('toggle-{{ btn.dir }}-btn-{{ unique_id }}').style.display='inline-block';"
+            onerror="document.getElementById('toggle-{{ btn.dir }}-btn-{{ unique_id }}').style.display='none';">
+    {% endfor %}
+    <img id="card-image-{{ unique_id }}"
+         src="{{ card.imagesrc }}"
+         alt="{{ card.name }}"
+         class="img-responsive img-vertical-card"
+         style="margin:auto">
+    <br>
+    {# Boutons dynamiques pour chaque promo #}
+    {% for btn in promo_buttons %}
+        <button id="toggle-{{ btn.dir }}-btn-{{ unique_id }}" class="btn btn-primary promo-toggle-btn" type="button"
+            style="display:none; margin-bottom:1em; position: relative; z-index: 10;"
+            onclick="togglePromo(this, '{{ btn.dir }}', '{{ unique_id }}')">{{ btn.label }}</button>
+    {% endfor %}
+    <div style="margin-bottom: 0em;"></div>
+    <script>
+        function togglePromo(btn, dir, uniqueId) {
+            var img = document.getElementById('card-image-' + uniqueId);
+            var p = document.getElementById('imagesrc-path-' + uniqueId);
+            var src = img.getAttribute('src');
+            // On retire tous les répertoires promo possibles
+            {% for b in promo_buttons %}
+            src = src.replace(/\/{{ b.dir }}\/([^\/]+)$/, '/$1');
+            {% endfor %}
+            if (!btn.classList.contains('active')) {
+                // Passe en promo : ajoute /dir juste avant le nom du fichier
+                var srcPromo = src.replace(/\/([^\/]+)$/, '/' + dir + '/$1');
+                img.setAttribute('src', srcPromo);
+                if (p) p.textContent = srcPromo;
+                btn.classList.add('active');
+                // Désactive les autres boutons pour cette carte uniquement
+                var allBtns = document.querySelectorAll('.promo-toggle-btn[id$="-' + uniqueId + '"]');
+                for (var i = 0; i < allBtns.length; i++) {
+                    if (allBtns[i] !== btn) allBtns[i].classList.remove('active');
+                }
+            } else {
+                // Revient à l'original (déjà fait plus haut)
+                img.setAttribute('src', src);
+                if (p) p.textContent = src;
+                btn.classList.remove('active');
+            }
+        }
+    </script>
+{% else %}
+    <div class="no-image" style="margin:auto"><div class="no-image-text">No image</div></div>
+{% endif %}
+    </div>
+</div>
+

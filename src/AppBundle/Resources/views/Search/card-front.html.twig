@@ -25,74 +25,43 @@
 		</div>
 	</div>
 </div>
-<div class="col-sm-5" style="margin-bottom:2em">
-    <div class="{% if card.spoiler is defined and not show_spoilers %} spoiler{% endif %}">
-        {% set promo_buttons = [
-    {'label': 'PROMO-FR', 'dir': 'promo-FR'},
-    {'label': 'PROMO-EN', 'dir': 'promo-EN'}
-] %}
-{% set path_parts = card.imagesrc|split('/') %}
-{% set filename = path_parts|last %}
-{% set path = path_parts|slice(0, path_parts|length - 1)|join('/') %}
 
-{% if card.imagesrc %}
-    {# Images cachées pour vérifier l'existence des promos #}
-    {% for btn in promo_buttons %}
-        {% set promo_src = path ~ '/' ~ btn.dir ~ '/' ~ filename %}
-        <img id="test-{{ btn.dir }}-img" src="{{ promo_src }}" style="display:none"
-            onload="document.getElementById('toggle-{{ btn.dir }}-btn').style.display='inline-block';"
-            onerror="document.getElementById('toggle-{{ btn.dir }}-btn').style.display='none';">
-    {% endfor %}
-    <img id="card-image"
-         src="{{ card.imagesrc }}"
-         alt="{{ card.name }}"
-         class="img-responsive img-vertical-card"
-         style="margin:auto">
-    <br>
-    {# Boutons dynamiques pour chaque promo #}
-    {% for btn in promo_buttons %}
-        <button id="toggle-{{ btn.dir }}-btn" class="btn btn-primary promo-toggle-btn" type="button"
-            style="display:none; margin-bottom:1em; position: relative; z-index: 10;"
-            onclick="togglePromo(this, '{{ btn.dir }}')">{{ btn.label }}</button>
-    {% endfor %}
-    <div style="margin-bottom: 0em;"></div>
-    <script>
-        function togglePromo(btn, dir) {
-            var img = document.getElementById('card-image');
-            var p = document.getElementById('imagesrc-path');
-            var src = img.getAttribute('src');
-            // On retire tous les répertoires promo possibles
-            {% for b in promo_buttons %}
-            src = src.replace(/\/{{ b.dir }}\/([^\/]+)$/, '/$1');
-            {% endfor %}
-            if (!btn.classList.contains('active')) {
-                // Passe en promo : ajoute /dir juste avant le nom du fichier
-                var srcPromo = src.replace(/\/([^\/]+)$/, '/' + dir + '/$1');
-                img.setAttribute('src', srcPromo);
-                if (p) p.textContent = srcPromo;
-                btn.classList.add('active');
-                // Désactive les autres boutons
-                var allBtns = document.getElementsByClassName('promo-toggle-btn');
-                for (var i = 0; i < allBtns.length; i++) {
-                    if (allBtns[i] !== btn) allBtns[i].classList.remove('active');
-                }
-            } else {
-                // Revient à l'original (déjà fait plus haut)
-                img.setAttribute('src', src);
-                if (p) p.textContent = src;
-                btn.classList.remove('active');
-            }
-        }
-    </script>
-{% else %}
-    <div class="no-image" style="margin:auto"><div class="no-image-text">No image</div></div>
-{% endif %}
-    </div>
-</div>
+{# Affiche le bloc promo pour la carte principale #}
+{% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': card } %}
 
 {% block cardbackblock %}
-{% if card.linked_card is defined %}
-{% set card = card.linked_card %}
-{% include 'AppBundle:Search:card-front.html.twig' %}
-{% endif %}
+    {% if card.linked_card is defined %}
+        <div class="row">
+            <div class="col-sm-7">
+                {# Affiche le texte du back #}
+                {% set back = card.linked_card %}
+                <div class="panel panel-default border-{{ back.faction_code }} {% if back.faction2_code is defined %} border-dual {% endif %}">
+                    <div class="panel-heading border-{{ back.faction_code }} bg-{{ back.faction_code }} {% if back.faction2_code is defined %} bg-dual border-dual{% endif %}">
+                        <h3 class="panel-title">
+                            {% include 'AppBundle:Search:card-name-with-link.html.twig' with { 'card': back } %}
+                        </h3>
+                    </div>
+                    <div class="panel-body card-content">
+                        {% include 'AppBundle:Search:card-faction.html.twig' with { 'card': back } %}
+                        {% include 'AppBundle:Search:card-info.html.twig' with { 'card': back } %}
+                        {% if back.type_code == 'main_scheme' or back.type_code == 'side_scheme' %}
+                            {% include 'AppBundle:Search:card-flavor.html.twig' with { 'card': back } %}
+                            {% include 'AppBundle:Search:card-text.html.twig' with { 'card': back } %}
+                        {% else %}
+                            {% include 'AppBundle:Search:card-text.html.twig' with { 'card': back } %}
+                            {% include 'AppBundle:Search:card-flavor.html.twig' with { 'card': back } %}
+                        {% endif %}
+                        {% include 'AppBundle:Search:card-illustrator.html.twig' with { 'card': back } %}
+                        {% include 'AppBundle:Search:card-pack.html.twig' with { 'card': back } %}
+                        {% if back.errata %}
+                            <div style="margin-top: 2rem;"><i><b>Errata</b>: {{back.errata}}</i></div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-5" style="margin-bottom:0em">
+                {% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': back } %}
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}
