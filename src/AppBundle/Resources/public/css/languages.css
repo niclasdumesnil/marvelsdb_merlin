@@ -32,6 +32,7 @@
 .lang-xs[lang=et] { background-position: 0px   -99px; }
 .lang-xs[lang=fi] { background-position: 0px  -110px; }
 .lang-xs[lang=fr] { background-position: 0px  -121px; }
+.lang-xs[lang=qc] { background-position: 0px  -121px; }
 .lang-xs[lang=ga] { background-position: 0px  -132px; }
 .lang-xs[lang=hi] { background-position: 0px  -143px; }
 .lang-xs[lang=hr] { background-position: 0px  -154px; }
@@ -77,6 +78,7 @@
 .lang-sm[lang=et] { background-position: 0px  -628px; }
 .lang-sm[lang=fi] { background-position: 0px  -644px; }
 .lang-sm[lang=fr] { background-position: 0px  -660px; }
+.lang-sm[lang=qc] { background-position: 0px  -660px; }
 .lang-sm[lang=ga] { background-position: 0px  -676px; }
 .lang-sm[lang=hi] { background-position: 0px  -692px; }
 .lang-sm[lang=hr] { background-position: 0px  -708px; }
@@ -122,6 +124,7 @@
 .lang-lg[lang=et] { background-position: 0px -1386px; }
 .lang-lg[lang=fi] { background-position: 0px -1408px; }
 .lang-lg[lang=fr] { background-position: 0px -1430px; }
+.lang-lg[lang=qc] { background-position: 0px -1430px; }
 .lang-lg[lang=ga] { background-position: 0px -1452px; }
 .lang-lg[lang=hi] { background-position: 0px -1474px; }
 .lang-lg[lang=hr] { background-position: 0px -1496px; }
@@ -172,6 +175,7 @@
 .lang-lbl[lang=et]:after { content: "Eesti"; }
 .lang-lbl[lang=fi]:after { content: "Suomi"; }
 .lang-lbl[lang=fr]:after { content: "Fran\0000E7ais"; }
+.lang-lbl[lang=qc]:after { content: "Fran\0000E7ais"; }
 .lang-lbl[lang=ga]:after { content: "Gaeilge"; }
 .lang-lbl[lang=hi]:after { content: "\000939\00093F\000902\000926\000940"; }
 .lang-lbl[lang=hr]:after { content: "Hrvatski"; }
@@ -217,6 +221,7 @@
 .lang-lbl-en[lang=et]:after { content: "Estonian"; }
 .lang-lbl-en[lang=fi]:after { content: "Finnish"; }
 .lang-lbl-en[lang=fr]:after { content: "French"; }
+.lang-lbl-en[lang=qc]:after { content: "French"; }
 .lang-lbl-en[lang=ga]:after { content: "Irish"; }
 .lang-lbl-en[lang=hi]:after { content: "Hindi"; }
 .lang-lbl-en[lang=hr]:after { content: "Croatian"; }
@@ -262,6 +267,7 @@
 .lang-lbl-full[lang=et]:after { content: "Eesti\0000A0/\0000A0Estonian"; }
 .lang-lbl-full[lang=fi]:after { content: "Suomi\0000A0/\0000A0Finnish"; }
 .lang-lbl-full[lang=fr]:after { content: "Fran\0000E7ais\0000A0/\0000A0French"; }
+.lang-lbl-full[lang=qc]:after { content: "Fran\0000E7ais\0000A0/\0000A0French"; }
 .lang-lbl-full[lang=ga]:after { content: "Gaeilge\0000A0/\0000A0Irish"; }
 .lang-lbl-full[lang=hi]:after { content: "\000939\00093F\000902\000926\000940\0000A0/\0000A0Hindi"; }
 .lang-lbl-full[lang=hr]:after { content: "Hrvatski\0000A0/\0000A0Croatian"; }

@@ -10,10 +10,10 @@ parameters:
     locale: en
     locale_names:
         en: English
-        fr: Francais
+        qc: Francais
     supported_locales:
         - en
-        - fr
+        - qc
     default_locale: en
 
 sensio_framework_extra:
@@ -114,7 +114,7 @@ jms_i18n_routing:
     strategy: custom
     hosts:
         en: "%website_url%"
-        fr: "www.fr.%website_url%" 
+        qc: "www.fr.%website_url%" 
     redirect_to_host: true
     
 # Swiftmailer Configuration

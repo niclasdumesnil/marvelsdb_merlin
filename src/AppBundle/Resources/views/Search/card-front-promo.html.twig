@@ -2,7 +2,7 @@
 {% set imagesrc = imagesrc_original %}
 {% set fr_imagesrc = '' %}
 {% set unique_id = card.id %}
-{% if app.request.locale == 'fr' %}
+{% if app.request.locale == 'qc' %}
     {# Remplace le chemin par la version FR si elle existe #}
     {% set path_parts = imagesrc|split('/') %}
     {% set filename = path_parts|last %}
@@ -65,7 +65,7 @@
                         }
                     } else {
                         // Revient à l'original (FR si locale fr ET fichier existe, sinon original)
-                        {% if app.request.locale == 'fr' %}
+                        {% if app.request.locale == 'qc' %}
                         if (window['fr_exists_{{ unique_id }}']) {
                             img.setAttribute('src', '{{ fr_imagesrc }}');
                             if (p) p.textContent = '{{ fr_imagesrc }}';
