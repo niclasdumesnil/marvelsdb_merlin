@@ -159,93 +159,87 @@ ui.build_type_selector = function build_type_selector() {
  * @memberOf ui
  */
 ui.build_pack_selector = function build_pack_selector() {
-	$('[data-filter=pack_code]').empty();
+    $('[data-filter=pack_code]').empty();
 
-	//$('<li><h2>Defaults to packs in your collection</p></h2>').appendTo('[data-filter=pack_code]');
+    // parse pack owner string
+    var collection = {};
+    var no_collection = true;
+    if (app.user.data && app.user.data.owned_packs) {
+        var packs = app.user.data.owned_packs.split(',');
+        _.forEach(packs, function(str) {
+            collection[str] = 1;
+            no_collection = false;
+        });
+    }
 
-	// parse pack owner string
-	var collection = {};
-	var no_collection = true;
-	if (app.user.data && app.user.data.owned_packs) {
-      var packs = app.user.data.owned_packs.split(',');
-      _.forEach(packs, function(str) {
-          collection[str] = 1;
-          no_collection = false;
-      });
-			//console.log(app.user.data.owned_packs, collection);
-  }
+    app.data.packs.find({
+        name: {
+            '$exists': true
+        }
+    }, {
+        $orderBy: {
+            cycle_position: 1,
+            position: 1
+        }
+    }).forEach(function(record) {
+        // Ajout du filtre : ne pas afficher le pack si visibility === "false" et que l'utilisateur n'est pas donateur
+        if (record.visibility === "false" && (!app.user.donation || app.user.donation === "0")) {
+            return;
+        }
 
+        // checked or unchecked ? checked by default
+        var checked = false;
+        if (collection[record.id]){
+            checked = true;
+        }
 
-	app.data.packs.find({
-		name: {
-			'$exists': true
-		}
-	}, {
-	    $orderBy: {
-	        cycle_position: 1,
-	        position: 1
-	    }
-	}).forEach(function(record) {
-		// checked or unchecked ? checked by default
-		var checked = false;
-		if (collection[record.id]){
-			checked = true;
-		}
-		// if not yet available, uncheck pack
-		//if(record.available === "") checked = false;
-		// if user checked it previously, check pack
-		// if(localStorage && localStorage.getItem('set_code_' + record.code) !== null) checked = true;
-		// if pack used by cards in deck, check pack
+        if (no_collection && localStorage && localStorage.getItem('set_code_' + record.code) === "true"){
+            checked = true;
+        } else if (no_collection && localStorage && localStorage.getItem('set_code_' + record.code) === "false"){
+            checked = false;
+        } else if (no_collection && record.available !== ""){
+            checked = true;
+        }
 
-		if (no_collection && localStorage && localStorage.getItem('set_code_' + record.code) === "true"){
-			checked = true;
-		} else if (no_collection && localStorage && localStorage.getItem('set_code_' + record.code) === "false"){
-			checked = false;
-		} else if (no_collection && record.available !== ""){
-			checked = true;
-		}
+        var cards = app.data.cards.find({
+            pack_code: record.code,
+            indeck: {
+                '$gt': 0
+            },
+            hidden: {
+                '$eq': false
+            }
+        });
+        if(cards.length) {
+            checked = true;
+        }
 
-		var cards = app.data.cards.find({
-			pack_code: record.code,
-			indeck: {
-				'$gt': 0
-			},
-			hidden: {
-				'$eq': false
-			}
-		});
-		if(cards.length) {
-			checked = true;
-		}
+        $('<li><a href="#"><label><input type="checkbox" name="' + record.code + '"' + (checked ? ' checked="checked"' : '') + '>' + record.name + '</label></a></li>').appendTo('[data-filter=pack_code]');
+        // special case for core set 2
+        if (record.code == "core"){
+            if (collection[record.id+"-2"]){
+                checked = true;
+            }else {
+                checked = false;
+            }
 
-		$('<li><a href="#"><label><input type="checkbox" name="' + record.code + '"' + (checked ? ' checked="checked"' : '') + '>' + record.name + '</label></a></li>').appendTo('[data-filter=pack_code]');
-		// special case for core set 2
-		if (record.code == "core"){
-			if (collection[record.id+"-2"]){
-				checked = true;
-			}else {
-				checked = false;
-			}
+            if (no_collection && localStorage && localStorage.getItem('set_code_' + record.code+"-2") === "true"){
+                checked = true;
+            } else if (no_collection && localStorage && localStorage.getItem('set_code_' + record.code+"-2") === "false"){
+                checked = false;
+            }
 
-			if (no_collection && localStorage && localStorage.getItem('set_code_' + record.code+"-2") === "true"){
-				checked = true;
-			} else if (no_collection && localStorage && localStorage.getItem('set_code_' + record.code+"-2") === "false"){
-				checked = false;
-			} else if (no_collection && record.available !== ""){
-				//checked = true;
-			}
+            var cards = app.data.cards.find({
+                pack_code: record.code,
+                indeck: {
+                    '$gt': 1
+                }
+            });
+            if(cards.length) checked = true;
 
-			var cards = app.data.cards.find({
-				pack_code: record.code,
-				indeck: {
-					'$gt': 1
-				}
-			});
-			if(cards.length) checked = true;
-
-			$('<li><a href="#"><label><input type="checkbox" name="' + record.code + '-2"' + (checked ? ' checked="checked"' : '') + '>Second ' + record.name + '</label></a></li>').appendTo('[data-filter=pack_code]');
-		}
-	});
+            $('<li><a href="#"><label><input type="checkbox" name="' + record.code + '-2"' + (checked ? ' checked="checked"' : '') + '>Second ' + record.name + '</label></a></li>').appendTo('[data-filter=pack_code]');
+        }
+    });
 }
 
 
