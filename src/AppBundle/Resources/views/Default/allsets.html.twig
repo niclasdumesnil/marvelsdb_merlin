@@ -39,7 +39,7 @@
 	{% for type in fan_types %}
 		{% for pack in data %}
 			{% if pack.creator != 'FFG' and pack.visibility != "false" and pack.type == type %}
-				<li style="margin-left:2em;">
+				<li style="margin-left:0em;">
 					<a title="{{ pack.name }}" href="{{ pack.url }}">{{ pack.name }}
 						{% set color = creator_colors[pack.creator] ?? creator_colors['default'] %}
 						{% set label = creator_labels[pack.creator] ?? (pack.creator ?? 'Unknown') %}
@@ -61,7 +61,7 @@
         <h3>Private</h3>
         {% for pack in data %}
             {% if pack.creator != 'FFG' and pack.visibility == "false" %}
-                <li style="margin-left:2em;">
+                <li style="margin-left:0em;">
                     <a title="{{ pack.name }}" href="{{ pack.url }}">{{ pack.name }}
                         {% set color = creator_colors[pack.creator] ?? creator_colors['default'] %}
                         {% set label = creator_labels[pack.creator] ?? (pack.creator ?? 'Unknown') %}
