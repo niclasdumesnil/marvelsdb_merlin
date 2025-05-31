@@ -152,18 +152,18 @@
 		<div class="decks">
 			{% set decks_count = decks|length %}
             {% set half = (decks_count // 2) + (decks_count % 2) %}
-			<div>
-			{% for data in decks|slice(0, half) %}
-			 	<div class="col-md-6">
-				{{ macros.deck_block(data, true, true) }}
-				</div>
-			{% endfor %}
-			</div>
-			{% for data in decks|slice(half) %}
+			<div class="row">
 				<div class="col-md-6">
-				{{ macros.deck_block(data, true, true) }}
+					{% for data in decks|slice(0, half) %}
+						{{ macros.deck_block(data, true, true) }}
+					{% endfor %}
 				</div>
-			{% endfor %}
+				<div class="col-md-6">
+					{% for data in decks|slice(half) %}
+						{{ macros.deck_block(data, true, true) }}
+					{% endfor %}
+				</div>
+			</div>
 		</div>
 		{% include 'AppBundle:Default:pagination.html.twig' %}
 
