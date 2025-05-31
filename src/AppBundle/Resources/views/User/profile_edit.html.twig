@@ -63,6 +63,13 @@
     <p class="help-block">If you check this box, the "View" page of your decks will be public instead of private. You can then send the link to your friends. If you uncheck the box, all your decks become private immediately.</p>
   </div>
 
+  <div class="checkbox">
+    <label>
+        <input type="checkbox" name="new_ui" value="1" {% if user.isNewUI %}checked{% endif %}>
+        {% trans %}use New UI.{% endtrans %}
+    </label>
+  </div>
+
   <div class="form-group">
     <label for="color">{% trans %}Select a faction color for your username{% endtrans %}</label>
     {% for faction in factions %}

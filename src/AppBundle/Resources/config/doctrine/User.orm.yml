@@ -119,6 +119,12 @@ AppBundle\Entity\User:
             column: is_share_decks
             options:
                 default: false
+        isNewUI:
+            type: boolean
+            nullable: false
+            column: is_new_ui
+            options:
+                default: false
         ownedPacks:
             type: string
             length: 512

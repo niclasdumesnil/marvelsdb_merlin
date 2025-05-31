@@ -77,6 +77,7 @@ class UserController extends Controller
     	$notifCommenter = $request->get('notif_commenter') ? TRUE : FALSE;
     	$notifMention = $request->get('notif_mention') ? TRUE : FALSE;
     	$shareDecks = $request->get('share_decks') ? TRUE : FALSE;
+		$setnewui = $request->request->get('new_ui', false) ? true : false;
 
     	$user->setColor($faction_code);
     	$user->setResume($resume);
@@ -84,6 +85,7 @@ class UserController extends Controller
     	$user->setIsNotifCommenter($notifCommenter);
     	$user->setIsNotifMention($notifMention);
     	$user->setIsShareDecks($shareDecks);
+		$user->setIsNewUI($setnewui);
 
     	$this->getDoctrine()->getManager()->flush();
 

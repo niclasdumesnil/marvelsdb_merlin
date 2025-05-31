@@ -81,6 +81,11 @@ class User extends BaseUser
     private $isShareDecks = false;
 
     /**
+     * @var boolean
+     */
+    private $isNewUI = false;
+
+    /**
      * @var string
      */
     private $ownedPacks;
@@ -460,6 +465,30 @@ class User extends BaseUser
     public function getIsShareDecks()
     {
         return $this->isShareDecks;
+    }
+
+    /**
+     * Set isNewUI
+     *
+     * @param boolean $isNewUI
+     *
+     * @return User
+     */
+    public function setisNewUI($isNewUI)
+    {
+        $this->isNewUI = $isNewUI;
+
+        return $this;
+    }
+
+    /**
+     * Get isNewUI
+     *
+     * @return boolean
+     */
+    public function getisNewUI()
+    {
+        return $this->isNewUI;
     }
 
     /**
