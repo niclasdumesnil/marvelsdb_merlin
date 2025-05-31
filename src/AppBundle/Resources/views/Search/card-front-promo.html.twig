@@ -30,12 +30,15 @@
                     onload="document.getElementById('toggle-{{ btn.dir }}-btn-{{ unique_id }}').style.display='inline-block';"
                     onerror="document.getElementById('toggle-{{ btn.dir }}-btn-{{ unique_id }}').style.display='none';">
             {% endfor %}
-            <img id="card-image-{{ unique_id }}"
-                src="{{ imagesrc }}"
-                alt="{{ card.name }}"
-                class="img-responsive img-vertical-card"
-                style="margin:auto">
-            <br>
+            {# N'affiche PAS l'image si New UI activée #}
+            {% if not (app.user is defined and app.user.isNewUI) %}
+                <img id="card-image-{{ unique_id }}"
+                    src="{{ imagesrc }}"
+                    alt="{{ card.name }}"
+                    class="img-responsive img-vertical-card"
+                    style="margin:auto">
+                <br>
+            {% endif %}
             {# Boutons dynamiques pour chaque promo #}
             {% for btn in promo_buttons %}
                 <button id="toggle-{{ btn.dir }}-btn-{{ unique_id }}" class="btn btn-primary promo-toggle-btn" type="button"
@@ -47,15 +50,15 @@
                 function togglePromo{{ unique_id }}(btn, dir, uniqueId) {
                     var img = document.getElementById('card-image-' + uniqueId);
                     var p = document.getElementById('imagesrc-path-' + uniqueId);
-                    var src = img.getAttribute('src');
+                    var src = img ? img.getAttribute('src') : '';
                     // On retire tous les répertoires promo possibles
                     {% for b in promo_buttons %}
-                    src = src.replace(/\/{{ b.dir }}\/([^\/]+)$/, '/$1');
+                    if (src) src = src.replace(/\/{{ b.dir }}\/([^\/]+)$/, '/$1');
                     {% endfor %}
                     if (!btn.classList.contains('active')) {
                         // Passe en promo : ajoute /dir juste avant le nom du fichier
                         var srcPromo = '{{ path }}/' + dir + '/{{ filename }}';
-                        img.setAttribute('src', srcPromo);
+                        if (img) img.setAttribute('src', srcPromo);
                         if (p) p.textContent = srcPromo;
                         btn.classList.add('active');
                         // Désactive les autres boutons pour cette carte uniquement
@@ -67,14 +70,14 @@
                         // Revient à l'original (FR si locale fr ET fichier existe, sinon original)
                         {% if app.request.locale == 'qc' %}
                         if (window['fr_exists_{{ unique_id }}']) {
-                            img.setAttribute('src', '{{ fr_imagesrc }}');
+                            if (img) img.setAttribute('src', '{{ fr_imagesrc }}');
                             if (p) p.textContent = '{{ fr_imagesrc }}';
                         } else {
-                            img.setAttribute('src', '{{ imagesrc }}');
+                            if (img) img.setAttribute('src', '{{ imagesrc }}');
                             if (p) p.textContent = '{{ imagesrc }}';
                         }
                         {% else %}
-                        img.setAttribute('src', '{{ imagesrc }}');
+                        if (img) img.setAttribute('src', '{{ imagesrc }}');
                         if (p) p.textContent = '{{ imagesrc }}';
                         {% endif %}
                         btn.classList.remove('active');

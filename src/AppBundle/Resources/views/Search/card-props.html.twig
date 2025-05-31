@@ -73,13 +73,40 @@
 	{% endif %}
 {% else %}
 	{% if card.resource_mental or card.resource_physical or card.resource_energy or card.resource_wild %}
-	<div>
-	{% trans %}Resource{% endtrans %}:
-	{% if card.resource_mental %}{% for i in 1..card.resource_mental %}<span title="Mental" class="icon icon-mental color-mental"></span>{% endfor %}{% endif %}
-	{% if card.resource_physical %}{% for i in 1..card.resource_physical %}<span title="Physical" class="icon icon-physical color-physical"></span>{% endfor %}{% endif %}
-	{% if card.resource_energy %}{% for i in 1..card.resource_energy %}<span title="Energy" class="icon icon-energy color-energy"></span>{% endfor %}{% endif %}
-	{% if card.resource_wild %}{% for i in 1..card.resource_wild %}<span title="Wild" class="icon icon-wild color-wild"></span>{% endfor %}{% endif %}
-	</div>
+    <div>
+    {% trans %}Resource{% endtrans %}:
+    {% if app.user is defined and app.user.isNewUI %}
+        {% if card.resource_mental %}{% for i in 1..card.resource_mental %}
+            <span title="Mental" class="icon icon-mental color-mental"
+                  style="border:0px solid rgb(53, 59, 73); border-radius:4px; background:rgba(255,255,255,0.25); padding:4px 6px; margin:0 2px; display:inline-block; font-size:1.1em; vertical-align:middle;"></span>
+        {% endfor %}{% endif %}
+        {% if card.resource_physical %}{% for i in 1..card.resource_physical %}
+            <span title="Physical" class="icon icon-physical color-physical"
+                  style="border:0px solid rgb(53, 59, 73); border-radius:4px; background:rgba(255,255,255,0.25); padding:4px 6px; margin:0 2px; display:inline-block; font-size:1.1em; vertical-align:middle;"></span>
+        {% endfor %}{% endif %}
+        {% if card.resource_energy %}{% for i in 1..card.resource_energy %}
+            <span title="Energy" class="icon icon-energy color-energy"
+                  style="border:0px solid rgb(53, 59, 73); border-radius:4px; background:rgba(255,255,255,0.25); padding:4px 6px; margin:0 2px; display:inline-block; font-size:1.1em; vertical-align:middle;"></span>
+        {% endfor %}{% endif %}
+        {% if card.resource_wild %}{% for i in 1..card.resource_wild %}
+            <span title="Wild" class="icon icon-wild color-wild"
+                  style="border:0px solid rgb(53, 59, 73); border-radius:4px; background:rgba(255,255,255,0.25); padding:4px 6px; margin:0 2px; display:inline-block; font-size:1.1em; vertical-align:middle;"></span>
+        {% endfor %}{% endif %}
+    {% else %}
+        {% if card.resource_mental %}{% for i in 1..card.resource_mental %}
+            <span title="Mental" class="icon icon-mental color-mental" display:inline-block;"></span>
+        {% endfor %}{% endif %}
+        {% if card.resource_physical %}{% for i in 1..card.resource_physical %}
+            <span title="Physical" class="icon icon-physical color-physical" display:inline-block;"></span>
+        {% endfor %}{% endif %}
+        {% if card.resource_energy %}{% for i in 1..card.resource_energy %}
+            <span title="Energy" class="icon icon-energy color-energy" display:inline-block;"></span>
+        {% endfor %}{% endif %}
+        {% if card.resource_wild %}{% for i in 1..card.resource_wild %}
+            <span title="Wild" class="icon icon-wild color-wild" display:inline-block;"></span>
+        {% endfor %}{% endif %}
+    {% endif %}
+    </div>
 	{% endif %}
 {% endif %}
 

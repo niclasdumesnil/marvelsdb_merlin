@@ -1,35 +1,110 @@
-<div class="col-sm-7">
-	<div>
-		<div class="panel panel-default border-{{ card.faction_code }} {% if card.faction2_code is defined %} border-dual {% endif %}">
-			<div class="panel-heading border-{{ card.faction_code }} bg-{{ card.faction_code }} {% if card.faction2_code is defined %} bg-dual border-dual{% endif %}">
-				<h3 class="panel-title">
-					{% include 'AppBundle:Search:card-name-with-link.html.twig' %}
-				</h3>
-  		</div>
-			<div class="panel-body card-content">
-				{% include 'AppBundle:Search:card-faction.html.twig' %}
-				{% include 'AppBundle:Search:card-info.html.twig' %}
-				{% if card.type_code == 'main_scheme' or card.type_code == 'side_scheme' %}
-				{% include 'AppBundle:Search:card-flavor.html.twig' %}
-				{% include 'AppBundle:Search:card-text.html.twig' %}
-				{% else %}
-				{% include 'AppBundle:Search:card-text.html.twig' %}
-				{% include 'AppBundle:Search:card-flavor.html.twig' %}
-				{% endif %}
-				{% include 'AppBundle:Search:card-illustrator.html.twig' %}
-				{% include 'AppBundle:Search:card-pack.html.twig' %}
-				{% if card.errata %}
-					<div style="margin-top: 2rem;"><i><b>Errata</b>: {{card.errata}}</i></div>
-				{% endif %}
-			</div>
-		</div>
-	</div>
-</div>
+{% if app.user is defined and app.user.isNewUI %}
+    <div class="col-sm-12">
+        <div class="panel panel-default border-{{ card.faction_code }} {% if card.faction2_code is defined %} border-dual {% endif %}">
+            <div class="panel-heading border-{{ card.faction_code }} bg-{{ card.faction_code }} {% if card.faction2_code is defined %} bg-dual border-dual{% endif %}"
+                {% if card.faction_code == 'hero' %}
+                    style="background-color: rgb(53, 59, 73); color: rgb(255,255,255);"
+                {% endif %}
+            >
+                <h3 class="panel-title">
+                    {% include 'AppBundle:Search:card-name-with-link.html.twig' %}
+                    {% if card.linked_card is defined %}
+                        &nbsp;/&nbsp;
+                        {% include 'AppBundle:Search:card-name-with-link.html.twig' with { 'card': card.linked_card } %}
+                    {% endif %}
+                </h3>
+            </div>
+            <div class="panel-body card-content" style="background-color: rgb(53, 59, 73); color: rgb(255,255,255);">
+                <div class="row">
+                    <div class="col-sm-8">
+                        {# Partie principale #}
+                        {% include 'AppBundle:Search:card-faction.html.twig' %}
+                        {% include 'AppBundle:Search:card-info.html.twig' %}
+                        {% if card.type_code == 'main_scheme' or card.type_code == 'side_scheme' %}
+                            {% include 'AppBundle:Search:card-flavor.html.twig' %}
+                            {% include 'AppBundle:Search:card-text.html.twig' %}
+                        {% else %}
+                            {% include 'AppBundle:Search:card-text.html.twig' %}
+                            {% include 'AppBundle:Search:card-flavor.html.twig' %}
+                        {% endif %}
+                        {% include 'AppBundle:Search:card-illustrator.html.twig' %}
+                        {% include 'AppBundle:Search:card-pack.html.twig' %}
+                        <div class="card-promos" style="margin-top:0.5em;">
+                            {% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': card } %}
+                        </div>
+                        {% if card.errata %}
+                            <div style="margin-top: 2rem;"><i><b>Errata</b>: {{card.errata}}</i></div>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-4" style="text-align:right;">
+                        <img src="{{ card.imagesrc }}" alt="{{ card.name }}" class="img-responsive" style="max-height:400px; margin:auto;">
+                    </div>
+                </div>
 
-{# Affiche le bloc promo pour la carte principale #}
-{% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': card } %}
+                {# Partie verso si présente #}
+                {% if card.linked_card is defined %}
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-8">
+                            {% include 'AppBundle:Search:card-faction.html.twig' with { 'card': card.linked_card } %}
+                            {% include 'AppBundle:Search:card-info.html.twig' with { 'card': card.linked_card } %}
+                            {% if card.linked_card.type_code == 'main_scheme' or card.linked_card.type_code == 'side_scheme' %}
+                                {% include 'AppBundle:Search:card-flavor.html.twig' with { 'card': card.linked_card } %}
+                                {% include 'AppBundle:Search:card-text.html.twig' with { 'card': card.linked_card } %}
+                            {% else %}
+                                {% include 'AppBundle:Search:card-text.html.twig' with { 'card': card.linked_card } %}
+                                {% include 'AppBundle:Search:card-flavor.html.twig' with { 'card': card.linked_card } %}
+                            {% endif %}
+                            {% include 'AppBundle:Search:card-illustrator.html.twig' with { 'card': card.linked_card } %}
+                            {% include 'AppBundle:Search:card-pack.html.twig' with { 'card': card.linked_card } %}
+                            <div class="card-promos" style="margin-top:0.5em;">
+                                {% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': card.linked_card } %}
+                            </div>
+                            {% if card.linked_card.errata %}
+                                <div style="margin-top: 2rem;"><i><b>Errata</b>: {{card.linked_card.errata}}</i></div>
+                            {% endif %}
+                        </div>
+                        <div class="col-sm-4" style="text-align:center;">
+                            <img src="{{ card.linked_card.imagesrc }}" alt="{{ card.linked_card.name }}" class="img-responsive" style="max-height:400px; margin:auto;">
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% else %}
+    {# ...conserve le code existant pour l'ancien affichage... #}
+    <div class="col-sm-7">
+        <div>
+            <div class="panel panel-default border-{{ card.faction_code }} {% if card.faction2_code is defined %} border-dual {% endif %}">
+                <div class="panel-heading border-{{ card.faction_code }} bg-{{ card.faction_code }} {% if card.faction2_code is defined %} bg-dual border-dual{% endif %}">
+                    <h3 class="panel-title">
+                        {% include 'AppBundle:Search:card-name-with-link.html.twig' %}
+                    </h3>
+                </div>
+                <div class="panel-body card-content">
+                    {% include 'AppBundle:Search:card-faction.html.twig' %}
+                    {% include 'AppBundle:Search:card-info.html.twig' %}
+                    {% if card.type_code == 'main_scheme' or card.type_code == 'side_scheme' %}
+                        {% include 'AppBundle:Search:card-flavor.html.twig' %}
+                        {% include 'AppBundle:Search:card-text.html.twig' %}
+                    {% else %}
+                        {% include 'AppBundle:Search:card-text.html.twig' %}
+                        {% include 'AppBundle:Search:card-flavor.html.twig' %}
+                    {% endif %}
+                    {% include 'AppBundle:Search:card-illustrator.html.twig' %}
+                    {% include 'AppBundle:Search:card-pack.html.twig' %}
+                    {% if card.errata %}
+                        <div style="margin-top: 2rem;"><i><b>Errata</b>: {{card.errata}}</i></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 
-{% block cardbackblock %}
+    {# Affiche le bloc promo pour la carte principale #}
+    {% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': card } %}
+
     {% if card.linked_card is defined %}
         <div class="row">
             <div class="col-sm-7">
@@ -64,4 +139,5 @@
             </div>
         </div>
     {% endif %}
-{% endblock %}
+
+{% endif %}
