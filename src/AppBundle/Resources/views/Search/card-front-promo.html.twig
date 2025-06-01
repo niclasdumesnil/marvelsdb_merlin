@@ -13,80 +13,68 @@
          onerror="window['fr_exists_{{ unique_id }}']=false;">
 {% endif %}
 
-<div class="col-sm-5" style="margin-bottom:2em">
-    <div class="{% if card.spoiler is defined and not show_spoilers %} spoiler{% endif %}">
-        {% set promo_buttons = [
-            {'label': 'PROMO-FR', 'dir': 'promo-FR'},
-            {'label': 'PROMO-EN', 'dir': 'promo-EN'}
-        ] %}
-        {% set path_parts = imagesrc_original|split('/') %}
-        {% set filename = path_parts|last %}
-        {% set path = path_parts|slice(0, path_parts|length - 1)|join('/') %}
-        {% if imagesrc %}
-            {# Images cachées pour vérifier l'existence des promos #}
-            {% for btn in promo_buttons %}
-                {% set promo_src = path ~ '/' ~ btn.dir ~ '/' ~ filename %}
-                <img id="test-{{ btn.dir }}-img-{{ unique_id }}" src="{{ promo_src }}" style="display:none"
-                    onload="document.getElementById('toggle-{{ btn.dir }}-btn-{{ unique_id }}').style.display='inline-block';"
-                    onerror="document.getElementById('toggle-{{ btn.dir }}-btn-{{ unique_id }}').style.display='none';">
-            {% endfor %}
-            {# N'affiche PAS l'image si New UI activée #}
-            {% if not (app.user is defined and app.user.isNewUI) %}
-                <img id="card-image-{{ unique_id }}"
-                    src="{{ imagesrc }}"
-                    alt="{{ card.name }}"
-                    class="img-responsive img-vertical-card"
-                    style="margin:auto">
-                <br>
-            {% endif %}
-            {# Boutons dynamiques pour chaque promo #}
-            {% for btn in promo_buttons %}
-                <button id="toggle-{{ btn.dir }}-btn-{{ unique_id }}" class="btn btn-primary promo-toggle-btn" type="button"
-                    style="display:none; margin-bottom:1em; position: relative; z-index: 10;"
-                    onclick="togglePromo{{ unique_id }}(this, '{{ btn.dir }}', '{{ unique_id }}')">{{ btn.label }}</button>
-            {% endfor %}
-            <div style="margin-bottom: 0em;"></div>
-            <script>
-                function togglePromo{{ unique_id }}(btn, dir, uniqueId) {
-                    var img = document.getElementById('card-image-' + uniqueId);
-                    var p = document.getElementById('imagesrc-path-' + uniqueId);
-                    var src = img ? img.getAttribute('src') : '';
-                    // On retire tous les répertoires promo possibles
-                    {% for b in promo_buttons %}
-                    if (src) src = src.replace(/\/{{ b.dir }}\/([^\/]+)$/, '/$1');
-                    {% endfor %}
-                    if (!btn.classList.contains('active')) {
-                        // Passe en promo : ajoute /dir juste avant le nom du fichier
-                        var srcPromo = '{{ path }}/' + dir + '/{{ filename }}';
-                        if (img) img.setAttribute('src', srcPromo);
-                        if (p) p.textContent = srcPromo;
-                        btn.classList.add('active');
-                        // Désactive les autres boutons pour cette carte uniquement
-                        var allBtns = document.querySelectorAll('.promo-toggle-btn[id$="-' + uniqueId + '"]');
-                        for (var i = 0; i < allBtns.length; i++) {
-                            if (allBtns[i] !== btn) allBtns[i].classList.remove('active');
-                        }
-                    } else {
-                        // Revient à l'original (FR si locale fr ET fichier existe, sinon original)
-                        {% if app.request.locale == 'qc' %}
-                        if (window['fr_exists_{{ unique_id }}']) {
-                            if (img) img.setAttribute('src', '{{ fr_imagesrc }}');
-                            if (p) p.textContent = '{{ fr_imagesrc }}';
-                        } else {
-                            if (img) img.setAttribute('src', '{{ imagesrc }}');
-                            if (p) p.textContent = '{{ imagesrc }}';
-                        }
-                        {% else %}
-                        if (img) img.setAttribute('src', '{{ imagesrc }}');
-                        if (p) p.textContent = '{{ imagesrc }}';
-                        {% endif %}
-                        btn.classList.remove('active');
-                    }
-                }
-            </script>
-        {% else %}
-            <div class="no-image" style="margin:auto"><div class="no-image-text">No image</div></div>
-        {% endif %}
+{% set promo_buttons = [
+    {'label': 'PROMO-FR', 'dir': 'promo-FR'},
+    {'label': 'PROMO-EN', 'dir': 'promo-EN'}
+] %}
+{% set path_parts = imagesrc_original|split('/') %}
+{% set filename = path_parts|last %}
+{% set path = path_parts|slice(0, path_parts|length - 1)|join('/') %}
+{% if imagesrc %}
+    {# Images cachées pour vérifier l'existence des promos #}
+    {% for btn in promo_buttons %}
+        {% set promo_src = path ~ '/' ~ btn.dir ~ '/' ~ filename %}
+        <img id="test-{{ btn.dir }}-img-{{ unique_id }}" src="{{ promo_src }}" style="display:none"
+            onload="document.getElementById('toggle-{{ btn.dir }}-btn-{{ unique_id }}').style.display='inline-block';"
+            onerror="document.getElementById('toggle-{{ btn.dir }}-btn-{{ unique_id }}').style.display='none';">
+    {% endfor %}
+    <div class="card-promos d-flex" style="margin-top:0.5em; gap:0.5em; display:flex; flex-wrap:wrap;">
+        {% for btn in promo_buttons %}
+            <button id="toggle-{{ btn.dir }}-btn-{{ unique_id }}" class="btn btn-primary promo-toggle-btn" type="button"
+                style="display:none; margin-bottom:1em; position: relative; z-index: 10;"
+                onclick="togglePromo{{ unique_id }}(this, '{{ btn.dir }}', '{{ unique_id }}')">{{ btn.label }}</button>
+        {% endfor %}
     </div>
-</div>
+    <div style="margin-bottom: 0em;"></div>
+    <script>
+        function togglePromo{{ unique_id }}(btn, dir, uniqueId) {
+            var img = document.getElementById('card-image-' + uniqueId);
+            var p = document.getElementById('imagesrc-path-' + uniqueId);
+            var src = img ? img.getAttribute('src') : '';
+            // On retire tous les répertoires promo possibles
+            {% for b in promo_buttons %}
+            if (src) src = src.replace(/\/{{ b.dir }}\/([^\/]+)$/, '/$1');
+            {% endfor %}
+            if (!btn.classList.contains('active')) {
+                // Passe en promo : ajoute /dir juste avant le nom du fichier
+                var srcPromo = '{{ path }}/' + dir + '/{{ filename }}';
+                if (img) img.setAttribute('src', srcPromo);
+                if (p) p.textContent = srcPromo;
+                btn.classList.add('active');
+                // Désactive les autres boutons pour cette carte uniquement
+                var allBtns = document.querySelectorAll('.promo-toggle-btn[id$="-' + uniqueId + '"]');
+                for (var i = 0; i < allBtns.length; i++) {
+                    if (allBtns[i] !== btn) allBtns[i].classList.remove('active');
+                }
+            } else {
+                // Revient à l'original (FR si locale fr ET fichier existe, sinon original)
+                {% if app.request.locale == 'qc' %}
+                if (window['fr_exists_{{ unique_id }}']) {
+                    if (img) img.setAttribute('src', '{{ fr_imagesrc }}');
+                    if (p) p.textContent = '{{ fr_imagesrc }}';
+                } else {
+                    if (img) img.setAttribute('src', '{{ imagesrc }}');
+                    if (p) p.textContent = '{{ imagesrc }}';
+                }
+                {% else %}
+                if (img) img.setAttribute('src', '{{ imagesrc }}');
+                if (p) p.textContent = '{{ imagesrc }}';
+                {% endif %}
+                btn.classList.remove('active');
+            }
+        }
+    </script>
+{% else %}
+    <div class="no-image" style="margin:auto"><div class="no-image-text">No image</div></div>
+{% endif %}
 
