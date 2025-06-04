@@ -105,6 +105,16 @@ deck.onloaded = function(data){
 				if (req.type_limit) {
 					deck.requirements.type_limit = req.type_limit;
 				}
+				if (req.aspect_card_min !== undefined) {
+    				deck.requirements.aspect_card_min = req.aspect_card_min;
+				}
+				// Ajout dans deck.onloaded (lecture du requirement)
+				if (req.cost_limit !== undefined) {
+    				deck.requirements.cost_limit = req.cost_limit;
+				}
+				if (req.aspect_equal !== undefined) {
+    deck.requirements.aspect_equal = req.aspect_equal;
+}
 			})
 		}
 		if (deck.hero && deck.hero.deck_options && deck.hero.deck_options.length) {
@@ -966,9 +976,12 @@ deck.get_problem = function get_problem() {
 			// For now, assume a deck aspects requirements means equal cards from each aspect.
 			if (deck.requirements.aspects === 2) {
 				if (deck.meta && deck.meta.aspect && deck.meta.aspect2) {
-					if (deck.get_aspect_count(deck.meta.aspect) != deck.get_aspect_count(deck.meta.aspect2) ) {
-						return 'hero';
-					}
+					// Si aspect_equal est false, on ne vérifie pas l'égalité stricte
+                    if (deck.requirements.aspect_equal !== false) {
+                        if (deck.get_aspect_count(deck.meta.aspect) != deck.get_aspect_count(deck.meta.aspect2)) {
+                            return 'hero';
+                        }
+                    }
 				} else {
 					return 'hero';
 				}
@@ -978,18 +991,24 @@ deck.get_problem = function get_problem() {
 					deck.get_aspect_count('justice'),
 					deck.get_aspect_count('leadership'),
 					deck.get_aspect_count('pool'),
-					deck.get_aspect_count('protection')
+					deck.get_aspect_count('protection'),
+					deck.get_aspect_count('determination') // ajout de determination
 				];
 
 				var differentAspectCounts = aspectCounts.filter((count) => count > 0);
 
-				// Allow an all basic deck.
+				// Si aspect_equal est false, on ne vérifie pas l'égalité stricte
 				if (differentAspectCounts.length > 0) {
-					var areAspectCountsEqual = differentAspectCounts.every((count) => count === differentAspectCounts[0]);
-
-					if (differentAspectCounts.length !== deck.requirements.aspects || !areAspectCountsEqual) {
-						return 'hero';
-					}
+                    if (deck.requirements.aspect_equal !== false) {
+                        var areAspectCountsEqual = differentAspectCounts.every((count) => count === differentAspectCounts[0]);
+                        if (differentAspectCounts.length !== deck.requirements.aspects || !areAspectCountsEqual) {
+                            return 'hero';
+                        }
+                    } else {
+                        if (differentAspectCounts.length !== deck.requirements.aspects) {
+                            return 'hero';
+                        }
+                    }
 				}
 			}
 		}
@@ -1011,6 +1030,50 @@ deck.get_problem = function get_problem() {
             }
         }
 	}
+	if (
+    deck.requirements.aspect_card_min !== undefined &&
+    deck.requirements.aspects
+) {
+    var aspectsList = [];
+    if (
+        deck.requirements.aspects === 2 &&
+        deck.meta &&
+        deck.meta.aspect &&
+        deck.meta.aspect2
+    ) {
+        aspectsList = [deck.meta.aspect, deck.meta.aspect2];
+    } else if (deck.requirements.aspects > 0) {
+        aspectsList = [
+            'aggression',
+            'justice',
+            'leadership',
+            'protection',
+            'pool',
+            'determination' // ajout de determination
+        ];
+    }
+    for (var i = 0; i < aspectsList.length; i++) {
+        var aspect = aspectsList[i];
+        var count = deck.get_aspect_count(aspect);
+        if (count > 0 && count < deck.requirements.aspect_card_min) {
+            return 'hero';
+        }
+    }
+}
+
+// Ajout dans deck.get_problem (vérification du requirement)
+if (deck.requirements.cost_limit !== undefined) {
+    var cards = deck.get_cards();
+    for (var i = 0; i < cards.length; i++) {
+        if (
+            cards[i].cost !== undefined &&
+            cards[i].cost !== null &&
+            parseInt(cards[i].cost, 10) > deck.requirements.cost_limit
+        ) {
+            return 'hero';
+        }
+    }
+}
 }
 
 deck.reset_limit_count = function (){
