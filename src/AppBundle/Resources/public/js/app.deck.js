@@ -102,6 +102,9 @@ deck.onloaded = function(data){
 					// the user must pick X aspects, only applied if this is not just set to 1
 					deck.requirements.limit = req.limit;
 				}
+				if (req.type_limit) {
+					deck.requirements.type_limit = req.type_limit;
+				}
 			})
 		}
 		if (deck.hero && deck.hero.deck_options && deck.hero.deck_options.length) {
@@ -995,6 +998,18 @@ deck.get_problem = function get_problem() {
 				return 'hero';
 			}
 		}
+		if (deck.requirements.type_limit) {
+            var typeLimits = deck.requirements.type_limit;
+            for (var type_code in typeLimits) {
+                if (!typeLimits.hasOwnProperty(type_code)) continue;
+                var max = typeLimits[type_code];
+                var cardsOfType = deck.get_cards({}, { type_code: type_code });
+                var count = deck.get_nb_cards(cardsOfType);
+                if (count > max) {
+                    return 'hero';
+                }
+            }
+        }
 	}
 }
 
@@ -1184,6 +1199,18 @@ deck.can_include_card = function can_include_card(card, limit_count, hard_count)
 			return true;
 		}
 	}
+
+	// Vérification du type_limit global
+if (deck.requirements && deck.requirements.type_limit && card.type_code) {
+    var max = deck.requirements.type_limit[card.type_code];
+    if (max !== undefined) {
+        var cardsOfType = deck.get_cards({}, { type_code: card.type_code });
+        var count = deck.get_nb_cards(cardsOfType);
+        if (count >= max) {
+            return false;
+        }
+    }
+}
 
 	return false;
 }
