@@ -27,7 +27,11 @@ var date_creation,
 		too_few_cards: "Contains too few cards",
 		too_many_cards: "Contains too many cards",
 		invalid_cards: "Contains invalid cards",
-		hero: "Doesn't comply with the hero requirements"
+		hero: "Doesn't comply with the hero requirements",
+		aspect_count_mismatch: "The number of cards for each aspect must be equal",
+		aspect_min: "Not enough cards for one or more required aspects",
+		type_limit: "Too many cards of a restricted type",
+		cost_limit: "A card exceeds the maximum allowed cost"
 	},
 	header_tpl = _.template('<h5><span class="icon icon-<%= code %>"></span> <%= name %> (<%= quantity %>)</h5>'),
 	card_line_tpl = _.template('<span class="icon icon-<%= card.type_code %> icon-<%= card.faction_code %>"></span><% if (typeof(card.faction2_code) !== "undefined") { %><span class="icon icon-<%= card.faction2_code %>"></span> <% } %> <a href="<%= card.url %>" class="card card-tip <% if (typeof(card.faction2_code) !== "undefined") { %> fg-dual <% } %>" data-toggle="modal" data-remote="false" data-target="#cardModal" data-code="<%= card.code %>"><%= card.name %></a>'),
@@ -979,11 +983,11 @@ deck.get_problem = function get_problem() {
 					// Si aspect_equal est false, on ne vérifie pas l'égalité stricte
                     if (deck.requirements.aspect_equal !== false) {
                         if (deck.get_aspect_count(deck.meta.aspect) != deck.get_aspect_count(deck.meta.aspect2)) {
-                            return 'hero';
+                            return 'aspect_count_mismatch';
                         }
                     }
 				} else {
-					return 'hero';
+					return 'aspect_count_mismatch';
 				}
 			} else {
 				var aspectCounts = [
@@ -1002,11 +1006,11 @@ deck.get_problem = function get_problem() {
                     if (deck.requirements.aspect_equal !== false) {
                         var areAspectCountsEqual = differentAspectCounts.every((count) => count === differentAspectCounts[0]);
                         if (differentAspectCounts.length !== deck.requirements.aspects || !areAspectCountsEqual) {
-                            return 'hero';
+                            return 'aspect_count_mismatch';
                         }
                     } else {
                         if (differentAspectCounts.length !== deck.requirements.aspects) {
-                            return 'hero';
+                            return 'aspect_count_mismatch';
                         }
                     }
 				}
@@ -1025,7 +1029,7 @@ deck.get_problem = function get_problem() {
                 var cardsOfType = deck.get_cards({}, { type_code: type_code });
                 var count = deck.get_nb_cards(cardsOfType);
                 if (count > max) {
-                    return 'hero';
+                    return 'type_limit';
                 }
             }
         }
@@ -1056,7 +1060,7 @@ deck.get_problem = function get_problem() {
         var aspect = aspectsList[i];
         var count = deck.get_aspect_count(aspect);
         if (count > 0 && count < deck.requirements.aspect_card_min) {
-            return 'hero';
+            return 'aspect_min';
         }
     }
 }
@@ -1070,7 +1074,7 @@ if (deck.requirements.cost_limit !== undefined) {
             cards[i].cost !== null &&
             parseInt(cards[i].cost, 10) > deck.requirements.cost_limit
         ) {
-            return 'hero';
+            return 'cost_limit';
         }
     }
 }
