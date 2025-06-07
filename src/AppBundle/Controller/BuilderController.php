@@ -744,8 +744,15 @@ class BuilderController extends Controller
 			if (isset($unique_heroes[$unique_key]) || !$hero->getMeta()) {
 				continue;
 			}
-			$unique_heroes[$unique_key] = true;
-			$heroes[] = $hero;
+			$pack = $hero->getPack();
+			$is_visible = !$pack->getVisibility();
+			$is_donator = $user && method_exists($user, 'getDonation') && $user->getDonation();
+
+			// Ajoute le héros si le pack est visible, ou si invisible mais donateur
+			if ($is_visible || (!$is_visible && $is_donator)) {
+				$unique_heroes[$unique_key] = true;
+				$heroes[] = $hero;
+			}
 		}
 		$header = $this->renderView('AppBundle:Builder:form-quick.html.twig',
 			array(
