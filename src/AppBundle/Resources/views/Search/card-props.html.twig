@@ -75,7 +75,7 @@
 	{% if card.resource_mental or card.resource_physical or card.resource_energy or card.resource_wild %}
     <div>
     {% trans %}Resource{% endtrans %}:
-    {% if app.user is defined and app.user.isNewUI %}
+    {% if app.user is defined and app.user and app.user.isNewUI %}
         {% if card.resource_mental %}{% for i in 1..card.resource_mental %}
             <span title="Mental" class="icon icon-mental color-mental"
                   style="border:0px solid rgb(53, 59, 73); border-radius:4px; background:rgba(255,255,255,0.25); padding:4px 6px; margin:0 2px; display:inline-block; font-size:1.1em; vertical-align:middle;"></span>

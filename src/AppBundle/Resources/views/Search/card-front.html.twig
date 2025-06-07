@@ -1,4 +1,4 @@
-{% if app.user is defined and app.user.isNewUI %}
+{% if app.user is defined and app.user and app.user.isNewUI %}
     {% include 'AppBundle:Search:card-front-newui.html.twig' %}    
 {% else %}
     <div class="row">
