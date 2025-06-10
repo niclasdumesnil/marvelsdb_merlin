@@ -108,15 +108,46 @@
         {% set filtered_packs = packs
             |filter(pack => pack.creator is not empty and pack.creator != 'FFG')
             |filter(pack => pack.visibility is not defined or pack.visibility != 'false')
+            |sort((a, b) => a.name < b.name ? -1 : 1)
         %}
         <ul style="flex: 1; border-radius: 8px; padding: 1rem; background: rgb(30, 47, 63); color: #fff; padding-left: 30px;">
             {% for pack in filtered_packs|slice(0, (filtered_packs|length // 2 + filtered_packs|length % 2)) %}
-                <li>{{ pack.name }} by {{ pack.creator }}</li>
+                <li>
+                    {{ pack.name }} by {{ pack.creator }}
+                    {% if pack.status is defined and pack.status == 'beta' %}
+                        <span style="
+                            display: inline-block;
+                            margin-left: 8px;
+                            padding: 2px 8px;
+                            border-radius: 12px;
+                            font-size: 12px;
+                            background: rgb(216, 150, 8);
+                            color: #fff;
+                        ">
+                            Beta
+                        </span>
+                    {% endif %}
+                </li>
             {% endfor %}
         </ul>
         <ul style="flex: 1; border-radius: 8px; padding: 1rem; background: rgb(30, 47, 63); color: #fff; padding-left: 30px;">
             {% for pack in filtered_packs|slice((filtered_packs|length // 2 + filtered_packs|length % 2)) %}
-                <li>{{ pack.name }} by {{ pack.creator }}</li>
+                <li>
+                    {{ pack.name }} by {{ pack.creator }}
+                    {% if pack.status is defined and pack.status == 'beta' %}
+                        <span style="
+                            display: inline-block;
+                            margin-left: 8px;
+                            padding: 2px 8px;
+                            border-radius: 12px;
+                            font-size: 12px;
+                            background: rgb(216, 150, 8);
+                            color: #fff;
+                        ">
+                            Beta
+                        </span>
+                    {% endif %}
+                </li>
             {% endfor %}
         </ul>
     </div>
@@ -126,14 +157,13 @@
 	<h3>Recent Updates</h3>
 	<ul>
 		<li>
-			Adding fan made functions to the site and revamp it.
+		<b>	Adding fan made functions to the site and revamp it.</b>
 		</li>
 		<li>
 			Revamped the private decks page to include more filtering and be similar to the deck lists page.
 		</li>
 		<li>
-			Revamped the decklist pages to be easier to find decks without resorting to advanced searching and hopefully make it much better on mobile.
-			If you have issues with it, try to clear the cache and retry, if there are still issues then please file a bug on <a href="https://github.com/zzorba/marvelsdb">GitHub</a>
+			Revamped the decklist pages to be easier to find decks without resorting to advanced searching and hopefully make it much better on mobile.			
 		</li>
 		<li>
 			The hero highlight should change each month, going through the heroes roughly in release order, hopefully it helps highlight more decks of interest!
