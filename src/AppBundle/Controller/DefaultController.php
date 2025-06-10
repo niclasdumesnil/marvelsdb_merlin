@@ -84,7 +84,7 @@ class DefaultController extends Controller
 
 		$paginator = $decklist_manager->findDecklistsByTrending();
 		$iterator = $paginator->getIterator();
-		while($iterator->valid() && count($decklists_by_popular) < 8)
+		while($iterator->valid() && count($decklists_by_popular) < 5) // Limite à 5
 		{
 			$decklist = $iterator->current();
 						
@@ -107,7 +107,7 @@ class DefaultController extends Controller
 		$paginator = $decklist_manager->findDecklistsByAge(true);
 		$iterator = $paginator->getIterator();
 		$userCheck = [];
-		while($iterator->valid() && count($decklists_by_recent) < 8)
+		while($iterator->valid() && count($decklists_by_recent) < 5) // Limite à 5
 		{
 			$decklist = $iterator->current();
 			if (!isset($userCheck[$decklist->getUser()->getId()])){
@@ -206,7 +206,7 @@ class DefaultController extends Controller
 		'card_of_the_day' => $card_of_the_day_info,
 		'card_of_the_day_decklists' => $card_of_the_day_decklists,
 		'decklists_by_hero' => $decklists_by_hero,
-		'packs' => array_slice($packs, 0, 4)
+		'packs' => array_slice($packs, 0, 30) // Limit to 30 packs for performance
 		], $response);
 	}
 

@@ -16,10 +16,7 @@
 		margin: 5px;
 		background: #fff;
 		overflow: hidden;
-
-
 	}
-
 	.front-block {
 		display: flex;
 		align-items: stretch;
@@ -41,7 +38,7 @@
 		.card-day-decklists {
 		display: flex;
 		flex-direction: column;
-	}
+		}
 	}
 
 </style>
@@ -106,21 +103,30 @@
 </div>
 
 <div class="main container">
-	<h3>Recent Fan made Pack Releases</h3>
-	<ul>
-		{% for pack in packs %}
-		{% if pack.creator == 'Merlin' %} 
-		<li> {{pack.name}} by {{pack.creator}} </li>
-		{% endif %} 
-		{% endfor %}
-	</ul>
+    <h3>Last Fan made Packs</h3>
+    <div style="display: flex; gap: 2rem;">
+        {% set filtered_packs = packs
+            |filter(pack => pack.creator is not empty and pack.creator != 'FFG')
+            |filter(pack => pack.visibility is not defined or pack.visibility != 'false')
+        %}
+        <ul style="flex: 1; border-radius: 8px; padding: 1rem; background: rgb(30, 47, 63); color: #fff; padding-left: 30px;">
+            {% for pack in filtered_packs|slice(0, (filtered_packs|length // 2 + filtered_packs|length % 2)) %}
+                <li>{{ pack.name }} by {{ pack.creator }}</li>
+            {% endfor %}
+        </ul>
+        <ul style="flex: 1; border-radius: 8px; padding: 1rem; background: rgb(30, 47, 63); color: #fff; padding-left: 30px;">
+            {% for pack in filtered_packs|slice((filtered_packs|length // 2 + filtered_packs|length % 2)) %}
+                <li>{{ pack.name }} by {{ pack.creator }}</li>
+            {% endfor %}
+        </ul>
+    </div>
 </div> <!-- .container -->
 
 <div class="main container">
 	<h3>Recent Updates</h3>
 	<ul>
 		<li>
-			Adding fan made functions to the site.
+			Adding fan made functions to the site and revamp it.
 		</li>
 		<li>
 			Revamped the private decks page to include more filtering and be similar to the deck lists page.
