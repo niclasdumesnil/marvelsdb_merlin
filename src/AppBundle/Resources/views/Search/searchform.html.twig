@@ -7,12 +7,12 @@
 
 <div class="row">
 
-<div class="col-md-4">
+<div class="col-md-3">
 	<h2>Browse by set</h2>
 	{{ allsets | raw }}
 </div>
 
-<div class="col-md-8">
+<div class="col-md-9">
 
 <h1>{{ block('title') }}</h1>
 <form method="GET" action="{{ path('cards_processSearchForm') }}" role="form" style="margin-bottom:2em">
@@ -334,4 +334,5 @@
 </div>
 
 </div>
+{# Le script de sélection automatique de l'onglet FFG a été retiré d'ici #}
 {% endblock %}
