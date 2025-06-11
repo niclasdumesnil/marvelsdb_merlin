@@ -23,7 +23,7 @@
 </ul>
 <div class="tab-content" id="packsTabsContent">
     <div class="tab-pane fade show active" id="ffg" role="tabpanel" aria-labelledby="ffg-tab">
-        <ol style="margin-top: 0.5em;">
+        <ol>
             <h3 style="margin-top: 0; margin-bottom: 0.1em;">FFG</h3>
             {% for pack in data %}
                 {% if pack.creator == 'FFG' %}
@@ -47,7 +47,7 @@
         </ol>
     </div>
     <div class="tab-pane fade" id="fanmade" role="tabpanel" aria-labelledby="fanmade-tab">
-        <ol style="margin-top: 0.5em;">
+        <ol>
             <h3 style="margin-top: 0; margin-bottom: 0.1em;">Fan made</h3>
             {% set fan_types = [] %}
             {% for pack in data %}
@@ -78,7 +78,7 @@
     </div>
     {% if app.user and app.user.donation == "1" %}
     <div class="tab-pane fade" id="private" role="tabpanel" aria-labelledby="private-tab">
-        <ol style="margin-top: 0.5em;">
+        <ol>
             <h3 style="margin-top: 0; margin-bottom: 0.1em;">Private</h3>
             {% for pack in data %}
                 {% if pack.creator != 'FFG' and pack.visibility == "false" %}
@@ -101,22 +101,76 @@
     {% endif %}
 </div>
 
-{# Ajoute ce JS si Bootstrap JS n'est pas déjà chargé #}
+<style>
+.tab-pane {
+  display: none;
+}
+.tab-pane.show.active {
+  display: block !important;
+  color: inherit !important;
+  background: inherit !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: auto !important;
+}
+</style>
+
 <script>
-document.querySelectorAll('.nav-link').forEach(function(tab){
-    tab.addEventListener('click', function(e){
-        e.preventDefault();
-        document.querySelectorAll('.nav-link').forEach(function(t){
-            t.classList.remove('active');
-            t.setAttribute('aria-selected', 'false');
+document.addEventListener('DOMContentLoaded', function() {
+    // Désactive tous les onglets et contenus
+    document.querySelectorAll('.nav-link').forEach(function(t){
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.tab-pane').forEach(function(p){
+        p.classList.remove('show','active');
+    });
+    var ffgTab = document.getElementById('ffg-tab');
+    var ffgPane = document.getElementById('ffg');
+    if(ffgTab && ffgPane) {
+        ffgTab.classList.add('active');
+        ffgTab.setAttribute('aria-selected', 'true');
+        ffgPane.classList.add('show','active');
+    }
+
+    // Gestion du clic sur les onglets
+    document.querySelectorAll('.nav-link').forEach(function(tab) {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('.nav-link').forEach(function(t){
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            document.querySelectorAll('.tab-pane').forEach(function(p){
+                p.classList.remove('show','active');
+            });
+            var pane = document.querySelector(tab.getAttribute('href'));
+            if(pane) {
+                pane.classList.add('show','active');
+            }
         });
-        document.querySelectorAll('.tab-pane').forEach(function(p){ p.classList.remove('show','active'); });
-        tab.classList.add('active');
-        tab.setAttribute('aria-selected', 'true');
-        var pane = document.querySelector(tab.getAttribute('href'));
-        pane.classList.add('show','active');
     });
 });
-
-
+window.addEventListener('load', function() {
+    // Correction de secours : si aucun .tab-pane n'est visible, force l'affichage du premier
+    var visible = false;
+    document.querySelectorAll('.tab-pane').forEach(function(p){
+        if (p.classList.contains('show') && p.classList.contains('active')) {
+            visible = true;
+        }
+    });
+    if (!visible) {
+        var firstTab = document.querySelector('.nav-link');
+        var firstPane = document.querySelector('.tab-pane');
+        if (firstTab && firstPane) {
+            firstTab.classList.add('active');
+            firstTab.setAttribute('aria-selected', 'true');
+            firstPane.classList.add('show','active');
+        }
+    }
+});
 </script>
+
+
