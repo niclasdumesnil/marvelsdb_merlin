@@ -43,7 +43,12 @@ Login
     
     <input type="submit" id="_submit" name="_submit" class="btn btn-primary" value="{{ 'security.login.submit'|trans }}" />
     <a href="{{ path('fos_user_registration_register') }}" class="btn btn-link">Register</a>
-    <a href="{{ path('fos_user_resetting_request') }}" class="btn btn-link">Forgot your password?</a>
+    {#<a href="{{ path('fos_user_resetting_request') }}" class="btn btn-link">Forgot your password?</a>#}
+    
+    <p style="margin-top:1em;">
+        Forgot your password? Please use the contact form on the blog to request a new one.
+    </p>
+	
     
 </form>
 
