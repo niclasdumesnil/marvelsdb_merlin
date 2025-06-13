@@ -1,58 +1,66 @@
 {% import "AppBundle::macros.html.twig" as macros %}
 
-<div style="width: 360px; padding : 2px; padding-top : 10px; border : solid #dfdfdf 1px; background-color: rgba(255, 255, 255, 0.4)">
-	<div style="display: flex;">
-		<div>
-			<span class="deck-list-hero-image card-thumbnail-2x card-thumbnail-hero" title="{{ hero.name }}" style="background-image:url({{ asset('/bundles/cards/'~hero.code~'.png') }})"></span>
-		</div>
-		<div style="height : 119px; padding-left : 0.2em;">
-			<h4 style="padding : 2px; margin: 1px;">{{ macros.card_name_no_link(hero) }}
-			{% if hero.pack.status == "released" or hero.pack.status == "sealed" %}
-			<span style="font-size: 10px; color: white; background-color: rgb(0, 48, 27); display: inline-flex;
-  			align-items: center; border-radius: 8px; padding: 2px 12px ;">{{hero.pack.status ?? 'Official'}}
-			</span>
-			{% endif %} 
-			{% if hero.pack.status == "alpha" or hero.pack.status == "beta" %}
-			<span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
-  			align-items: center; border-radius: 8px; padding: 2px 12px ;">{{hero.pack.status ?? 'Official'}}
-			</span>
-			{% endif %} 
-			</h4>
-			<span style="font-size: 10px; color:gray; padding: 2px 0px 0px">
-				<li><i>Pack: {{hero.pack.name}}</i></li>
-				<li><i>Theme: {{hero.pack.theme ?? 'Marvel'}}</i></li>
-			</span>
-			{% if hero.pack.creator != "" %}
-			<span style="font-size: 10px; color: white; background-color: rgb(18, 120, 216); display: inline-flex;
-  			align-items: center; padding: 2px 36px ;">by {{hero.pack.creator ?? 'Unknown'}}
-			</span>
-			<span style="font-size: 12px; color: rgb(216, 69, 11); text-align: right; ">{% if hero.pack.visibility == "false" %} <li><i>Private</i></li> {% endif %} </span>
-			{% endif %} 
-			
-			
-			{# Remove the comment for seeing hero.code for each hero
-				<span style="font-size: 12px; color:blue;">
-				<li><i>Hero code : {{hero.code}}</i></li>
-				<li><i>Hero pack type : {{hero.pack_type}}</i></li>
-			</span> #}
-			<ul style="margin-left : 25px; margin-top : 5px; padding-left: 0px;">
-				{% if hero.code == '44001a'%}<li><b>You should definitely pick me!</b></li>{% endif %}
-				{% if hero.code == '51001a'%}<li>Hey Brother I'm here.</li> {% endif %}
-				{% if hero.code == '50001a'%}<li>Pericles should have an errata</li> {% endif %}
-			</ul>
-		</div>
-	</div>
-	<div>
-	{% if hero.code == '44001a'%}
-	<p><button style="background-image: linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,154,0,1) 10%, rgba(208,222,33,1) 20%, rgba(79,220,74,1) 30%, rgba(63,218,216,1) 40%, rgba(47,201,226,1) 50%, rgba(28,127,238,1) 60%, rgba(95,21,242,1) 70%, rgba(186,12,248,1) 80%, rgba(251,7,217,1) 90%, rgba(255,0,0,1) 100%);"name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
-	{% else %}
-	{# {% if hero.code == '70301a' or hero.code == '70401a' or hero.code == '70501a' or hero.code == '70601a' or hero.code == '70701a'%}#}
-	{% if hero.pack.creator != "" %}
-	<p><button style="background-image: linear-gradient(90deg, rgb(18, 120, 216) 0%, rgba(7,77,143,1) 100%);" name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
-		{% else %}
-		<p><button name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
-		{% endif %}
-	{% endif %}
-	</div>
+{% set isNewUI = app.user is defined and app.user and app.user.isNewUI %}
+{% set spacing = spacing is defined ? spacing : (isNewUI ? '2px' : '0px') %}
+{% set bg_color = isNewUI ? 'rgba(34,34,34,0.95)' : 'rgba(255,255,255,0.4)' %}
+{% set border_color = isNewUI ? 'rgb(34, 34, 34)' : 'rgb(160, 154, 154)' %}
+{% set text_color = isNewUI ? 'rgb(245,245,245)' : 'rgb(44, 41, 41)' %}
+{% set h4_color = isNewUI ? 'rgb(255,255,255)' : 'rgb(32, 29, 29)' %}
+{% set pack_theme_color = isNewUI ? 'rgb(187,187,187)' : 'gray' %}
+
+<div style="width: 360px; padding: 2px; padding-top: 10px; border: solid {{ border_color }} 1px; background-color: {{ bg_color }}; color: {{ text_color }}; margin: {{ spacing }};">
+    <div style="display: flex;">
+        <div>
+            <span class="deck-list-hero-image card-thumbnail-2x card-thumbnail-hero" title="{{ hero.name }}" style="background-image:url({{ asset('/bundles/cards/'~hero.code~'.png') }})"></span>
+        </div>
+        <div style="height: 119px; padding-left: 0.2em;">
+            <h4 style="padding: 2px; margin: 1px; color: {{ h4_color }};">{{ macros.card_name_no_link(hero) }}
+            {% if hero.pack.status == "released" or hero.pack.status == "sealed" %}
+            <span style="font-size: 10px; color: white; background-color: rgb(0, 48, 27); display: inline-flex;
+              align-items: center; border-radius: 8px; padding: 2px 12px ;">{{hero.pack.status ?? 'Official'}}
+            </span>
+            {% endif %}
+            {% if hero.pack.status == "alpha" or hero.pack.status == "beta" %}
+            <span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
+              align-items: center; border-radius: 8px; padding: 2px 12px ;">{{hero.pack.status ?? 'Official'}}
+            </span>
+            {% endif %}
+            </h4>
+            <span style="font-size: 10px; color: {{ pack_theme_color }}; padding: 2px 0px 0px">
+                <li><i>Pack: {{hero.pack.name}}</i></li>
+                <li><i>Theme: {{hero.pack.theme ?? 'Marvel'}}</i></li>
+            </span>
+            {% if hero.pack.creator != "" %}
+            <span style="font-size: 10px; color: white; background-color: rgb(18, 120, 216); display: inline-flex;
+              align-items: center; padding: 2px 36px ;">by {{hero.pack.creator ?? 'Unknown'}}
+            </span>
+            <span style="font-size: 12px; color: rgb(216, 69, 11); text-align: right; ">{% if hero.pack.visibility == "false" %} <li><i>Private</i></li> {% endif %} </span>
+            {% endif %}
+            <ul style="margin-left: 25px; margin-top: 5px; padding-left: 0px;">
+                {% if hero.code == '44001a'%}<li><b>You should definitely pick me!</b></li>{% endif %}
+                {% if hero.code == '51001a'%}<li>Hey Brother I'm here.</li> {% endif %}
+                {% if hero.code == '50001a'%}<li>Pericles should have an errata</li> {% endif %}
+				{% if hero.code == '01019a'%}<li>You should try my updated version... It's much more fun</li> {% endif %}
+				
+            </ul>
+        </div>
+    </div>
+    <div>
+    {% if isNewUI %}
+        <form method="post" action="{{ path('deck_initbuild') }}">
+    {% endif %}
+    {% if hero.code == '44001a'%}
+        <p><button style="background-image: linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,154,0,1) 10%, rgba(208,222,33,1) 20%, rgba(79,220,74,1) 30%, rgba(63,218,216,1) 40%, rgba(47,201,226,1) 50%, rgba(28,127,238,1) 60%, rgba(95,21,242,1) 70%, rgba(186,12,248,1) 80%, rgba(251,7,217,1) 90%, rgba(255,0,0,1) 100%); color: #222;" name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
+    {% else %}
+        {% if hero.pack.creator != "" %}
+            <p><button style="background-image: linear-gradient(90deg, rgb(18, 120, 216) 0%, rgba(7,77,143,1) 100%); color: #fff;" name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
+        {% else %}
+            <p><button name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
+        {% endif %}
+    {% endif %}
+    {% if isNewUI %}
+        </form>
+    {% endif %}
+    </div>
 </div>
 

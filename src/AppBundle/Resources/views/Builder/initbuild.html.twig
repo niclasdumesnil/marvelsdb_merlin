@@ -2,114 +2,202 @@
 {% import "AppBundle::macros.html.twig" as macros %}
 
 {% block javascripts %}
-	{% javascripts '@AppBundle/Resources/public/js/app.deckinit.js' %}
-	<script src="{{ asset_url }}"></script>
-	{% endjavascripts %}
+    {% javascripts '@AppBundle/Resources/public/js/app.deckinit.js' %}
+    <script src="{{ asset_url }}"></script>
+    {% endjavascripts %}
 {% endblock %}
 
 {% block body %}
 
 <style>
-	.hero-selection {
-		display: flex;
-		vertical-align: center;
-		align-items: center;
-		margin-bottom: 5px;
-		flex-wrap: wrap;
-	}
-	.hero-selection > div {
-		padding: 5px;
-	}
-	h4 {
-		padding: 5px;
-		margin: 0;
-	}
+    .hero-selection {
+        display: flex;
+        vertical-align: center;
+        align-items: center;
+        margin-bottom: 5px;
+        flex-wrap: wrap;
+    }
+    .hero-selection > div {
+        padding: 5px;
+    }
+    h4 {
+        padding: 5px;
+        margin: 0;
+    }
+    .tab-pane {
+  display: none;
+}
+.tab-pane.show.active {
+  display: block !important;
+  color: inherit !important;
+  background: inherit !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: auto !important;
+}
 </style>
 
 <div class="main white container">
 
+{% if app.user is defined and app.user and app.user.isNewUI %}
+    <ul class="nav nav-tabs" id="heroTypeTabsNewUI" role="tablist" style="margin-bottom:1em;">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="ffg-tab-newui" data-toggle="tab" href="#ffg_heroes_newui" role="tab" aria-controls="ffg_heroes_newui" aria-selected="true">Current</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="fanmade-tab-newui" data-toggle="tab" href="#fanmade_heroes_newui" role="tab" aria-controls="fanmade_heroes_newui" aria-selected="false">Fan made</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="private-tab-newui" data-toggle="tab" href="#private_heroes_newui" role="tab" aria-controls="private_heroes_newui" aria-selected="false">Private</a>
+        </li>
+    </ul>
+    <div class="tab-content" id="heroTypeTabsContentNewUI">
+        <div class="tab-pane fade" id="ffg_heroes_newui" role="tabpanel" aria-labelledby="ffg-tab-newui">
+            <h2 style="font-size: 1.5em; margin-bottom: 0.5em;">Choose a Hero:</h2>
+            <h4>Hero</h4>
+            <div style="display: flex; flex-wrap: wrap;">
+                {% for hero in all_heroes %}
+                    {% if hero.pack.creator == '' or hero.pack.creator == 'FFG' %}
+                        {% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="tab-pane fade" id="fanmade_heroes_newui" role="tabpanel" aria-labelledby="fanmade-tab-newui">
+            <h2 style="font-size: 1.5em; margin-bottom: 0.5em;">Choose a Hero:</h2>
+            <h4>Fan made Hero</h4>
+            <div style="display: flex; flex-wrap: wrap;">
+                {% for hero in all_heroes %}
+                    {% if hero.pack.creator != '' and hero.pack.creator != 'FFG' and hero.pack.visibility != "false" %}
+                        {% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="tab-pane fade" id="private_heroes_newui" role="tabpanel" aria-labelledby="private-tab-newui">
+            <h2 style="font-size: 1.5em; margin-bottom: 0.5em;">Choose a Hero:</h2>
+            <h4>Private Fan made Hero</h4>
+            <div style="display: flex; flex-wrap: wrap;">
+                {% for hero in all_heroes %}
+                    {% if hero.pack.creator != '' and hero.pack.creator != 'FFG' and hero.pack.visibility == "false" %}
+                        {% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Désactive tous les onglets et contenus
+        document.querySelectorAll('#heroTypeTabsNewUI .nav-link').forEach(function(t){
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('#heroTypeTabsContentNewUI .tab-pane').forEach(function(p){
+            p.classList.remove('show','active');
+        });
+        var ffgTab = document.getElementById('ffg-tab-newui');
+        var ffgPane = document.getElementById('ffg_heroes_newui');
+        if(ffgTab && ffgPane) {
+            ffgTab.classList.add('active');
+            ffgTab.setAttribute('aria-selected', 'true');
+            ffgPane.classList.add('show','active');
+        }
+
+        // Gestion du clic sur les onglets
+        document.querySelectorAll('#heroTypeTabsNewUI .nav-link').forEach(function(tab) {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('#heroTypeTabsNewUI .nav-link').forEach(function(t){
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+                tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
+                document.querySelectorAll('#heroTypeTabsContentNewUI .tab-pane').forEach(function(p){
+                    p.classList.remove('show','active');
+                });
+                var pane = document.querySelector(tab.getAttribute('href'));
+                if(pane) {
+                    pane.classList.add('show','active');
+                }
+            });
+        })
+    });
+    </script>
+{% else %}
 <form action="{{ path('deck_initbuild') }}" class="form-inline" method="post" enctype="application/x-www-form-urlencoded">
 <div>
-	<div class="hero-select">
-		<h2>Choose a Hero
-		<select class="form-control" id="deck_init_all" onchange="app.deck_init.update_build_init();">
-			<option value="your">Your Heroes</option>
-			<option value="all">All Heroes</option>
-		</select>
-		</h2>
-		<div>
-			<div id="my_inv">
-				<h4>Hero</h4>
-				<div style="display: flex; flex-wrap: wrap;">
-				{% for hero in my_heroes %}
-					{% if hero.pack.creator == '' %} 
-						{% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
-					{% endif %}
-				{% endfor %}
-				</div>
+    <div class="hero-select">
+        <h2>Choose a Hero
+        <select class="form-control" id="deck_init_all" onchange="app.deck_init.update_build_init();">
+            <option value="your">Your Heroes</option>
+            <option value="all">All Heroes</option>
+        </select>
+        </h2>
+        <div>
+            <div id="my_inv">
+                <h4>Hero</h4>
+                <div style="display: flex; flex-wrap: wrap;">
+                {% for hero in my_heroes %}
+                    {% if hero.pack.creator == '' %}
+                        {% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
+                    {% endif %}
+                {% endfor %}
+                </div>
 
-				<br></br><h4>Fan made Hero</h4>
-				<div style="display: flex; flex-wrap: wrap;">
-				{% for hero in my_heroes %}
-					{% if hero.pack.creator != '' and hero.pack.visibility != "false" %} 
-						{% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
-					{% endif %}
-				{% endfor %}
-				</div>
+                <br></br><h4>Fan made Hero</h4>
+                <div style="display: flex; flex-wrap: wrap;">
+                {% for hero in my_heroes %}
+                    {% if hero.pack.creator != '' and hero.pack.visibility != "false" %}
+                        {% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
+                    {% endif %}
+                {% endfor %}
+                </div>
 
-				{% if app.user.donation == "1" %} 
-					<br></br><h4>Private Fan made Hero</h4>
-					<div style="display: flex; flex-wrap: wrap;">
-					{% for hero in my_heroes %}
-						{% if hero.pack.creator != '' and hero.pack.visibility == "false" %} 
-							{% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
-						{% endif %}
-					{% endfor %}
-					</div>
-				{% endif %}
-			</div>
-			
-			<div class="hidden" id="all_inv">
-				<h4>Hero</h4>
-				<div style="display: flex; flex-wrap: wrap;">
-				{% for hero in all_heroes %}
-					{% if hero.pack.creator == '' %} 
-						{% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
-						{%endif%}
-				{% endfor %}
-				</div>
+                {% if app.user.donation == "1" %}
+                    <br></br><h4>Private Fan made Hero</h4>
+                    <div style="display: flex; flex-wrap: wrap;">
+                    {% for hero in my_heroes %}
+                        {% if hero.pack.creator != '' and hero.pack.visibility == "false" %}
+                            {% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="hidden" id="all_inv">
+                <h4>Hero</h4>
+                <div style="display: flex; flex-wrap: wrap;">
+                {% for hero in all_heroes %}
+                    {% if hero.pack.creator == '' %}
+                        {% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
+                    {% endif %}
+                {% endfor %}
+                </div>
 
-				<br></br><h4>Fan made Hero</h4>
-				<div style="display: flex; flex-wrap: wrap;">
-				{% for hero in all_heroes %}
-					{% if hero.pack.creator != '' and hero.pack.visibility != "false" %} 
-						{% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
-					{%endif%}
-				{% endfor %}
-				</div>
+                <br></br><h4>Fan made Hero</h4>
+                <div style="display: flex; flex-wrap: wrap;">
+                {% for hero in all_heroes %}
+                    {% if hero.pack.creator != '' and hero.pack.visibility != "false" %}
+                        {% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
+                    {% endif %}
+                {% endfor %}
+                </div>
 
-				{% if app.user.donation == "1" %} 
-					<br></br><h4>Private Fan made Hero</h4>
-					<div style="display: flex; flex-wrap: wrap;">
-					{% for hero in all_heroes %}
-						{% if hero.pack.creator != '' %} 
-						{% if hero.pack.visibility == "false" %} 
-							{% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
-						{%endif%}
-						{%endif%}
-					{% endfor %}
-					</div>
-				{% endif %}
-
-			</div>
-
-			
-		</div>
-	</div>
-</div>
-
+                {% if app.user.donation == "1" %}
+                    <br></br><h4>Private Fan made Hero</h4>
+                    <div style="display: flex; flex-wrap: wrap;">
+                    {% for hero in all_heroes %}
+                        {% if hero.pack.creator != '' and hero.pack.visibility == "false" %}
+                            {% include 'AppBundle:Builder:initbuild-hero.html.twig' %}
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+                {% endif %}
+</div>      </div>
 </form>
-
+{% endif %}
 </div>
-
 {% endblock %}
