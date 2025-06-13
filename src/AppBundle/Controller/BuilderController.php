@@ -238,12 +238,20 @@ class BuilderController extends Controller
 		/* @var $em \Doctrine\ORM\EntityManager */
 		$em = $this->getDoctrine()->getManager();
 
-		$crawler = new Crawler();
-		$crawler->addXmlContent($octgn);
-		// read octgnId
-		$cardcrawler = $crawler->filter('deck > section > card');
-		$octgnIds = [];
-		foreach ($cardcrawler as $domElement) {
+		if (!$octgn || !is_string($octgn) || trim($octgn) === '') {
+            return [
+                "faction_code" => '',
+                "content" => [],
+                "description" => ''
+            ];
+        }
+
+        $crawler = new Crawler();
+        $crawler->addXmlContent($octgn);
+        // read octgnId
+        $cardcrawler = $crawler->filter('deck > section > card');
+        $octgnIds = [];
+        foreach ($cardcrawler as $domElement) {
 			$octgnIds[$domElement->getAttribute('id')] = intval($domElement->getAttribute('qty'));
 		}
 		// read desc
@@ -255,24 +263,32 @@ class BuilderController extends Controller
 
 		$content = [];
 		$faction = null;
+		$hero_code = null;
+
 		foreach ($octgnIds as $octgnId => $qty) {
 			$card = $em->getRepository('AppBundle:Card')->findOneBy(array(
 				'octgnId' => $octgnId
 			));
 			if ($card) {
-				$content[$card->getCode()] = $qty;
-			}
-			else {
-				$faction = $faction ?: $em->getRepository('AppBundle:Faction')->findOneBy(array(
-					'octgnId' => $octgnId
-				));
+				if ($card->getType()->getCode() == "hero" && $hero_code === null) {
+					$hero_code = $card->getCode();
+				} else {
+					$content[$card->getCode()] = $qty;
+				}
+			} else {
+				// Optionnel : gestion du cas où la carte n'est pas trouvée
+				if ($faction === null) {
+					$faction = $em->getRepository('AppBundle:Faction')->findOneBy(array(
+						'octgnId' => $octgnId
+					));
+				}
 			}
 		}
 
 		$description = implode("\n", $descriptions);
 
 		return array(
-			"faction_code" => $faction ? $faction->getCode() : '',
+			"faction_code" => $hero_code ?: ($faction ? $faction->getCode() : ''),
 			"content" => $content,
 			"description" => $description
 		);
