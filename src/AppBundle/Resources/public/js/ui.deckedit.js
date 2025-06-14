@@ -741,6 +741,7 @@ ui.update_list_template = function update_list_template() {
 				+ '<td class="cost"><%= card.cost %></td>'
 				+ '<td class="type" style="text-align : left;"><span class="" title="<%= card.type_name %>"><%= card.type_name %></span> <% if (card.slot) { %> - <%= card.slot %> <% } %></td>'
 				+ '<td class="faction"><span class="fg-<%= card.faction_code %>" title="<%= card.faction_name %>"><%= card.faction_name %></span></td>'
+				+ '<td class="fm_code"><% if (fanmade === "Yes") { %><span class="fm_code_yes"><%= card.pack_name %></span><% } else { %><% } %></td>'
 			+ '</tr>'
 		);
 		break;
@@ -812,11 +813,22 @@ ui.build_row = function build_row(card) {
         });
     }
 
+    // Récupère le pack de la carte
+var pack = app.data.packs.findById(card.pack_code);
+var fanmade = (pack && pack.creator && pack.creator !== "" && pack.creator !== "FFG") ? "Yes" : "";
+
+// Gestion du filtre fanmade sans casser les autres filtres
+var showFanmadeAffinity = document.getElementById('show-fanmade-affinity');
+if (showFanmadeAffinity && !showFanmadeAffinity.checked && fanmade === "Yes") {
+    return $('');
+}
+
     var html = DisplayColumnsTpl({
         radios: radios,
         resources: $span.html(),
         url: Routing.generate('cards_zoom', {card_code:card.code}),
-        card: card
+        card: card,
+        fanmade: fanmade // Ajouté
     });
     return $(html);
 }
@@ -1010,6 +1022,17 @@ ui.on_dom_loaded = function on_dom_loaded() {
 	app.markdown && app.markdown.setup('#description', '#description-preview')
 	app.draw_simulator && app.draw_simulator.on_dom_loaded();
 	app.card_modal && $('#filter-text').on('typeahead:selected typeahead:autocompleted', app.card_modal.typeahead);
+
+	// ...dans ui.on_dom_loaded ou juste après l'initialisation de la page...
+
+var cb = document.getElementById('show-fanmade-affinity');
+if (cb) {
+    cb.addEventListener('change', function() {
+        // Vide le cache pour forcer le recalcul des lignes
+        CardDivs = [[],[],[]];
+        app.ui.refresh_lists();
+    });
+}
 };
 
 /**
