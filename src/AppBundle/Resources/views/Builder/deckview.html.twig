@@ -9,26 +9,87 @@
 	app.deck && app.deck.init({{ deck|json_encode|raw }});
 	app.deck_history && app.deck_history.init({{ deck.history|json_encode|raw }});
 	</script>
+	<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+	<script type="text/javascript">
+	document.addEventListener('DOMContentLoaded', function() {
+	    var btn = document.getElementById('btn-deck-image');
+	    if (btn) {
+	        btn.addEventListener('click', function() {
+	            var deckDiv = document.getElementById('deck');
+	            html2canvas(deckDiv).then(function(canvas) {
+	                // Marges définies par l'utilisateur
+	                var cropLeft = 18;   // pixels à rogner à gauche
+	                var cropRight = 18;  // pixels à rogner à droite
+	                var cropTop = 3;     // pixels à rogner en haut
+	                var cropBottom = 18; // pixels à rogner en bas
+
+	                var cropWidth = canvas.width - cropLeft - cropRight;
+	                var cropHeight = canvas.height - cropTop - cropBottom;
+
+	                // Canvas pour l'image rognée
+	                var croppedCanvas = document.createElement('canvas');
+	                croppedCanvas.width = cropWidth;
+	                croppedCanvas.height = cropHeight;
+	                var ctx = croppedCanvas.getContext('2d');
+	                ctx.drawImage(
+	                    canvas,
+	                    cropLeft, cropTop,
+	                    cropWidth, cropHeight,
+	                    0, 0,
+	                    cropWidth, cropHeight
+	                );
+
+	                // Ajustement de la taille en pourcentage (exemple : 60%)
+	                var scale = 0.8;
+	                var scaledCanvas = document.createElement('canvas');
+	                scaledCanvas.width = Math.round(cropWidth * scale);
+	                scaledCanvas.height = Math.round(cropHeight * scale);
+	                var scaledCtx = scaledCanvas.getContext('2d');
+	                scaledCtx.drawImage(
+	                    croppedCanvas,
+	                    0, 0, cropWidth, cropHeight,
+	                    0, 0, scaledCanvas.width, scaledCanvas.height
+	                );
+
+	                var link = document.createElement('a');
+	                var deckName = document.getElementById('deck-name');
+	                var name = deckName ? deckName.textContent.trim().replace(/\s+/g, '_') : 'deck';
+	                link.download = name + '.jpg';
+	                link.href = scaledCanvas.toDataURL('image/jpeg');
+	                link.click();
+	            });
+	        });
+	    }
+	});
+	</script>
 {% endblock %}
 
 {% block body %}
+
+
 <div class="main white container">
 
 	<div class="row">
 		<div class="col-md-12">
-			<h1>{{ deck.name }}</h1>
+			<h1 id="deck-name">{{ deck.name }} 
+				<!-- Ajoute le bouton Deck en image où tu veux dans la page, par exemple sous le deck -->
+				<button type="button" id="btn-deck-image" class="btn btn-default">
+					<span class="fa fa-image"></span> Deck Image
+				</button>
+			</h1>
 			{% if deck.problem %}
 			<div class="alert alert-danger" role="alert">{{ deck_validation_helper.problemLabel(deck.problem) }}</div>
 			{% endif %}
 		</div>
 	</div>
-
+	
 	<div class="row">
 
 		<!-- Deck Contents -->
 		<div class="col-md-6" id="deck">
 		</div>
 		<!-- End Deck Contents -->
+		
 
 		<!-- Build Controls -->
 		<div class="col-md-6 hidden-print">
@@ -115,6 +176,11 @@
 
 	</div><!-- .row -->
 </div><!-- .container -->
+
+<!-- Ajoute le bouton Deck en image où tu veux dans la page, par exemple sous le deck -->
+<button type="button" id="btn-deck-image" class="btn btn-default">
+    <span class="fa fa-image"></span> Deck en image
+</button>
 
 {% include 'AppBundle:Modale:odds.html.twig' %}
 {% include 'AppBundle:Modale:delete.html.twig' %}
