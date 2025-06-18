@@ -1,7 +1,7 @@
 {% import "AppBundle::macros.html.twig" as macros %}
 
 {% set isNewUI = app.user is defined and app.user and app.user.isNewUI %}
-{% set spacing = spacing is defined ? spacing : (isNewUI ? '2px' : '0px') %}
+{% set spacing = spacing is defined ? spacing : (isNewUI ? '0.5px' : '0px') %}
 {% set bg_color = isNewUI ? 'rgba(34,34,34,0.95)' : 'rgba(255,255,255,0.4)' %}
 {% set border_color = isNewUI ? 'rgb(34, 34, 34)' : 'rgb(160, 154, 154)' %}
 {% set text_color = isNewUI ? 'rgb(245,245,245)' : 'rgb(44, 41, 41)' %}
