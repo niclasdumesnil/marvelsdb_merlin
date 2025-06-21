@@ -1,0 +1,287 @@
+{% extends 'AppBundle::layout.html.twig' %}
+
+{% block body %}
+<div style="margin-left:200px; margin-right:200px;">
+    <h1>Stories</h1>
+
+    <button id="toggle-stats-btn" style="margin-bottom:18px; padding:10px 24px; background:#ff9800; color:#fff; border:none; border-radius:6px; font-size:1.1em; cursor:pointer;">
+        Afficher les statistiques de tous les sets
+    </button>
+    <div id="slide-panel-stats" style="max-height:0; overflow:hidden; transition:max-height 0.5s cubic-bezier(.4,2,.6,1); background:#fff3e0; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.07); padding:0 24px;">
+        <h2 style="margin-top:24px;">Statistiques de tous les sets</h2>
+        <div style="overflow-x:auto;">
+            <table border="1" cellpadding="6" style="background:#fff; border-radius:8px; margin-top:10px; width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#ff9800; color:#fff;">
+                        <th>Set</th>
+                        <th>Cartes différentes</th>
+                        <th>Nombre total de cartes</th>
+                        <th>Total boost</th>
+                        <th>Total boost étoile</th>
+                        <th>Moyenne boost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for set in modular_sets if
+                        'campaign' not in set.name|lower
+                        and 'shield executive board' not in set.name|lower
+                        and 's.h.i.e.l.d. executive board' not in set.name|lower
+                        and 'expert kang' not in set.name|lower
+                        and 'brawler' not in set.name|lower
+                        and 'commander' not in set.name|lower
+                        and 'defender' not in set.name|lower
+                        and 'mission' not in set.name|lower
+                        and 'the market' not in set.name|lower
+                        and 'shield tech' not in set.name|lower
+                        and 'challenge' not in set.name|lower
+                        and 'peacekeeper' not in set.name|lower
+                    %}
+                        {% set set_cards = cards|filter(card => card.cardset and card.cardset.code == set.code) %}
+                        {% set nbDiff = set_cards|length %}
+                        {% set nbTotal = set_cards|reduce((carry, card) => carry + (card.quantity|default(1)), 0) %}
+                        {% set totalBoost = set_cards|reduce((carry, card) => carry + (card.boost|default(0) * card.quantity|default(1)), 0) %}
+                        {% set totalBoostStar = set_cards|reduce((carry, card) => carry + (card.boostStar ? card.quantity|default(1) : 0), 0) %}
+                        {% set avgBoost = nbTotal > 0 ? (totalBoost / nbTotal)|number_format(2, '.', '') : '0.00' %}
+                        <tr>
+                            <td>{{ set.name }}</td>
+                            <td>{{ nbDiff }}</td>
+                            <td>{{ nbTotal }}</td>
+                            <td>{{ totalBoost }}</td>
+                            <td>{{ totalBoostStar }}</td>
+                            <td>{{ avgBoost }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div style="height:24px;"></div>
+    </div>
+
+    <div style="height: 24px;"></div> {# Ajoute un espace au-dessus de la sélection des sets #}
+
+    <label for="modular-sets">Sélectionnez un set modular :</label>
+    <select id="modular-sets" name="modular_set">
+        {% for set in modular_sets if
+            'campaign' not in set.name|lower
+            and 'shield executive board' not in set.name|lower
+            and 's.h.i.e.l.d. executive board' not in set.name|lower
+            and 'expert kang' not in set.name|lower
+            and 'brawler' not in set.name|lower
+            and 'commander' not in set.name|lower
+            and 'defender' not in set.name|lower
+            and 'mission' not in set.name|lower
+            and 'the market' not in set.name|lower
+            and 'shield tech' not in set.name|lower
+            and 'challenge' not in set.name|lower
+            and 'peacekeeper' not in set.name|lower
+        %}
+            <option value="{{ set.code }}">{{ set.name }}</option>
+        {% endfor %}
+    </select>
+
+    <div id="set-infos" style="margin: 18px 0 18px 0; font-size: 1.05em; background: #fff3e0; border-radius: 8px; padding: 12px 18px;">
+        <!-- Les infos du set s'afficheront ici -->
+    </div>
+
+    <div>
+        <h4>Cartes du set</h4>
+        <div id="card-panels-list" class="row"></div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('toggle-stats-btn');
+        const panel = document.getElementById('slide-panel-stats');
+        let open = false;
+        btn.addEventListener('click', function() {
+            open = !open;
+            if(open) {
+                panel.style.maxHeight = panel.scrollHeight + 60 + "px";
+                btn.textContent = "Masquer les statistiques de tous les sets";
+            } else {
+                panel.style.maxHeight = "0";
+                btn.textContent = "Afficher les statistiques de tous les sets";
+            }
+        });
+
+        const cards = [
+            {% set first = true %}
+            {% for card in cards if card.cardset %}
+                {% if not first %},{% endif %}
+                {% set first = false %}
+                {
+                    name: "{{ card.name|e('js') }}",
+                    set_code: "{{ card.cardset.code|e('js') }}",
+                    imagesrc: "/bundles/cards/{{ card.code }}.jpg",
+                    quantity: {{ card.quantity|default('1') }},
+                    type: "{{ card.type ? card.type.name|e('js') : '' }}",
+                    boost: {{ card.boost|default('0') }},
+                    boostStar: {{ card.boostStar ? 'true' : 'false' }},
+                    pack: "{{ card.pack ? card.pack.name|e('js') : '' }}",
+                    isUnique: {{ card.isUnique ? 'true' : 'false' }}
+                }
+            {% endfor %}
+        ];
+
+        function updateSetInfos(filtered) {
+            const nbDiff = filtered.length;
+            const nbTotal = filtered.reduce((sum, card) => sum + (parseInt(card.quantity) || 1), 0);
+            const totalBoost = filtered.reduce((sum, card) => sum + (parseInt(card.boost) * (parseInt(card.quantity) || 1)), 0);
+            const totalBoostStar = filtered.reduce((sum, card) => sum + (card.boostStar === true || card.boostStar === 'true' ? (parseInt(card.quantity) || 1) : 0), 0);
+            const avgBoost = nbTotal > 0 ? (totalBoost / nbTotal).toFixed(2) : "0.00";
+
+            document.getElementById('set-infos').innerHTML = `
+                <strong>Cartes différentes :</strong> ${nbDiff} &nbsp;|&nbsp;
+                <strong>Nombre total de cartes :</strong> ${nbTotal} &nbsp;|&nbsp;
+                <strong>Total boost :</strong> ${totalBoost} &nbsp;|&nbsp;
+                <strong>Total boost étoile :</strong> ${totalBoostStar} &nbsp;|&nbsp;
+                <strong>Moyenne boost :</strong> ${avgBoost}
+            `;
+        }
+
+        function updateCardsList() {
+            const select = document.getElementById('modular-sets');
+            const selectedSet = select.value;
+            const panelsList = document.getElementById('card-panels-list');
+            let filtered = cards.filter(card => card.set_code === selectedSet);
+
+            updateSetInfos(filtered);
+
+            if (filtered.length === 0) {
+                panelsList.innerHTML = "<em>Aucune carte pour ce set.</em>";
+            } else {
+                let html = '';
+                for (let i = 0; i < filtered.length; i += 2) {
+                    html += '<div class="clearfix"></div>';
+                    // Première colonne
+                    if (filtered[i]) {
+                        html += `<div class="card-panel-col">
+                            <div class="card-panel">
+                                <div class="card-panel-title">${
+                                    filtered[i].isUnique === true || filtered[i].isUnique === 'true' ? '<span class="icon-unique"></span> ' : ''
+                                }${filtered[i].name}</div>
+                                <div class="card-panel-content">
+                                    <div class="card-panel-info">
+                                        <strong>Type :</strong> ${filtered[i].type || '-'}<br>
+                                        <strong>Quantité :</strong> ${filtered[i].quantity || '-'}<br>
+                                        <strong>Boost :</strong> ${filtered[i].boost || '0'}${filtered[i].boostStar === true || filtered[i].boostStar === 'true' ? ' ★' : ''}
+                                    </div>
+                                    <div class="card-panel-img">
+                                        <img src="${filtered[i].imagesrc}" alt="${filtered[i].name}">
+                                    </div>
+                                </div>
+                                <div class="card-panel-pack">
+                                    <strong>Pack :</strong> ${filtered[i].pack || '-'}
+                                </div>
+                            </div>
+                        </div>`;
+                    }
+                    // Deuxième colonne
+                    if (filtered[i + 1]) {
+                        html += `<div class="card-panel-col">
+                            <div class="card-panel">
+                                <div class="card-panel-title">${
+                                    filtered[i + 1].isUnique === true || filtered[i + 1].isUnique === 'true' ? '<span class="icon-unique"></span> ' : ''
+                                }${filtered[i + 1].name}</div>
+                                <div class="card-panel-content">
+                                    <div class="card-panel-info">
+                                        <strong>Type :</strong> ${filtered[i + 1].type || '-'}<br>
+                                        <strong>Quantité :</strong> ${filtered[i + 1].quantity || '-'}<br>
+                                        <strong>Boost :</strong> ${filtered[i + 1].boost || '0'}${filtered[i + 1].boostStar === true || filtered[i + 1].boostStar === 'true' ? ' ★' : ''}
+                                    </div>
+                                    <div class="card-panel-img">
+                                        <img src="${filtered[i + 1].imagesrc}" alt="${filtered[i + 1].name}">
+                                    </div>
+                                </div>
+                                <div class="card-panel-pack">
+                                    <strong>Pack :</strong> ${filtered[i + 1].pack || '-'}
+                                </div>
+                            </div>
+                        </div>`;
+                    }
+                }
+                panelsList.innerHTML = html;
+            }
+        }
+
+        document.getElementById('modular-sets').addEventListener('change', updateCardsList);
+        window.addEventListener('DOMContentLoaded', updateCardsList);
+    </script>
+
+    <style>
+        .card-panel-col {
+            width: 50%;
+            float: left;
+            box-sizing: border-box;
+            padding: 8px;
+        }
+        .card-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #ffe5b4;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            min-height: 220px;
+            position: relative;
+        }
+        .card-panel-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            background: #ff9800;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px 6px 0 0;
+            text-align: left;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+            letter-spacing: 0.5px;
+        }
+        .card-panel-content {
+            display: flex;
+            flex: 1;
+        }
+        .card-panel-info {
+            font-size: 0.97em;
+            color: #444;
+            flex: 1;
+        }
+        .card-panel-img {
+            margin-left: 20px;
+        }
+        .card-panel-img img {
+            max-width: 120px;
+            height: auto;
+            max-height: 180px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .card-panel-pack {
+            margin-top: 12px;
+            font-size: 0.95em;
+            color: #b26a00;
+            font-style: italic;
+            text-align: right;
+        }
+        .icon-unique {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            background: url('/bundles/icons/unique.svg') no-repeat center center;
+            background-size: contain;
+            vertical-align: middle;
+            margin-right: 0px;
+        }
+        @media (max-width: 900px) {
+            div[style*="margin-left:200px"] {
+                margin-left: 10px !important;
+                margin-right: 10px !important;
+            }
+            .card-panel-col {
+                width: 100%;
+            }
+        }
+    </style>
+</div>
+{% endblock %}

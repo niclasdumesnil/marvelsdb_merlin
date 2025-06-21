@@ -192,6 +192,35 @@ class SearchController extends Controller
 		);
 	}
 
+
+	public function storyAction()
+	{
+    	$response = new Response();
+		$response->setPublic();
+		$response->setMaxAge($this->container->getParameter('cache_expiration'));
+
+		// Récupère tous les sets dont le type est 'modular'
+		$em = $this->getDoctrine()->getManager();
+		$qb = $em->createQueryBuilder();
+		$qb->select('s')
+			->from('AppBundle:Cardset', 's')
+			->join('s.cardset_type', 't')
+			->where('t.code = :type')
+			->setParameter('type', 'modular');
+		$sets = $qb->getQuery()->getResult();
+
+		$cards = $this->getDoctrine()
+		    ->getRepository('AppBundle:Card')
+		    ->findAll();
+
+		return $this->render('AppBundle:Search:story.html.twig', [
+			"pagetitle" => "Story",
+			"pagedescription" => "Villains reference",
+			"modular_sets" => $sets,
+			"cards" => $cards
+		], $response);
+	}
+
 	/**
 	 * Processes the action of the card search form
 	 * @param Request $request

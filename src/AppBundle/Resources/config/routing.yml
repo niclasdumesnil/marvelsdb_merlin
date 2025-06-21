@@ -92,6 +92,12 @@ card_faqs_list:
     requirements:
         page: \d+
 
+Story:
+    path: /story
+    methods: [GET]
+    defaults:
+        _controller: AppBundle:Search:story
+
 about:
     path: /about
     defaults:
