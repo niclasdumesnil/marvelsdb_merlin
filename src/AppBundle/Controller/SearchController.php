@@ -470,6 +470,28 @@ class SearchController extends Controller
 		}
 
 		
+		// Calcul des traits par set villain
+		$villain_traits_by_set = [];
+		foreach ($filtered_villain_sets as $set) {
+		    $set_code = $set->getCode();
+		    $traits = [];
+		    foreach ($cards as $card) {
+		        if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
+		            $card_traits = $card->getTraits();
+		            if (is_string($card_traits) && trim($card_traits) !== '') {
+		                foreach (explode('.', $card_traits) as $trait) {
+		                    $trait = trim($trait);
+		                    if ($trait !== '') {
+		                        $traits[$trait] = true;
+		                    }
+		                }
+		            }
+		        }
+		    }
+		    ksort($traits);
+		    $villain_traits_by_set[$set_code] = array_keys($traits);
+		}
+
 		return $this->render('AppBundle:Search:story.html.twig', [
 			"pagetitle" => "Stories",
 			"pagedescription" => "Villains reference",
@@ -487,6 +509,7 @@ class SearchController extends Controller
 			"filtered_villain_sets" => $filtered_villain_sets,
 			"villain_cards_by_set" => $villain_cards_by_set,
 			"villain_set_stats" => $villain_set_stats,
+			"villain_traits_by_set" => $villain_traits_by_set,
 		], $response);
 	}
 

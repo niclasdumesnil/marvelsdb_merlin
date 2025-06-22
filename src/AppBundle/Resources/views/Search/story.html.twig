@@ -222,13 +222,17 @@
     </div>
 
     <div id="tab-villain-content" style="display: none;">
-        {# --- INFOS VILLAIN --- #}
         <div>
             {% for set in filtered_villain_sets %}
                 <div class="villain-cards-panel" id="villain-cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
-                    <h4 style="margin-bottom:18px;">
-                        Cartes du set villain : {{ set.name }}
-                    </h4>
+                    <div class="villain-traits-panel" id="villain-traits-{{ set.code }}" style="margin-bottom: 18px; font-size: 1.05em; background:rgb(241, 217, 239); border-radius: 8px; padding: 12px 18px; color: #222;">
+                        <strong>Traits du set :</strong>
+                        {% if villain_traits_by_set[set.code] is not empty %}
+                            {{ villain_traits_by_set[set.code]|join(', ') }}
+                        {% else %}
+                            <em>Aucun trait</em>
+                        {% endif %}
+                     </div>
                     <div class="villain-set-infos-panel" id="villain-infos-{{ set.code }}" style="margin-bottom: 18px; font-size: 1.05em; background:#a080c6; color: #fff; border-radius: 8px; padding: 12px 18px;">
                         <strong>Cartes différentes :</strong> {{ villain_set_stats[set.code].nbDiff }} &nbsp;|&nbsp;
                         <strong>Nombre total de cartes :</strong> {{ villain_set_stats[set.code].nbTotal }} &nbsp;|&nbsp;
@@ -236,6 +240,9 @@
                         <strong>Total boost étoile :</strong> {{ villain_set_stats[set.code].totalBoostStar }} &nbsp;|&nbsp;
                         <strong>Moyenne boost :</strong> {{ villain_set_stats[set.code].avgBoost }}
                     </div>
+                    <h4 style="margin-bottom:18px;">
+                        Cartes du set villain : {{ set.name }}
+                    </h4>
                     <div class="row">
                         {% for card in villain_cards_by_set[set.code]|default([]) %}
                             {% if loop.index0 is divisible by(2) %}
