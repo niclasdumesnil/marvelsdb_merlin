@@ -170,7 +170,7 @@
                         <h4 style="margin-bottom:18px;">Cartes du set : {{ set.name }}</h4>
                         <div class="row">
                             {% for card in modular_cards_by_set[set.code]|default([]) %}
-                                {% if loop.index0 is divisible by(2) %}
+                                {% if loop.index0 is divisible by(3) %}
                                     <div class="clearfix"></div>
                                 {% endif %}
                                 <div class="card-panel-col">
@@ -186,7 +186,8 @@
                                                 <strong>Boost :</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
                                             </div>
                                             <div class="card-panel-img">
-                                                <img src="{{ card.imagesrc }}" alt="{{ card.name }}">
+                                                <img src="{{ card.imagesrc }}" alt="{{ card.name }}"
+                                                    style="{% if card.type == 'Side Scheme' %}max-width:180px;{% else %}max-width:120px;{% endif %} height:auto; max-height:180px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                                             </div>
                                         </div>
                                         <div class="card-panel-pack">
@@ -227,7 +228,7 @@
                         </h4>
                         <div class="row">
                             {% for card in villain_cards_by_set[set.code]|default([]) %}
-                                {% if loop.index0 is divisible by(2) %}
+                                {% if loop.index0 is divisible by(3) %}
                                     <div class="clearfix"></div>
                                 {% endif %}
                                 <div class="card-panel-col">
@@ -243,7 +244,8 @@
                                                 <strong>Boost :</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
                                             </div>
                                             <div class="card-panel-img">
-                                                <img src="{{ card.imagesrc }}" alt="{{ card.name }}">
+                                                <img src="{{ card.imagesrc }}" alt="{{ card.name }}"
+                                                    style="{% if card.type == 'Side Scheme' %}max-width:180px;{% else %}max-width:120px;{% endif %} height:auto; max-height:180px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                                             </div>
                                         </div>
                                         <div class="card-panel-pack">
@@ -388,10 +390,19 @@ window.addEventListener('DOMContentLoaded', function() {
 
 <style>
     .card-panel-col {
-        width: 50%;
+        width: 33.3333%;
         float: left;
         box-sizing: border-box;
         padding: 8px;
+    }
+    @media (max-width: 900px) {
+        div[style*="margin-left:200px"] {
+            margin-left: 10px !important;
+            margin-right: 10px !important;
+        }
+        .card-panel-col {
+            width: 100%;
+        }
     }
     .card-panel {
         display: flex;
@@ -451,15 +462,6 @@ window.addEventListener('DOMContentLoaded', function() {
         background-size: contain;
         vertical-align: middle;
         margin-right: 0px;
-    }
-    @media (max-width: 900px) {
-        div[style*="margin-left:200px"] {
-            margin-left: 10px !important;
-            margin-right: 10px !important;
-        }
-        .card-panel-col {
-            width: 100%;
-        }
     }
     #slide-panel-stats {
         background: linear-gradient(135deg, #e3f0ff 0%, #b3cfff 100%);
