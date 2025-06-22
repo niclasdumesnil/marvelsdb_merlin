@@ -55,7 +55,7 @@
             <li><a href="{{ path('decklists_list') }}">{% trans %}Decklists{% endtrans %}</a></li>
             <li><a href="{{ path('cards_search') }}">{% trans %}Cards{% endtrans %}</a></li>
             {% if app.user and app.user.donation %}
-                <li><a href="{{ path('Story') }}">Story</a></li>
+                <li><a href="{{ path('Stories') }}">Stories</a></li>
             {% endif %}
             <li class="hidden-sm"><a href="{{ path('card_reviews_list') }}">{% trans %}Reviews{% endtrans %}</a></li>
             <li class="hidden-sm"><a href="{{ path('rules') }}">{% trans %}Rules{% endtrans %}</a></li>

@@ -471,7 +471,7 @@ class SearchController extends Controller
 
 		
 		return $this->render('AppBundle:Search:story.html.twig', [
-			"pagetitle" => "Story",
+			"pagetitle" => "Stories",
 			"pagedescription" => "Villains reference",
 			"modular_sets" => $sets,
 			"filtered_modular_sets" => $filtered_sets, // Ajout du tableau filtré et trié
