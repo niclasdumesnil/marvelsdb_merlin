@@ -4,107 +4,15 @@
 <div style="margin-left:200px; margin-right:200px;">
     <h1>Stories</h1>
 
-    <button id="toggle-stats-btn" style="margin-bottom:18px; padding:10px 24px; background:linear-gradient(90deg, #1976d2 0%, #64b5f6 100%); color:#fff; border:none; border-radius:6px; font-size:1.1em; cursor:pointer;">
-        Afficher les statistiques de tous les sets
-    </button>
-
-    {# Paragraphe d'informations sur le modular avec le plus et le moins de chaque type #}
-    <div style="margin-bottom:18px;">
-        <div style="display: flex; gap: 40px;">
-            <div>
-                <strong>Maximum number of cards :</strong><br>
-                {% for type, label in type_label %}
-                    <strong>{{ label|capitalize }} :</strong>
-                    {% if type_max[type].set %}
-                        {{ type_max[type].set }} ({{ type_max[type].count }})
-                    {% else %}
-                        Aucun
-                    {% endif %}
-                    <br>
-                {% endfor %}
-            </div>
-            <div>
-                <strong>Minimum number of cards :</strong><br>
-                {% for type, label in type_label %}
-                    <strong>{{ label|capitalize }} :</strong>
-                    {% if type_min[type].set %}
-                        {{ type_min[type].set }} ({{ type_min[type].count }})
-                    {% else %}
-                        Aucun
-                    {% endif %}
-                    <br>
-                {% endfor %}
-            </div>
-            <div>
-                <strong>Average number of cards :</strong><br>
-                {% for type, label in type_label %}
-                    <strong>{{ label|capitalize }} :</strong>
-                    {{ type_avg[type].avg }}
-                    <br>
-                {% endfor %}
-            </div>
-        </div>
+    <div style="display: flex; align-items: flex-end; gap: 18px; margin-bottom: 18px;">
+        <button id="toggle-stats-btn" style="padding:8px 18px; border-radius:6px; border:none; background:linear-gradient(90deg, #1976d2 0%, #64b5f6 100%); color:#fff; font-weight:bold; cursor:pointer;">
+            Afficher les statistiques de tous les sets modulaires
+        </button>
+        <button id="show-villain-stats" type="button"
+            style="padding: 8px 18px; border-radius: 6px; border: none; background: #a080c6; color: #fff; font-weight: bold; cursor:pointer;">
+            Afficher les stats de tous les sets villain
+        </button>
     </div>
-
-    <div id="slide-panel-stats" style="max-height:0; overflow:hidden; transition:max-height 0.5s cubic-bezier(.4,2,.6,1); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.07); padding:0 24px;">
-        <h2 style="margin-top:24px;">Statistiques de tous les sets</h2>
-        <div style="overflow-x:auto;">
-            <table border="1" cellpadding="6" style="background:#fff; border-radius:8px; margin-top:10px; width:100%; border-collapse:collapse;">
-                <colgroup>
-                    <col style="width: 18%;">
-                    <col style="width: 6%; border-right:2px solid #1976d2;">
-                    <col style="width: 7%; border-right:2px solid #1976d2;">
-                    <col style="width: 7%; border-right:2px solid #1976d2;">
-                    <col style="width: 7%; border-right:2px solid #1976d2;">
-                    <col style="width: 8%; border-right:4px double #1976d2;">
-                    {% for type, label in type_label %}
-                        <col style="width: {{ 47 // type_label|length }}%;">
-                    {% endfor %}
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>Set</th>
-                        <th style="text-align:center; border-right:2px solid #1976d2;">Different card</th>
-                        <th style="text-align:center; border-right:2px solid #1976d2;">Total card</th>
-                        <th style="text-align:center; border-right:2px solid #1976d2;">Total boost</th>
-                        <th style="text-align:center; border-right:2px solid #1976d2;">Total boost star</th>
-                        <th style="text-align:center; border-right:4px double #1976d2;">Average boost</th>
-                        {% for type, label in type_label %}
-                            <th style="text-align:center;">{{ label|capitalize }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for set in filtered_modular_sets %}
-                        {% set set_cards = modular_cards_by_set[set.code]|default([]) %}
-                        {% set nbDiff = set_cards|length %}
-                        {% set nbTotal = set_cards|reduce((carry, card) => carry + (card.quantity|default(1)), 0) %}
-                        {% set totalBoost = set_cards|reduce((carry, card) => carry + (card.boost|default(0) * card.quantity|default(1)), 0) %}
-                        {% set totalBoostStar = set_cards|reduce((carry, card) => carry + (card.boostStar ? card.quantity|default(1) : 0), 0) %}
-                        {% set avgBoost = nbTotal > 0 ? (totalBoost / nbTotal)|number_format(2, '.', '') : '0.00' %}
-                        <tr>
-                            <td style="font-weight:bold; padding-left:10px;">{{ set.name }}</td>
-                            <td style="text-align:center; border-left:2px solid #1976d2;">{{ nbDiff }}</td>
-                            <td style="text-align:center; border-left:2px solid #1976d2;">{{ nbTotal }}</td>
-                            <td style="text-align:center; border-left:2px solid #1976d2;">{{ totalBoost }}</td>
-                            <td style="text-align:center; border-left:2px solid #1976d2;">{{ totalBoostStar }}</td>
-                            <td style="text-align:center; border-left:2px solid #1976d2; border-right:4px double #1976d2;">{{ avgBoost }}</td>
-                            {% for type, label in type_label %}
-                                {% if loop.first %}
-                                    <td style="text-align:center; border-left:4px double #1976d2;">{{ modular_set_type_counts[set.code][type] }}</td>
-                                {% else %}
-                                    <td style="text-align:center; border-left:2px solid #1976d2;">{{ modular_set_type_counts[set.code][type] }}</td>
-                                {% endif %}
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div style="height:24px;"></div>
-    </div>
-
-    <div style="height: 24px;"></div>
 
     <div id="combined-stats" style="margin-bottom: 24px; font-size: 1.08em; background: #111; color: #fff; border-radius: 8px; padding: 14px 22px; font-weight: bold;">
         {% set modular_code = filtered_modular_sets|first ? filtered_modular_sets|first.code : '' %}
@@ -128,7 +36,6 @@
         </span>
     </div>
 
-    <div style="margin-bottom: 24px;">
     <div style="display: flex; align-items: flex-end; gap: 32px; margin-bottom: 18px;">
         <div>
             <label for="modular-sets"><strong>Sélectionnez un set modular :</strong></label>
@@ -148,220 +55,236 @@
         </div>
     </div>
 
-    <div style="margin-bottom: 18px;">
-        <button id="tab-modular" type="button"
-            style="padding: 8px 18px; border-radius: 6px 6px 0 0; border: none; background: #1976d2; color: #fff; font-weight: bold; cursor:pointer;">
-            Modular
-        </button>
-        <button id="tab-villain" type="button"
-            style="padding: 8px 18px; border-radius: 6px 6px 0 0; border: none; background: #ccc; color: #222; font-weight: bold; cursor:pointer;">
-            Villain
-        </button>
+    {# TABLEAU MODULAR #}
+    <div id="slide-panel-stats" style="max-height:0; overflow:hidden; transition:max-height 0.5s cubic-bezier(.4,2,.6,1); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.07); padding:0 24px;">
+        <h2 style="margin-top:24px;">Statistiques de tous les sets modulaires</h2>
+        {% include 'AppBundle:Search:table_stats.html.twig' with {
+            sets: filtered_modular_sets,
+            cards_by_set: modular_cards_by_set,
+            set_type_counts: modular_set_type_counts,
+            set_stats: modular_set_stats,
+            color: '#1976d2',
+            color2: '#64b5f6'
+        } %}
     </div>
 
-    <div id="tab-modular-content" style="display: block;">
-        {# --- INFOS MODULAR --- #}
-        <div id="set-traits-list" style="margin: 12px 0 18px 0; font-size: 1.05em; background: #e3f0ff; border-radius: 8px; padding: 12px 18px;">
-            {% for set in filtered_modular_sets %}
-                <div class="set-traits-panel" id="traits-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
-                    <strong>Traits du set :</strong>
-                    {% if modular_traits_by_set[set.code] is not empty %}
-                        {{ modular_traits_by_set[set.code]|join(', ') }}
-                    {% else %}
-                        <em>Aucun trait</em>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-        <div id="set-infos" style="margin: 18px 0 18px 0; font-size: 1.05em; background:rgb(188, 200, 223); border-radius: 8px; padding: 12px 18px;">
-            {% for set in filtered_modular_sets %}
-                <div class="set-infos-panel" id="infos-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
-                    <strong>Cartes différentes :</strong> {{ modular_set_stats[set.code].nbDiff }} &nbsp;|&nbsp;
-                    <strong>Nombre total de cartes :</strong> {{ modular_set_stats[set.code].nbTotal }} &nbsp;|&nbsp;
-                    <strong>Total boost :</strong> {{ modular_set_stats[set.code].totalBoost }} &nbsp;|&nbsp;
-                    <strong>Total boost étoile :</strong> {{ modular_set_stats[set.code].totalBoostStar }} &nbsp;|&nbsp;
-                    <strong>Moyenne boost :</strong> {{ modular_set_stats[set.code].avgBoost }}
-                </div>
-            {% endfor %}
-        </div>
-        <div>
-            {% for set in filtered_modular_sets %}
-                <div class="set-cards-panel" id="cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
-                    <h4 style="margin-bottom:18px;">Cartes du set : {{ set.name }}</h4>
-                    <div class="row">
-                        {% for card in modular_cards_by_set[set.code]|default([]) %}
-                            {% if loop.index0 is divisible by(2) %}
-                                <div class="clearfix"></div>
-                            {% endif %}
-                            <div class="card-panel-col">
-                                <div class="card-panel-title">
-                                    {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
-                                    {{ card.name }}
-                                </div>
-                                <div class="card-panel">
-                                    <div class="card-panel-content">
-                                        <div class="card-panel-info">
-                                            <strong>Type :</strong> {{ card.type }}<br>
-                                            <strong>Quantité :</strong> {{ card.quantity or '-' }}<br>
-                                            <strong>Boost :</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
-                                        </div>
-                                        <div class="card-panel-img">
-                                            <img src="{{ card.imagesrc }}" alt="{{ card.name }}">
-                                        </div>
-                                    </div>
-                                    <div class="card-panel-pack">
-                                        <strong>Pack :</strong> {{ card.pack }}
-                                    </div>
-                                </div>
-                            </div>
+    {# TABLEAU VILLAIN #}
+    <div id="villain-stats-table" style="display:none; margin-bottom: 24px;">
+        <div style="overflow-x:auto;">
+            <table border="1" cellpadding="6" style="background:#fff; border-radius:8px; margin-top:10px; width:100%; border-collapse:collapse;">
+                <colgroup>
+                    <col style="width: 18%;">
+                    <col style="width: 6%; border-right:2px solid #a080c6;">
+                    <col style="width: 7%; border-right:2px solid #a080c6;">
+                    <col style="width: 7%; border-right:2px solid #a080c6;">
+                    <col style="width: 7%; border-right:2px solid #a080c6;">
+                    <col style="width: 8%; border-right:4px double #a080c6;">
+                    {% for type, label in type_label %}
+                        <col style="width: {{ 47 // type_label|length }}%;">
+                    {% endfor %}
+                </colgroup>
+                <thead>
+                    <tr style="background: linear-gradient(90deg, #a080c6 0%, #e0c3fc 100%); color: #fff;">
+                        <th>Set villain</th>
+                        <th style="text-align:center; border-right:2px solid #a080c6;">Different card</th>
+                        <th style="text-align:center; border-right:2px solid #a080c6;">Total card</th>
+                        <th style="text-align:center; border-right:2px solid #a080c6;">Total boost</th>
+                        <th style="text-align:center; border-right:2px solid #a080c6;">Total boost star</th>
+                        <th style="text-align:center; border-right:4px double #a080c6;">Average boost</th>
+                        {% for type, label in type_label %}
+                            <th style="text-align:center;">{{ label|capitalize }}</th>
                         {% endfor %}
-                    </div>
-                </div>
-            {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for set in filtered_villain_sets %}
+                        {% set set_cards = villain_cards_by_set[set.code]|default([]) %}
+                        {% set nbDiff = set_cards|length %}
+                        {% set nbTotal = set_cards|reduce((carry, card) => carry + (card.quantity|default(1)), 0) %}
+                        {% set totalBoost = set_cards|reduce((carry, card) => carry + (card.boost|default(0) * card.quantity|default(1)), 0) %}
+                        {% set totalBoostStar = set_cards|reduce((carry, card) => carry + (card.boostStar ? card.quantity|default(1) : 0), 0) %}
+                        {% set avgBoost = nbTotal > 0 ? (totalBoost / nbTotal)|number_format(2, '.', '') : '0.00' %}
+                        <tr>
+                            <td style="font-weight:bold; padding-left:10px;">{{ set.name }}</td>
+                            <td style="text-align:center; border-left:2px solid #a080c6;">{{ nbDiff }}</td>
+                            <td style="text-align:center; border-left:2px solid #a080c6;">{{ nbTotal }}</td>
+                            <td style="text-align:center; border-left:2px solid #a080c6;">{{ totalBoost }}</td>
+                            <td style="text-align:center; border-left:2px solid #a080c6;">{{ totalBoostStar }}</td>
+                            <td style="text-align:center; border-left:2px solid #a080c6; border-right:4px double #a080c6;">{{ avgBoost }}</td>
+                            {% for type, label in type_label %}
+                                {% if loop.first %}
+                                    <td style="text-align:center; border-left:4px double #a080c6;">{{ villain_set_type_counts[set.code][type]|default(0) }}</td>
+                                {% else %}
+                                    <td style="text-align:center; border-left:2px solid #a080c6;">{{ villain_set_type_counts[set.code][type]|default(0) }}</td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+        <div style="height:24px;"></div>
     </div>
 
-    <div id="tab-villain-content" style="display: none;">
-        <div>
-            {% for set in filtered_villain_sets %}
-                <div class="villain-cards-panel" id="villain-cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
-                    <div class="villain-traits-panel" id="villain-traits-{{ set.code }}" style="margin-bottom: 18px; font-size: 1.05em; background:rgb(241, 217, 239); border-radius: 8px; padding: 12px 18px; color: #222;">
+    {# ONGLET MODULAR / VILLAIN #}
+    <div style="margin-top: 32px;">
+        <div style="display: flex; gap: 0;">
+            <button id="tab-modular" type="button"
+                style="padding: 8px 18px; border-radius: 6px 6px 0 0; border: none; background: #1976d2; color: #fff; font-weight: bold; cursor:pointer;">
+                Modular
+            </button>
+            <button id="tab-villain" type="button"
+                style="padding: 8px 18px; border-radius: 6px 6px 0 0; border: none; background: #ccc; color: #222; font-weight: bold; cursor:pointer;">
+                Villain
+            </button>
+        </div>
+
+        <div id="tab-modular-content" style="display: block;">
+            {# --- INFOS MODULAR --- #}
+            <div id="set-traits-list" style="margin: 12px 0 18px 0; font-size: 1.05em; background: #e3f0ff; border-radius: 8px; padding: 12px 18px;">
+                {% for set in filtered_modular_sets %}
+                    <div class="set-traits-panel" id="traits-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
                         <strong>Traits du set :</strong>
-                        {% if villain_traits_by_set[set.code] is not empty %}
-                            {{ villain_traits_by_set[set.code]|join(', ') }}
+                        {% if modular_traits_by_set[set.code] is not empty %}
+                            {{ modular_traits_by_set[set.code]|join(', ') }}
                         {% else %}
                             <em>Aucun trait</em>
                         {% endif %}
-                     </div>
-                    <div class="villain-set-infos-panel" id="villain-infos-{{ set.code }}" style="margin-bottom: 18px; font-size: 1.05em; background:#a080c6; color: #fff; border-radius: 8px; padding: 12px 18px;">
-                        <strong>Cartes différentes :</strong> {{ villain_set_stats[set.code].nbDiff }} &nbsp;|&nbsp;
-                        <strong>Nombre total de cartes :</strong> {{ villain_set_stats[set.code].nbTotal }} &nbsp;|&nbsp;
-                        <strong>Total boost :</strong> {{ villain_set_stats[set.code].totalBoost }} &nbsp;|&nbsp;
-                        <strong>Total boost étoile :</strong> {{ villain_set_stats[set.code].totalBoostStar }} &nbsp;|&nbsp;
-                        <strong>Moyenne boost :</strong> {{ villain_set_stats[set.code].avgBoost }}
                     </div>
-                    <h4 style="margin-bottom:18px;">
-                        Cartes du set villain : {{ set.name }}
-                    </h4>
-                    <div class="row">
-                        {% for card in villain_cards_by_set[set.code]|default([]) %}
-                            {% if loop.index0 is divisible by(2) %}
-                                <div class="clearfix"></div>
+                {% endfor %}
+            </div>
+            <div id="set-infos" style="margin: 18px 0 18px 0; font-size: 1.05em; background:rgb(188, 200, 223); border-radius: 8px; padding: 12px 18px;">
+                {% for set in filtered_modular_sets %}
+                    <div class="set-infos-panel" id="infos-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+                        <strong>Cartes différentes :</strong> {{ modular_set_stats[set.code].nbDiff }} &nbsp;|&nbsp;
+                        <strong>Nombre total de cartes :</strong> {{ modular_set_stats[set.code].nbTotal }} &nbsp;|&nbsp;
+                        <strong>Total boost :</strong> {{ modular_set_stats[set.code].totalBoost }} &nbsp;|&nbsp;
+                        <strong>Total boost étoile :</strong> {{ modular_set_stats[set.code].totalBoostStar }} &nbsp;|&nbsp;
+                        <strong>Moyenne boost :</strong> {{ modular_set_stats[set.code].avgBoost }}
+                    </div>
+                {% endfor %}
+            </div>
+            <div>
+                {% for set in filtered_modular_sets %}
+                    <div class="set-cards-panel" id="cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+                        <h4 style="margin-bottom:18px;">Cartes du set : {{ set.name }}</h4>
+                        <div class="row">
+                            {% for card in modular_cards_by_set[set.code]|default([]) %}
+                                {% if loop.index0 is divisible by(2) %}
+                                    <div class="clearfix"></div>
+                                {% endif %}
+                                <div class="card-panel-col">
+                                    <div class="card-panel-title">
+                                        {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
+                                        {{ card.name }}
+                                    </div>
+                                    <div class="card-panel">
+                                        <div class="card-panel-content">
+                                            <div class="card-panel-info">
+                                                <strong>Type :</strong> {{ card.type }}<br>
+                                                <strong>Quantité :</strong> {{ card.quantity }}<br>
+                                                <strong>Boost :</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
+                                            </div>
+                                            <div class="card-panel-img">
+                                                <img src="{{ card.imagesrc }}" alt="{{ card.name }}">
+                                            </div>
+                                        </div>
+                                        <div class="card-panel-pack">
+                                            <strong>Pack :</strong> {{ card.pack }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="tab-villain-content" style="display:none;">
+            {# --- INFOS VILLAIN --- #}
+            <div>
+                {% for set in filtered_villain_sets %}
+                    <div class="villain-cards-panel" id="villain-cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+                        <div class="villain-traits-panel" id="villain-traits-{{ set.code }}" style="margin: 12px 0 18px 0; font-size: 1.05em; background:rgb(215, 195, 216); border-radius: 8px; padding: 12px 18px; color: #222;">
+                            <strong>Traits du set :</strong>
+                            {% if villain_traits_by_set[set.code] is not empty %}
+                                {{ villain_traits_by_set[set.code]|join(', ') }}
+                            {% else %}
+                                <em>Aucun trait</em>
                             {% endif %}
-                            <div class="card-panel-col">
-                                <div class="card-panel-title" style="background: linear-gradient(90deg, #a080c6 0%, #e0c3fc 100%); color: #fff; border-radius: 4px; padding: 4px 10px;">
-                                    {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
-                                    {{ card.name }}
-                                </div>
-                                <div class="card-panel">
-                                    <div class="card-panel-content">
-                                        <div class="card-panel-info">
-                                            <strong>Type :</strong> {{ card.type }}<br>
-                                            <strong>Quantité :</strong> {{ card.quantity or '-' }}<br>
-                                            <strong>Boost :</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
+                        </div>
+                        <div class="villain-set-infos-panel" id="villain-infos-{{ set.code }}" style="margin-bottom: 18px; font-size: 1.05em; background:#a080c6; color: #fff; border-radius: 8px; padding: 12px 18px;">
+                            <strong>Cartes différentes :</strong> {{ villain_set_stats[set.code].nbDiff }} &nbsp;|&nbsp;
+                            <strong>Nombre total de cartes :</strong> {{ villain_set_stats[set.code].nbTotal }} &nbsp;|&nbsp;
+                            <strong>Total boost :</strong> {{ villain_set_stats[set.code].totalBoost }} &nbsp;|&nbsp;
+                            <strong>Total boost étoile :</strong> {{ villain_set_stats[set.code].totalBoostStar }} &nbsp;|&nbsp;
+                            <strong>Moyenne boost :</strong> {{ villain_set_stats[set.code].avgBoost }}
+                        </div>
+                        
+                         <h4 style="margin-bottom:18px;">
+                            Cartes du set villain : {{ set.name }}
+                        </h4>
+                        <div class="row">
+                            {% for card in villain_cards_by_set[set.code]|default([]) %}
+                                {% if loop.index0 is divisible by(2) %}
+                                    <div class="clearfix"></div>
+                                {% endif %}
+                                <div class="card-panel-col">
+                                    <div class="card-panel-title" style="background: linear-gradient(90deg, #a080c6 0%, #e0c3fc 100%); color: #fff; border-radius: 4px; padding: 4px 10px;">
+                                        {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
+                                        {{ card.name }}
+                                    </div>
+                                    <div class="card-panel">
+                                        <div class="card-panel-content">
+                                            <div class="card-panel-info">
+                                                <strong>Type :</strong> {{ card.type }}<br>
+                                                <strong>Quantité :</strong> {{ card.quantity }}<br>
+                                                <strong>Boost :</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
+                                            </div>
+                                            <div class="card-panel-img">
+                                                <img src="{{ card.imagesrc }}" alt="{{ card.name }}">
+                                            </div>
                                         </div>
-                                        <div class="card-panel-img">
-                                            <img src="{{ card.imagesrc }}" alt="{{ card.name }}">
+                                        <div class="card-panel-pack">
+                                            <strong>Pack :</strong> {{ card.pack }}
                                         </div>
                                     </div>
-                                    <div class="card-panel-pack">
-                                        <strong>Pack :</strong> {{ card.pack }}
-                                    </div>
                                 </div>
-                            </div>
-                        {% endfor %}
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-        const btn = document.getElementById('toggle-stats-btn');
-        const panel = document.getElementById('slide-panel-stats');
-        let open = false;
-        btn.addEventListener('click', function() {
-            open = !open;
-            if(open) {
-                panel.style.maxHeight = panel.scrollHeight + 60 + "px";
-                btn.textContent = "Masquer les statistiques de tous les sets";
-            } else {
-                panel.style.maxHeight = "0";
-                btn.textContent = "Afficher les statistiques de tous les sets modulaires";
-            }
-        });
-
-       
-        function showSetCards(setCode) {
-            document.querySelectorAll('.set-cards-panel').forEach(function(panel) {
-                panel.style.display = 'none';
-            });
-            var panel = document.getElementById('cards-' + setCode);
-            if(panel) panel.style.display = '';
-            document.querySelectorAll('.set-infos-panel').forEach(function(panel) {
-                panel.style.display = 'none';
-            });
-            var infos = document.getElementById('infos-' + setCode);
-            if(infos) infos.style.display = '';
-            document.querySelectorAll('.set-traits-panel').forEach(function(panel) {
-                panel.style.display = 'none';
-            });
-            var traits = document.getElementById('traits-' + setCode);
-            if(traits) traits.style.display = '';
-        }
-        document.getElementById('modular-sets').addEventListener('change', function() {
-            showSetCards(this.value);
-        });
-        window.addEventListener('DOMContentLoaded', function() {
-            showSetCards(document.getElementById('modular-sets').value);
-        });
-    </script>
-
-    <script>
-    function showVillainSet(setCode) {
-        document.querySelectorAll('.villain-cards-panel').forEach(function(panel) {
-            panel.style.display = 'none';
-        });
-        var panel = document.getElementById('villain-cards-' + setCode);
-        if(panel) panel.style.display = '';
+document.getElementById('show-villain-stats').addEventListener('click', function() {
+    var table = document.getElementById('villain-stats-table');
+    var btn = document.getElementById('show-villain-stats');
+    if (table.style.display === 'none' || table.style.display === '') {
+        table.style.display = 'block';
+        btn.textContent = 'Masquer les stats de tous les sets villain';
+    } else {
+        table.style.display = 'none';
+        btn.textContent = 'Afficher les stats de tous les sets villain';
     }
-    document.getElementById('villain-sets').addEventListener('change', function() {
-        showVillainSet(this.value);
-    });
-    window.addEventListener('DOMContentLoaded', function() {
-        showVillainSet(document.getElementById('villain-sets').value);
-    });
-    </script>
-
-    <script>
-function updateCombinedStats() {
-    var modularCode = document.getElementById('modular-sets').value;
-    var villainCode = document.getElementById('villain-sets').value;
-    var modularStats = window.modular_set_stats && window.modular_set_stats[modularCode] ? window.modular_set_stats[modularCode] : {nbDiff:0,nbTotal:0,totalBoost:0,totalBoostStar:0,avgBoost:'0.00'};
-    var villainStats = window.villain_set_stats && window.villain_set_stats[villainCode] ? window.villain_set_stats[villainCode] : {nbDiff:0,nbTotal:0,totalBoost:0,totalBoostStar:0,avgBoost:'0.00'};
-    var sum_nbDiff = modularStats.nbDiff + villainStats.nbDiff;
-    var sum_nbTotal = modularStats.nbTotal + villainStats.nbTotal;
-    var sum_totalBoost = modularStats.totalBoost + villainStats.totalBoost;
-    var sum_totalBoostStar = modularStats.totalBoostStar + villainStats.totalBoostStar;
-    var sum_avgBoost = sum_nbTotal > 0 ? ((modularStats.totalBoost + villainStats.totalBoost) / sum_nbTotal).toFixed(2) : '0.00';
-    document.getElementById('sum-nbDiff').textContent = sum_nbDiff;
-    document.getElementById('sum-nbTotal').textContent = sum_nbTotal;
-    document.getElementById('sum-totalBoost').textContent = sum_totalBoost;
-    document.getElementById('sum-totalBoostStar').textContent = sum_totalBoostStar;
-    document.getElementById('sum-avgBoost').textContent = sum_avgBoost;
-}
-
-// Expose stats to JS
-window.modular_set_stats = {{ modular_set_stats|json_encode|raw }};
-window.villain_set_stats = {{ villain_set_stats|json_encode|raw }};
-
-document.getElementById('modular-sets').addEventListener('change', updateCombinedStats);
-document.getElementById('villain-sets').addEventListener('change', updateCombinedStats);
-window.addEventListener('DOMContentLoaded', updateCombinedStats);
-</script>
-
-    <script>
+});
+const btn = document.getElementById('toggle-stats-btn');
+const panel = document.getElementById('slide-panel-stats');
+let open = false;
+btn.addEventListener('click', function() {
+    open = !open;
+    if(open) {
+        panel.style.maxHeight = panel.scrollHeight + 60 + "px";
+        btn.textContent = "Masquer les statistiques de tous les sets modulaires";
+    } else {
+        panel.style.maxHeight = "0";
+        btn.textContent = "Afficher les statistiques de tous les sets modulaires";
+    }
+});
 function showTab(tab) {
     var modularBtn = document.getElementById('tab-modular');
     var villainBtn = document.getElementById('tab-villain');
@@ -387,100 +310,172 @@ function showTab(tab) {
 document.getElementById('tab-modular').addEventListener('click', function() { showTab('modular'); });
 document.getElementById('tab-villain').addEventListener('click', function() { showTab('villain'); });
 window.addEventListener('DOMContentLoaded', function() { showTab('modular'); });
+
+// Modular set selection
+document.getElementById('modular-sets').addEventListener('change', function() {
+    var code = this.value;
+    // Hide all modular panels
+    document.querySelectorAll('.set-traits-panel, .set-infos-panel, .set-cards-panel').forEach(function(el) {
+        el.style.display = 'none';
+    });
+    // Show selected modular panels
+    var traits = document.getElementById('traits-' + code);
+    var infos = document.getElementById('infos-' + code);
+    var cards = document.getElementById('cards-' + code);
+    if(traits) traits.style.display = '';
+    if(infos) infos.style.display = '';
+    if(cards) cards.style.display = '';
+});
+
+// Villain set selection
+document.getElementById('villain-sets').addEventListener('change', function() {
+    var code = this.value;
+    // Hide all villain panels
+    document.querySelectorAll('.villain-traits-panel, .villain-set-infos-panel, .villain-cards-panel').forEach(function(el) {
+        el.style.display = 'none';
+    });
+    // Show selected villain panels
+    var traits = document.getElementById('villain-traits-' + code);
+    var infos = document.getElementById('villain-infos-' + code);
+    var cards = document.getElementById('villain-cards-' + code);
+    if(traits) traits.style.display = '';
+    if(infos) infos.style.display = '';
+    if(cards) cards.style.display = '';
+});
+
+// Fonction pour recalculer et afficher les stats globales
+function updateCombinedStats() {
+    // Récupère les codes sélectionnés
+    var modularCode = document.getElementById('modular-sets').value;
+    var villainCode = document.getElementById('villain-sets').value;
+
+    // Récupère les stats depuis les variables Twig rendues dans le template
+    var modularStats = window.allModularStats && window.allModularStats[modularCode] ? window.allModularStats[modularCode] : {nbDiff:0,nbTotal:0,totalBoost:0,totalBoostStar:0,avgBoost:'0.00'};
+    var villainStats = window.allVillainStats && window.allVillainStats[villainCode] ? window.allVillainStats[villainCode] : {nbDiff:0,nbTotal:0,totalBoost:0,totalBoostStar:0,avgBoost:'0.00'};
+
+    var sum_nbDiff = modularStats.nbDiff + villainStats.nbDiff;
+    var sum_nbTotal = modularStats.nbTotal + villainStats.nbTotal;
+    var sum_totalBoost = modularStats.totalBoost + villainStats.totalBoost;
+    var sum_totalBoostStar = modularStats.totalBoostStar + villainStats.totalBoostStar;
+    var sum_avgBoost = sum_nbTotal > 0 ? ((modularStats.totalBoost + villainStats.totalBoost) / sum_nbTotal).toFixed(2) : '0.00';
+
+    document.getElementById('sum-nbDiff').textContent = sum_nbDiff;
+    document.getElementById('sum-nbTotal').textContent = sum_nbTotal;
+    document.getElementById('sum-totalBoost').textContent = sum_totalBoost;
+    document.getElementById('sum-totalBoostStar').textContent = sum_totalBoostStar;
+    document.getElementById('sum-avgBoost').textContent = sum_avgBoost;
+}
+
+// Expose les stats PHP côté JS pour accès rapide
+window.allModularStats = {{ modular_set_stats|json_encode|raw }};
+window.allVillainStats = {{ villain_set_stats|json_encode|raw }};
+
+// Ajoute le recalcul lors du changement de set
+document.getElementById('modular-sets').addEventListener('change', function() {
+    // ... panels ...
+    updateCombinedStats();
+});
+document.getElementById('villain-sets').addEventListener('change', function() {
+    // ... panels ...
+    updateCombinedStats();
+});
+
+// Appelle au chargement pour initialiser
+window.addEventListener('DOMContentLoaded', function() {
+    updateCombinedStats();
+});
 </script>
 
-    <style>
+<style>
+    .card-panel-col {
+        width: 50%;
+        float: left;
+        box-sizing: border-box;
+        padding: 8px;
+    }
+    .card-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: linear-gradient(135deg, #e3f0ff 0%,rgb(145, 155, 172) 100%);
+        border-radius: 0px 0px 8px 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        min-height: 220px;
+        position: relative;
+    }
+    .card-panel-title {
+        font-weight: bold;
+        font-size: 1.2em;
+        margin-bottom: 0px;
+        background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 6px 6px 0 0;
+        text-align: left;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+        letter-spacing: 0.5px;
+    }
+    .card-panel-content {
+        display: flex;
+        flex: 1;
+    }
+    .card-panel-info {
+        font-size: 0.97em;
+        color: #444;
+        flex: 1;
+    }
+    .card-panel-img {
+        margin-left: 20px;
+    }
+    .card-panel-img img {
+        max-width: 120px;
+        height: auto;
+        max-height: 180px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .card-panel-pack {
+        margin-top: 12px;
+        font-size: 0.95em;
+        color: #111;
+        font-style: italic;
+        text-align: right;
+    }
+    .icon-unique {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        background: url('/bundles/icons/unique.svg') no-repeat center center;
+        background-size: contain;
+        vertical-align: middle;
+        margin-right: 0px;
+    }
+    @media (max-width: 900px) {
+        div[style*="margin-left:200px"] {
+            margin-left: 10px !important;
+            margin-right: 10px !important;
+        }
         .card-panel-col {
-            width: 50%;
-            float: left;
-            box-sizing: border-box;
-            padding: 8px;
+            width: 100%;
         }
-        .card-panel {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            background: linear-gradient(135deg, #e3f0ff 0%,rgb(145, 155, 172) 100%);
-            border-radius: 0px 0px 8px 8px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            min-height: 220px;
-            position: relative;
-        }
-        .card-panel-title {
-            font-weight: bold;
-            font-size: 1.2em;
-            margin-bottom: 0px;
-            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 6px 6px 0 0;
-            text-align: left;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
-            letter-spacing: 0.5px;
-        }
-        .card-panel-content {
-            display: flex;
-            flex: 1;
-        }
-        .card-panel-info {
-            font-size: 0.97em;
-            color: #444;
-            flex: 1;
-        }
-        .card-panel-img {
-            margin-left: 20px;
-        }
-        .card-panel-img img {
-            max-width: 120px;
-            height: auto;
-            max-height: 180px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .card-panel-pack {
-            margin-top: 12px;
-            font-size: 0.95em;
-            color: #111; /* Texte en noir */
-            font-style: italic;
-            text-align: right;
-        }
-        .icon-unique {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            background: url('/bundles/icons/unique.svg') no-repeat center center;
-            background-size: contain;
-            vertical-align: middle;
-            margin-right: 0px;
-        }
-        @media (max-width: 900px) {
-            div[style*="margin-left:200px"] {
-                margin-left: 10px !important;
-                margin-right: 10px !important;
-            }
-            .card-panel-col {
-                width: 100%;
-            }
-        }
-        /* Tableau statistiques */
-        #slide-panel-stats {
-            background: linear-gradient(135deg, #e3f0ff 0%, #b3cfff 100%);
-        }
-        #slide-panel-stats h2 {
-            color: #1976d2;
-        }
-        #slide-panel-stats table thead tr {
-            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
-            color: #fff;
-        }
-        #slide-panel-stats table th {
-            background: none !important;
-        }
-        #slide-panel-stats table {
-            background: #fff;
-        }
-    </style>
-</div>
+    }
+    #slide-panel-stats {
+        background: linear-gradient(135deg, #e3f0ff 0%, #b3cfff 100%);
+    }
+    #slide-panel-stats h2 {
+        color: #1976d2;
+    }
+    #slide-panel-stats table thead tr {
+        background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+        color: #fff;
+    }
+    #slide-panel-stats table th {
+        background: none !important;
+    }
+    #slide-panel-stats table {
+        background: #fff;
+    }
+</style>
 {% endblock %}

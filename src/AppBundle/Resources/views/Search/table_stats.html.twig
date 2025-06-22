@@ -1,0 +1,53 @@
+<div style="overflow-x:auto;">
+    <table border="1" cellpadding="6" style="background:#fff; border-radius:8px; margin-top:10px; width:100%; border-collapse:collapse;">
+        <colgroup>
+            <col style="width: 18%;">
+            <col style="width: 6%; border-right:2px solid {{ color|default('#1976d2') }};">
+            <col style="width: 7%; border-right:2px solid {{ color|default('#1976d2') }};">
+            <col style="width: 7%; border-right:2px solid {{ color|default('#1976d2') }};">
+            <col style="width: 7%; border-right:2px solid {{ color|default('#1976d2') }};">
+            <col style="width: 8%; border-right:4px double {{ color|default('#1976d2') }};">
+            {% for type, label in type_label %}
+                <col style="width: {{ 47 // type_label|length }}%;">
+            {% endfor %}
+        </colgroup>
+        <thead>
+            <tr style="background: linear-gradient(90deg, {{ color|default('#1976d2') }} 0%, {{ color2|default('#64b5f6') }} 100%); color: #fff;">
+                <th>Set</th>
+                <th style="text-align:center; border-right:2px solid {{ color|default('#1976d2') }};">Different card</th>
+                <th style="text-align:center; border-right:2px solid {{ color|default('#1976d2') }};">Total card</th>
+                <th style="text-align:center; border-right:2px solid {{ color|default('#1976d2') }};">Total boost</th>
+                <th style="text-align:center; border-right:2px solid {{ color|default('#1976d2') }};">Total boost star</th>
+                <th style="text-align:center; border-right:4px double {{ color|default('#1976d2') }};">Average boost</th>
+                {% for type, label in type_label %}
+                    <th style="text-align:center;">{{ label|capitalize }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for set in sets %}
+                {% set set_cards = cards_by_set[set.code]|default([]) %}
+                {% set nbDiff = set_cards|length %}
+                {% set nbTotal = set_cards|reduce((carry, card) => carry + (card.quantity|default(1)), 0) %}
+                {% set totalBoost = set_cards|reduce((carry, card) => carry + (card.boost|default(0) * card.quantity|default(1)), 0) %}
+                {% set totalBoostStar = set_cards|reduce((carry, card) => carry + (card.boostStar ? card.quantity|default(1) : 0), 0) %}
+                {% set avgBoost = nbTotal > 0 ? (totalBoost / nbTotal)|number_format(2, '.', '') : '0.00' %}
+                <tr>
+                    <td style="font-weight:bold; padding-left:10px;">{{ set.name }}</td>
+                    <td style="text-align:center; border-left:2px solid {{ color|default('#1976d2') }};">{{ nbDiff }}</td>
+                    <td style="text-align:center; border-left:2px solid {{ color|default('#1976d2') }};">{{ nbTotal }}</td>
+                    <td style="text-align:center; border-left:2px solid {{ color|default('#1976d2') }};">{{ totalBoost }}</td>
+                    <td style="text-align:center; border-left:2px solid {{ color|default('#1976d2') }};">{{ totalBoostStar }}</td>
+                    <td style="text-align:center; border-left:2px solid {{ color|default('#1976d2') }}; border-right:4px double {{ color|default('#1976d2') }};">{{ avgBoost }}</td>
+                    {% for type, label in type_label %}
+                        {% if loop.first %}
+                            <td style="text-align:center; border-left:4px double {{ color|default('#1976d2') }};">{{ set_type_counts[set.code][type]|default(0) }}</td>
+                        {% else %}
+                            <td style="text-align:center; border-left:2px solid {{ color|default('#1976d2') }};">{{ set_type_counts[set.code][type]|default(0) }}</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
