@@ -106,12 +106,46 @@
 
     <div style="height: 24px;"></div>
 
-    <label for="modular-sets">Sélectionnez un set modular :</label>
-    <select id="modular-sets" name="modular_set">
-        {% for set in filtered_modular_sets %}
-            <option value="{{ set.code }}">{{ set.name }}</option>
-        {% endfor %}
-    </select>
+    <div id="combined-stats" style="margin-bottom: 24px; font-size: 1.08em; background: #111; color: #fff; border-radius: 8px; padding: 14px 22px; font-weight: bold;">
+        {% set modular_code = filtered_modular_sets|first ? filtered_modular_sets|first.code : '' %}
+        {% set villain_code = filtered_villain_sets|first ? filtered_villain_sets|first.code : '' %}
+        {% set modular_stats = modular_set_stats[modular_code]|default({'nbDiff':0,'nbTotal':0,'totalBoost':0,'totalBoostStar':0,'avgBoost':'0.00'}) %}
+        {% set villain_stats = villain_set_stats[villain_code]|default({'nbDiff':0,'nbTotal':0,'totalBoost':0,'totalBoostStar':0,'avgBoost':'0.00'}) %}
+        {% set sum_nbDiff = modular_stats.nbDiff + villain_stats.nbDiff %}
+        {% set sum_nbTotal = modular_stats.nbTotal + villain_stats.nbTotal %}
+        {% set sum_totalBoost = modular_stats.totalBoost + villain_stats.totalBoost %}
+        {% set sum_totalBoostStar = modular_stats.totalBoostStar + villain_stats.totalBoostStar %}
+        {% set sum_avgBoost = (sum_nbTotal > 0) 
+            ? ((modular_stats.totalBoost + villain_stats.totalBoost) / sum_nbTotal)|number_format(2, '.', '') 
+            : '0.00' %}
+        <span>Statistiques combinées des sets sélectionnés :</span>
+        <span style="margin-left: 18px;">
+            <strong>Cartes différentes :</strong> <span id="sum-nbDiff">{{ sum_nbDiff }}</span> &nbsp;|&nbsp;
+            <strong>Nombre total de cartes :</strong> <span id="sum-nbTotal">{{ sum_nbTotal }}</span> &nbsp;|&nbsp;
+            <strong>Total boost :</strong> <span id="sum-totalBoost">{{ sum_totalBoost }}</span> &nbsp;|&nbsp;
+            <strong>Total boost étoile :</strong> <span id="sum-totalBoostStar">{{ sum_totalBoostStar }}</span> &nbsp;|&nbsp;
+            <strong>Moyenne boost :</strong> <span id="sum-avgBoost">{{ sum_avgBoost }}</span>
+        </span>
+    </div>
+
+    <div style="display: flex; align-items: flex-end; gap: 32px; margin-bottom: 18px;">
+        <div>
+            <label for="modular-sets"><strong>Sélectionnez un set modular :</strong></label>
+            <select id="modular-sets" name="modular_set">
+                {% for set in filtered_modular_sets %}
+                    <option value="{{ set.code }}">{{ set.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="villain-sets"><strong>Sélectionnez un set villain :</strong></label>
+            <select id="villain-sets" name="villain_set">
+                {% for set in filtered_villain_sets %}
+                    <option value="{{ set.code }}">{{ set.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
 
     <div id="set-traits-list" style="margin: 12px 0 18px 0; font-size: 1.05em; background: #e3f0ff; border-radius: 8px; padding: 12px 18px;">
         {% for set in filtered_modular_sets %}
@@ -174,6 +208,51 @@
         {% endfor %}
     </div>
 
+    <div>
+        {% for set in filtered_villain_sets %}
+            <div class="villain-cards-panel" id="villain-cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+                <h4 style="margin-bottom:18px;">
+                    Cartes du set villain : {{ set.name }}
+                </h4>
+                <div class="villain-set-infos-panel" id="villain-infos-{{ set.code }}" style="margin-bottom: 18px; font-size: 1.05em; background:#a080c6; color: #fff; border-radius: 8px; padding: 12px 18px;">
+                    <strong>Cartes différentes :</strong> {{ villain_set_stats[set.code].nbDiff }} &nbsp;|&nbsp;
+                    <strong>Nombre total de cartes :</strong> {{ villain_set_stats[set.code].nbTotal }} &nbsp;|&nbsp;
+                    <strong>Total boost :</strong> {{ villain_set_stats[set.code].totalBoost }} &nbsp;|&nbsp;
+                    <strong>Total boost étoile :</strong> {{ villain_set_stats[set.code].totalBoostStar }} &nbsp;|&nbsp;
+                    <strong>Moyenne boost :</strong> {{ villain_set_stats[set.code].avgBoost }}
+                </div>
+                <div class="row">
+                    {% for card in villain_cards_by_set[set.code]|default([]) %}
+                        {% if loop.index0 is divisible by(2) %}
+                            <div class="clearfix"></div>
+                        {% endif %}
+                        <div class="card-panel-col">
+                            <div class="card-panel-title" style="background: linear-gradient(90deg, #a080c6 0%, #e0c3fc 100%); color: #fff; border-radius: 4px; padding: 4px 10px;">
+                                {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
+                                {{ card.name }}
+                            </div>
+                            <div class="card-panel">
+                                <div class="card-panel-content">
+                                    <div class="card-panel-info">
+                                        <strong>Type :</strong> {{ card.type }}<br>
+                                        <strong>Quantité :</strong> {{ card.quantity or '-' }}<br>
+                                        <strong>Boost :</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
+                                    </div>
+                                    <div class="card-panel-img">
+                                        <img src="{{ card.imagesrc }}" alt="{{ card.name }}">
+                                    </div>
+                                </div>
+                                <div class="card-panel-pack">
+                                    <strong>Pack :</strong> {{ card.pack }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
     <script>
         const btn = document.getElementById('toggle-stats-btn');
         const panel = document.getElementById('slide-panel-stats');
@@ -185,7 +264,7 @@
                 btn.textContent = "Masquer les statistiques de tous les sets";
             } else {
                 panel.style.maxHeight = "0";
-                btn.textContent = "Afficher les statistiques de tous les sets";
+                btn.textContent = "Afficher les statistiques de tous les sets modulaires";
             }
         });
 
@@ -214,6 +293,49 @@
             showSetCards(document.getElementById('modular-sets').value);
         });
     </script>
+
+    <script>
+    function showVillainSet(setCode) {
+        document.querySelectorAll('.villain-cards-panel').forEach(function(panel) {
+            panel.style.display = 'none';
+        });
+        var panel = document.getElementById('villain-cards-' + setCode);
+        if(panel) panel.style.display = '';
+    }
+    document.getElementById('villain-sets').addEventListener('change', function() {
+        showVillainSet(this.value);
+    });
+    window.addEventListener('DOMContentLoaded', function() {
+        showVillainSet(document.getElementById('villain-sets').value);
+    });
+    </script>
+
+    <script>
+function updateCombinedStats() {
+    var modularCode = document.getElementById('modular-sets').value;
+    var villainCode = document.getElementById('villain-sets').value;
+    var modularStats = window.modular_set_stats && window.modular_set_stats[modularCode] ? window.modular_set_stats[modularCode] : {nbDiff:0,nbTotal:0,totalBoost:0,totalBoostStar:0,avgBoost:'0.00'};
+    var villainStats = window.villain_set_stats && window.villain_set_stats[villainCode] ? window.villain_set_stats[villainCode] : {nbDiff:0,nbTotal:0,totalBoost:0,totalBoostStar:0,avgBoost:'0.00'};
+    var sum_nbDiff = modularStats.nbDiff + villainStats.nbDiff;
+    var sum_nbTotal = modularStats.nbTotal + villainStats.nbTotal;
+    var sum_totalBoost = modularStats.totalBoost + villainStats.totalBoost;
+    var sum_totalBoostStar = modularStats.totalBoostStar + villainStats.totalBoostStar;
+    var sum_avgBoost = sum_nbTotal > 0 ? ((modularStats.totalBoost + villainStats.totalBoost) / sum_nbTotal).toFixed(2) : '0.00';
+    document.getElementById('sum-nbDiff').textContent = sum_nbDiff;
+    document.getElementById('sum-nbTotal').textContent = sum_nbTotal;
+    document.getElementById('sum-totalBoost').textContent = sum_totalBoost;
+    document.getElementById('sum-totalBoostStar').textContent = sum_totalBoostStar;
+    document.getElementById('sum-avgBoost').textContent = sum_avgBoost;
+}
+
+// Expose stats to JS
+window.modular_set_stats = {{ modular_set_stats|json_encode|raw }};
+window.villain_set_stats = {{ villain_set_stats|json_encode|raw }};
+
+document.getElementById('modular-sets').addEventListener('change', updateCombinedStats);
+document.getElementById('villain-sets').addEventListener('change', updateCombinedStats);
+window.addEventListener('DOMContentLoaded', updateCombinedStats);
+</script>
 
     <style>
         .card-panel-col {

@@ -238,6 +238,56 @@ class SearchController extends Controller
 		    ->getRepository('AppBundle:Card')
 		    ->findAll();
 
+		// Filtrage des cartes pour ne garder que celles des sets villains
+		$villain_cards_by_set = [];
+		foreach ($filtered_villain_sets as $set) {
+			$set_code = $set->getCode();
+			$villain_cards_by_set[$set_code] = [];
+			foreach ($cards as $card) {
+				if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
+					$type_name = $card->getType() ? $card->getType()->getName() : '';
+					$pack_name = $card->getPack() ? $card->getPack()->getName() : '';
+					$villain_cards_by_set[$set_code][] = [
+						'name' => $card->getName(),
+						'imagesrc' => '/bundles/cards/' . $card->getCode() . '.jpg',
+						'quantity' => method_exists($card, 'getQuantity') ? $card->getQuantity() : 1,
+						'type' => $type_name,
+						'boost' => method_exists($card, 'getBoost') ? $card->getBoost() : 0,
+						'boostStar' => method_exists($card, 'getBoostStar') ? $card->getBoostStar() : false,
+						'pack' => $pack_name,
+						'isUnique' => method_exists($card, 'getIsUnique') ? $card->getIsUnique() : false,
+					];
+				}
+			}
+		}
+
+		$villain_set_stats = [];
+		foreach ($filtered_villain_sets as $set) {
+			$set_code = $set->getCode();
+			$set_cards = $villain_cards_by_set[$set_code];
+			$nbDiff = count($set_cards);
+			$nbTotal = 0;
+			$totalBoost = 0;
+			$totalBoostStar = 0;
+			foreach ($set_cards as $card) {
+				$qty = $card['quantity'];
+				$nbTotal += $qty;
+				$totalBoost += ($card['boost'] ?: 0) * $qty;
+				if ($card['boostStar']) {
+					$totalBoostStar += $qty;
+				}
+			}
+			$avgBoost = $nbTotal > 0 ? number_format($totalBoost / $nbTotal, 2, '.', '') : '0.00';
+			$villain_set_stats[$set_code] = [
+				'nbDiff' => $nbDiff,
+				'nbTotal' => $nbTotal,
+				'totalBoost' => $totalBoost,
+				'totalBoostStar' => $totalBoostStar,
+				'avgBoost' => $avgBoost,
+			];
+		}
+
+		
 		// --- Statistiques par type ---
 		$type_label = [
 			'Minion' => 'minion',
@@ -435,6 +485,8 @@ class SearchController extends Controller
 			"modular_cards_by_set" => $cards_by_set,
 			"modular_set_stats" => $set_stats,
 			"filtered_villain_sets" => $filtered_villain_sets,
+			"villain_cards_by_set" => $villain_cards_by_set,
+			"villain_set_stats" => $villain_set_stats,
 		], $response);
 	}
 
