@@ -199,109 +199,134 @@ class SearchController extends Controller
 		$response->setPublic();
 		$response->setMaxAge($this->container->getParameter('cache_expiration'));
 
-		// Récupère tous les sets dont le type est 'modular'
 		$em = $this->getDoctrine()->getManager();
-		$qb = $em->createQueryBuilder();
-		$qb->select('s')
-			->from('AppBundle:Cardset', 's')
-			->join('s.cardset_type', 't')
-			->where('t.code = :type')
-			->setParameter('type', 'modular');
-		$sets = $qb->getQuery()->getResult();
 
-		// Récupère tous les sets dont le type est 'villain'
-		$qb_villain = $em->createQueryBuilder();
-		$qb_villain->select('s')
-		    ->from('AppBundle:Cardset', 's')
-		    ->join('s.cardset_type', 't')
-		    ->where('t.code = :type')
-		    ->setParameter('type', 'villain');
-		$villain_sets = $qb_villain->getQuery()->getResult();
+		// Récupère tous les sets par type
+		$getSetsByType = function($type) use ($em) {
+			$qb = $em->createQueryBuilder();
+			$qb->select('s')
+				->from('AppBundle:Cardset', 's')
+				->join('s.cardset_type', 't')
+				->where('t.code = :type')
+				->setParameter('type', $type);
+			return $qb->getQuery()->getResult();
+		};
 
-		// Filtrage et tri alphabétique des sets villain
-		$filtered_villain_sets = array_filter($villain_sets, function($set) {
-		    $name = strtolower($set->getName());
-		    foreach([
-		        'campaign', 'shield executive board', 's.h.i.e.l.d. executive board', 'expert kang',
-		        'brawler', 'commander', 'defender', 'mission', 'the market', 'shield tech',
-		        'challenge', 'peacekeeper', 'community service', 'bad publicity', 'longshot', 'hope summers'
-		    ] as $forbidden) {
-		        if (strpos($name, $forbidden) !== false) return false;
-		    }
-		    return true;
-		});
-		usort($filtered_villain_sets, function($a, $b) {
-		    return strcasecmp($a->getName(), $b->getName());
-		});
+		$sets = $getSetsByType('modular');
+		$villain_sets = $getSetsByType('villain');
 
-		$cards = $this->getDoctrine()
-		    ->getRepository('AppBundle:Card')
-		    ->findAll();
+		// Filtrage et tri alphabétique des sets
+		$filterSets = function($sets) {
+			$forbidden = [
+				'campaign', 'shield executive board', 's.h.i.e.l.d. executive board', 'expert kang',
+				'brawler', 'commander', 'defender', 'mission', 'the market', 'shield tech',
+				'challenge', 'peacekeeper', 'community service', 'bad publicity', 'longshot', 'hope summers'
+			];
+			$filtered = array_filter($sets, function($set) use ($forbidden) {
+				$name = strtolower($set->getName());
+				foreach($forbidden as $f) {
+					if (strpos($name, $f) !== false) return false;
+				}
+				return true;
+			});
+			usort($filtered, function($a, $b) {
+				return strcasecmp($a->getName(), $b->getName());
+			});
+			return $filtered;
+		};
 
-		// Filtrage des cartes pour ne garder que celles des sets villains
-		$villain_cards_by_set = [];
-		foreach ($filtered_villain_sets as $set) {
-		    $set_code = $set->getCode();
-		    $villain_cards_by_set[$set_code] = [];
-		    foreach ($cards as $card) {
-		        // Exclure les cartes de type 'villain' et 'Main Scheme'
-		        $type_name = $card->getType() ? $card->getType()->getName() : '';
-		        if (
-		            $card->getCardset() && $card->getCardset()->getCode() === $set_code &&
-		            strtolower($type_name) !== 'villain' &&
-		            strtolower($type_name) !== 'main scheme'
-		        ) {
-		            $pack_name = $card->getPack() ? $card->getPack()->getName() : '';
-		            $quantity = $card->getQuantity();
-		            $villain_cards_by_set[$set_code][] = [
-		                'name' => $card->getName(),
-		                'imagesrc' => '/bundles/cards/' . $card->getCode() . '.jpg',
-		                'quantity' => $quantity,
-		                'type' => $type_name,
-		                'boost' => method_exists($card, 'getBoost') ? $card->getBoost() : 0,
-		                'boostStar' => method_exists($card, 'getBoostStar') ? $card->getBoostStar() : false,
-		                'pack' => $pack_name,
-		                'isUnique' => method_exists($card, 'getIsUnique') ? $card->getIsUnique() : false,
-		            ];
-		        }
-		    }
-		}
+		$filtered_sets = $filterSets($sets);
+		$filtered_villain_sets = $filterSets($villain_sets);
 
-		$villain_set_stats = [];
-		foreach ($filtered_villain_sets as $set) {
-		    $set_code = $set->getCode();
-		    // On filtre ici pour exclure les cartes de type 'villain' ou 'main scheme'
-		    $set_cards = array_filter(
-		        $villain_cards_by_set[$set_code],
-		        function($card) {
-		            $type = strtolower($card['type']);
-		            return $type !== 'villain' && $type !== 'main scheme';
-		        }
-		    );
-		    $nbDiff = count($set_cards);
-		    $nbTotal = 0;
-		    $totalBoost = 0;
-		    $totalBoostStar = 0;
-		    foreach ($set_cards as $card) {
-		        $qty = $card['quantity'];
-		        $nbTotal += $qty;
-		        $totalBoost += ($card['boost'] ?: 0) * $qty;
-		        if ($card['boostStar']) {
-		            $totalBoostStar += $qty;
-		        }
-		    }
-		    $avgBoost = $nbTotal > 0 ? number_format($totalBoost / $nbTotal, 2, '.', '') : '0.00';
-		    $villain_set_stats[$set_code] = [
-		        'nbDiff' => $nbDiff,
-		        'nbTotal' => $nbTotal,
-		        'totalBoost' => $totalBoost,
-		        'totalBoostStar' => $totalBoostStar,
-		        'avgBoost' => $avgBoost,
-		    ];
-		}
+		$cards = $this->getDoctrine()->getRepository('AppBundle:Card')->findAll();
 
-		
-		// --- Statistiques par type ---
+		// Utilitaires factorisés
+		$getCardQuantity = function($card) {
+			return method_exists($card, 'getQuantity') && $card->getQuantity() !== null ? $card->getQuantity() : 1;
+		};
+		$getCardType = function($card) {
+			return $card->getType() ? $card->getType()->getName() : '';
+		};
+		$getCardPack = function($card) {
+			return $card->getPack() ? $card->getPack()->getName() : '';
+		};
+
+		// Génère un tableau [set_code => [cards...]] pour un type de set
+		$cardsBySet = function($sets, $cards, $excludeTypes = []) use ($getCardType, $getCardPack, $getCardQuantity) {
+			$result = [];
+			foreach ($sets as $set) {
+				$set_code = $set->getCode();
+				$result[$set_code] = [];
+				foreach ($cards as $card) {
+					if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
+						$type_name = $getCardType($card);
+						if (in_array(strtolower($type_name), $excludeTypes)) continue;
+						$result[$set_code][] = [
+							'name' => $card->getName(),
+							'imagesrc' => '/bundles/cards/' . $card->getCode() . '.jpg',
+							'quantity' => $getCardQuantity($card),
+							'type' => $type_name,
+							'boost' => method_exists($card, 'getBoost') ? $card->getBoost() : 0,
+							'boostStar' => method_exists($card, 'getBoostStar') ? $card->getBoostStar() : false,
+							'pack' => $getCardPack($card),
+							'isUnique' => method_exists($card, 'getIsUnique') ? $card->getIsUnique() : false,
+						];
+					}
+				}
+			}
+			return $result;
+		};
+
+		// Stats par set
+		$setStats = function($cards_by_set) {
+			$stats = [];
+			foreach ($cards_by_set as $set_code => $set_cards) {
+				$nbDiff = count($set_cards);
+				$nbTotal = 0;
+				$totalBoost = 0;
+				$totalBoostStar = 0;
+				foreach ($set_cards as $card) {
+					$qty = $card['quantity'];
+					$nbTotal += $qty;
+					$totalBoost += ($card['boost'] ?: 0) * $qty;
+					if ($card['boostStar']) $totalBoostStar += $qty;
+				}
+				$avgBoost = $nbTotal > 0 ? number_format($totalBoost / $nbTotal, 2, '.', '') : '0.00';
+				$stats[$set_code] = [
+					'nbDiff' => $nbDiff,
+					'nbTotal' => $nbTotal,
+					'totalBoost' => $totalBoost,
+					'totalBoostStar' => $totalBoostStar,
+					'avgBoost' => $avgBoost,
+				];
+			}
+			return $stats;
+		};
+
+		// Traits par set
+		$traitsBySet = function($sets, $cards) {
+			$result = [];
+			foreach ($sets as $set) {
+				$set_code = $set->getCode();
+				$traits = [];
+				foreach ($cards as $card) {
+					if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
+						$card_traits = $card->getTraits();
+						if (is_string($card_traits) && trim($card_traits) !== '') {
+							foreach (explode('.', $card_traits) as $trait) {
+								$trait = trim($trait);
+								if ($trait !== '') $traits[$trait] = true;
+							}
+						}
+					}
+				}
+				ksort($traits);
+				$result[$set_code] = array_keys($traits);
+			}
+			return $result;
+		};
+
+		// Nombre de cartes par type pour chaque set
 		$type_label = [
 			'Minion' => 'minion',
 			'Treachery' => 'treachery',
@@ -315,232 +340,64 @@ class SearchController extends Controller
 			'Event' => 'événement'
 		];
 
-		// Filtrage et tri alphabétique des sets (désormais dans le contrôleur)
-		$filtered_sets = array_filter($sets, function($set) {
-			$name = strtolower($set->getName());
-			foreach([
-				'campaign', 'shield executive board', 's.h.i.e.l.d. executive board', 'expert kang',
-				'brawler', 'commander', 'defender', 'mission', 'the market', 'shield tech',
-				'challenge', 'peacekeeper', 'community service', 'bad publicity', 'longshot', 'hope summers'
-			] as $forbidden) {
-				if (strpos($name, $forbidden) !== false) return false;
-			}
-			return true;
-		});
-		// Tri alphabétique
-		usort($filtered_sets, function($a, $b) {
-			return strcasecmp($a->getName(), $b->getName());
-		});
-
-		// Préparation des stats
-		$type_max = [];
-		$type_min = [];
-		$type_avg = [];
-		$nb_sets = count($filtered_sets);
-
-		foreach ($type_label as $type => $label) {
-			$max_count = 0;
-			$max_set = '';
-			$min_count = null;
-			$min_set = '';
-			$total_count = 0;
-
-			foreach ($filtered_sets as $set) {
+		$setTypeCounts = function($sets, $cards_by_set, $type_label) {
+			$counts = [];
+			foreach ($sets as $set) {
 				$set_code = $set->getCode();
-				// Filtre les cartes du set et du type voulu
-				$set_cards = array_filter($cards, function($card) use ($set_code, $type) {
-					return $card->getCardset() && $card->getCardset()->getCode() === $set_code
-						&& $card->getType() && $card->getType()->getName() === $type;
-				});
-				$count = 0;
-				foreach ($set_cards as $card) {
-					$qty = method_exists($card, 'getQuantity') ? $card->getQuantity() : 1;
-					$count += $qty ?: 1;
-				}
-				$total_count += $count;
-				if ($count > $max_count) {
-					$max_count = $count;
-					$max_set = $set->getName();
-				}
-				if (($min_count === null || ($count < $min_count && $count > 0))) {
-					$min_count = $count;
-					$min_set = $set->getName();
+				$counts[$set_code] = [];
+				foreach ($type_label as $type => $label) {
+					$count = 0;
+					foreach ($cards_by_set[$set_code] as $card) {
+						if ($card['type'] === $type) {
+							$qty = isset($card['quantity']) && $card['quantity'] !== null ? $card['quantity'] : 1;
+							$count += $qty;
+						}
+					}
+					$counts[$set_code][$type] = $count;
 				}
 			}
-			$avg_count = $nb_sets > 0 ? number_format($total_count / $nb_sets, 2, '.', '') : '0.00';
-			$type_max[$type] = ['set' => $max_set, 'count' => $max_count, 'label' => $label];
-			$type_min[$type] = ['set' => $min_set, 'count' => $min_count, 'label' => $label];
-			$type_avg[$type] = ['avg' => $avg_count, 'label' => $label];
-		}
+			return $counts;
+		};
 
-		// Calcul du nombre de cartes par type pour chaque set
-		$set_type_counts = [];
-		foreach ($filtered_sets as $set) {
-		    $set_code = $set->getCode();
-		    $set_type_counts[$set_code] = [];
-		    foreach ($type_label as $type => $label) {
-		        $type_cards = array_filter($cards, function($card) use ($set_code, $type) {
-		            return $card->getCardset() && $card->getCardset()->getCode() === $set_code
-		                && $card->getType() && $card->getType()->getName() === $type;
-		        });
-		        $count = 0;
-		        foreach ($type_cards as $card) {
-		            $qty = method_exists($card, 'getQuantity') ? $card->getQuantity() : 1;
-		            $count += $qty ?: 1;
-		        }
-		        $set_type_counts[$set_code][$type] = $count;
-		    }
-		}
+		// --- Modular ---
+		$modular_cards_by_set = $cardsBySet($filtered_sets, $cards);
+		$modular_set_stats = $setStats($modular_cards_by_set);
+		$modular_traits_by_set = $traitsBySet($filtered_sets, $cards);
+		$modular_set_type_counts = $setTypeCounts($filtered_sets, $modular_cards_by_set, $type_label);
+
+		// --- Villain ---
+		$villain_cards_by_set = $cardsBySet($filtered_villain_sets, $cards, ['villain', 'main scheme']);
+		$villain_set_stats = $setStats($villain_cards_by_set);
+		$villain_traits_by_set = $traitsBySet($filtered_villain_sets, $cards);
+		$villain_set_type_counts = $setTypeCounts($filtered_villain_sets, $villain_cards_by_set, $type_label);
 
 		// Retirer les types qui sont toujours à 0 dans tous les sets
 		$types_to_remove = [];
 		foreach ($type_label as $type => $label) {
-		    $all_zero = true;
-		    foreach ($set_type_counts as $set_counts) {
-		        if (!empty($set_counts[$type])) {
-		            $all_zero = false;
-		            break;
-		        }
-		    }
-		    if ($all_zero) {
-		        $types_to_remove[] = $type;
-		    }
+			$all_zero = true;
+			foreach ($modular_set_type_counts as $set_counts) {
+				if (!empty($set_counts[$type])) {
+					$all_zero = false;
+					break;
+				}
+			}
+			if ($all_zero) $types_to_remove[] = $type;
 		}
 		foreach ($types_to_remove as $type) {
-		    unset($type_label[$type]);
-		    // Optionnel : tu peux aussi les retirer de $type_max, $type_min, $type_avg si tu les utilises
-		}
-
-		$cards_by_set = [];
-		foreach ($filtered_sets as $set) {
-			$set_code = $set->getCode();
-			$cards_by_set[$set_code] = [];
-			foreach ($cards as $card) {
-				if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
-					$type_name = $card->getType()->getName();
-					$pack_name = $card->getPack()->getName();
-					$quantity = $card->getQuantity();
-					$cards_by_set[$set_code][] = [
-						'name' => $card->getName(),
-						'imagesrc' => '/bundles/cards/' . $card->getCode() . '.jpg',
-						'quantity' => $quantity,
-						'type' => $type_name,
-						'boost' => method_exists($card, 'getBoost') ? $card->getBoost() : 0,
-						'boostStar' => method_exists($card, 'getBoostStar') ? $card->getBoostStar() : false,
-						'pack' => $pack_name,
-						'isUnique' => method_exists($card, 'getIsUnique') ? $card->getIsUnique() : false,
-					];
-				}
-			}
-		}
-
-		$set_stats = [];
-		foreach ($filtered_sets as $set) {
-			$set_code = $set->getCode();
-			$set_cards = $cards_by_set[$set_code];
-			$nbDiff = count($set_cards);
-			$nbTotal = 0;
-			$totalBoost = 0;
-			$totalBoostStar = 0;
-			foreach ($set_cards as $card) {
-				$qty = $card['quantity'];
-				$nbTotal += $qty;
-				$totalBoost += ($card['boost'] ?: 0) * $qty;
-				if ($card['boostStar']) {
-					$totalBoostStar += $qty;
-				}
-			}
-			$avgBoost = $nbTotal > 0 ? number_format($totalBoost / $nbTotal, 2, '.', '') : '0.00';
-			$set_stats[$set_code] = [
-				'nbDiff' => $nbDiff,
-				'nbTotal' => $nbTotal,
-				'totalBoost' => $totalBoost,
-				'totalBoostStar' => $totalBoostStar,
-				'avgBoost' => $avgBoost,
-			];
-		}
-
-		// Calcul des traits par set
-		$traits_by_set = [];
-		foreach ($filtered_sets as $set) {
-		    $set_code = $set->getCode();
-		    $traits = [];
-		    foreach ($cards as $card) {
-		        if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
-		            $card_traits = $card->getTraits();
-		            if (is_string($card_traits) && trim($card_traits) !== '') {
-		                // Découper sur le point, enlever espaces, ignorer vides
-		                foreach (explode('.', $card_traits) as $trait) {
-		                    $trait = trim($trait);
-		                    if ($trait !== '') {
-		                        $traits[$trait] = true;
-		                    }
-		                }
-		            }
-		        }
-		    }
-		    ksort($traits); // Trie alphabétique
-		    $traits_by_set[$set_code] = array_keys($traits);
-		}
-
-		
-		// Calcul des traits par set villain
-		$villain_traits_by_set = [];
-		foreach ($filtered_villain_sets as $set) {
-		    $set_code = $set->getCode();
-		    $traits = [];
-		    foreach ($cards as $card) {
-		        if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
-		            $card_traits = $card->getTraits();
-		            if (is_string($card_traits) && trim($card_traits) !== '') {
-		                foreach (explode('.', $card_traits) as $trait) {
-		                    $trait = trim($trait);
-		                    if ($trait !== '') {
-		                        $traits[$trait] = true;
-		                    }
-		                }
-		            }
-		        }
-		    }
-		    ksort($traits);
-		    $villain_traits_by_set[$set_code] = array_keys($traits);
-		}
-
-		// Calcul du nombre de cartes par type pour chaque set villain
-		$villain_set_type_counts = [];
-		foreach ($filtered_villain_sets as $set) {
-			$set_code = $set->getCode();
-			$villain_set_type_counts[$set_code] = [];
-			foreach ($type_label as $type => $label) {
-				$count = 0;
-				foreach ($villain_cards_by_set[$set_code] as $card) {
-					$card_type = strtolower($card['type']);
-					if ($card_type === 'villain' || $card_type === 'main scheme') {
-						continue;
-					}
-					if ($card['type'] === $type) {
-						$qty = isset($card['quantity']) && $card['quantity'] !== null ? $card['quantity'] : 1;
-						$count += $qty;
-					}
-				}
-				$villain_set_type_counts[$set_code][$type] = $count;
-			}
+			unset($type_label[$type]);
 		}
 
 		return $this->render('AppBundle:Search:story.html.twig', [
 			"pagetitle" => "Stories",
 			"pagedescription" => "Villains reference",
 			"modular_sets" => $sets,
-			"filtered_modular_sets" => $filtered_sets, // Ajout du tableau filtré et trié
+			"filtered_modular_sets" => $filtered_sets,
 			"cards" => $cards,
 			"type_label" => $type_label,
-			"type_max" => $type_max,
-			"type_min" => $type_min,
-			"type_avg" => $type_avg,
-			"modular_set_type_counts" => $set_type_counts,
-			"modular_traits_by_set" => $traits_by_set,
-			"modular_cards_by_set" => $cards_by_set,
-			"modular_set_stats" => $set_stats,
+			"modular_set_type_counts" => $modular_set_type_counts,
+			"modular_traits_by_set" => $modular_traits_by_set,
+			"modular_cards_by_set" => $modular_cards_by_set,
+			"modular_set_stats" => $modular_set_stats,
 			"filtered_villain_sets" => $filtered_villain_sets,
 			"villain_cards_by_set" => $villain_cards_by_set,
 			"villain_set_stats" => $villain_set_stats,
