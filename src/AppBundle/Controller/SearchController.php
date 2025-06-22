@@ -323,6 +323,78 @@ class SearchController extends Controller
 		    // Optionnel : tu peux aussi les retirer de $type_max, $type_min, $type_avg si tu les utilises
 		}
 
+		$cards_by_set = [];
+		foreach ($filtered_sets as $set) {
+			$set_code = $set->getCode();
+			$cards_by_set[$set_code] = [];
+			foreach ($cards as $card) {
+				if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
+					$type_name = $card->getType()->getName();
+					$pack_name = $card->getPack()->getName();
+					$cards_by_set[$set_code][] = [
+						'name' => $card->getName(),
+						'imagesrc' => '/bundles/cards/' . $card->getCode() . '.jpg',
+						'quantity' => method_exists($card, 'getQuantity') ? $card->getQuantity() : 1,
+						'type' => $type_name,
+						'boost' => method_exists($card, 'getBoost') ? $card->getBoost() : 0,
+						'boostStar' => method_exists($card, 'getBoostStar') ? $card->getBoostStar() : false,
+						'pack' => $pack_name,
+						'isUnique' => method_exists($card, 'getIsUnique') ? $card->getIsUnique() : false,
+					];
+				}
+			}
+		}
+
+		$set_stats = [];
+		foreach ($filtered_sets as $set) {
+			$set_code = $set->getCode();
+			$set_cards = $cards_by_set[$set_code];
+			$nbDiff = count($set_cards);
+			$nbTotal = 0;
+			$totalBoost = 0;
+			$totalBoostStar = 0;
+			foreach ($set_cards as $card) {
+				$qty = $card['quantity'];
+				$nbTotal += $qty;
+				$totalBoost += ($card['boost'] ?: 0) * $qty;
+				if ($card['boostStar']) {
+					$totalBoostStar += $qty;
+				}
+			}
+			$avgBoost = $nbTotal > 0 ? number_format($totalBoost / $nbTotal, 2, '.', '') : '0.00';
+			$set_stats[$set_code] = [
+				'nbDiff' => $nbDiff,
+				'nbTotal' => $nbTotal,
+				'totalBoost' => $totalBoost,
+				'totalBoostStar' => $totalBoostStar,
+				'avgBoost' => $avgBoost,
+			];
+		}
+
+		// Calcul des traits par set
+		$traits_by_set = [];
+		foreach ($filtered_sets as $set) {
+		    $set_code = $set->getCode();
+		    $traits = [];
+		    foreach ($cards as $card) {
+		        if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
+		            $card_traits = $card->getTraits();
+		            if (is_string($card_traits) && trim($card_traits) !== '') {
+		                // Découper sur le point, enlever espaces, ignorer vides
+		                foreach (explode('.', $card_traits) as $trait) {
+		                    $trait = trim($trait);
+		                    if ($trait !== '') {
+		                        $traits[$trait] = true;
+		                    }
+		                }
+		            }
+		        }
+		    }
+		    ksort($traits); // Trie alphabétique
+		    $traits_by_set[$set_code] = array_keys($traits);
+		}
+
+		
 		return $this->render('AppBundle:Search:story.html.twig', [
 			"pagetitle" => "Story",
 			"pagedescription" => "Villains reference",
@@ -334,6 +406,9 @@ class SearchController extends Controller
 			"type_min" => $type_min,
 			"type_avg" => $type_avg,
 			"set_type_counts" => $set_type_counts,
+			"traits_by_set" => $traits_by_set,
+			"cards_by_set" => $cards_by_set,
+			"set_stats" => $set_stats,
 		], $response);
 	}
 

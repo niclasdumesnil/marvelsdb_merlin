@@ -12,7 +12,7 @@
     <div style="margin-bottom:18px;">
         <div style="display: flex; gap: 40px;">
             <div>
-                <strong>Modular avec le plus de cartes par type :</strong><br>
+                <strong>Maximum number of cards :</strong><br>
                 {% for type, label in type_label %}
                     <strong>{{ label|capitalize }} :</strong>
                     {% if type_max[type].set %}
@@ -24,7 +24,7 @@
                 {% endfor %}
             </div>
             <div>
-                <strong>Modular avec le moins de cartes par type :</strong><br>
+                <strong>Minimum number of cards :</strong><br>
                 {% for type, label in type_label %}
                     <strong>{{ label|capitalize }} :</strong>
                     {% if type_min[type].set %}
@@ -36,7 +36,7 @@
                 {% endfor %}
             </div>
             <div>
-                <strong>Nombre moyen par type :</strong><br>
+                <strong>Average number of cards :</strong><br>
                 {% for type, label in type_label %}
                     <strong>{{ label|capitalize }} :</strong>
                     {{ type_avg[type].avg }}
@@ -113,13 +113,66 @@
         {% endfor %}
     </select>
 
+    <div id="set-traits-list" style="margin: 12px 0 18px 0; font-size: 1.05em; background: #e3f0ff; border-radius: 8px; padding: 12px 18px;">
+        {% for set in filtered_sets %}
+            <div class="set-traits-panel" id="traits-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+                <strong>Traits du set :</strong>
+                {% if traits_by_set[set.code] is not empty %}
+                    {{ traits_by_set[set.code]|join(', ') }}
+                {% else %}
+                    <em>Aucun trait</em>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
     <div id="set-infos" style="margin: 18px 0 18px 0; font-size: 1.05em; background:rgb(188, 200, 223); border-radius: 8px; padding: 12px 18px;">
-        <!-- Les infos du set s'afficheront ici -->
+        {% for set in filtered_sets %}
+            <div class="set-infos-panel" id="infos-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+                <strong>Cartes différentes :</strong> {{ set_stats[set.code].nbDiff }} &nbsp;|&nbsp;
+                <strong>Nombre total de cartes :</strong> {{ set_stats[set.code].nbTotal }} &nbsp;|&nbsp;
+                <strong>Total boost :</strong> {{ set_stats[set.code].totalBoost }} &nbsp;|&nbsp;
+                <strong>Total boost étoile :</strong> {{ set_stats[set.code].totalBoostStar }} &nbsp;|&nbsp;
+                <strong>Moyenne boost :</strong> {{ set_stats[set.code].avgBoost }}
+            </div>
+        {% endfor %}
     </div>
 
     <div>
-        <h4>Cartes du set</h4>
-        <div id="card-panels-list" class="row"></div>
+        {% for set in filtered_sets %}
+            <div class="set-cards-panel" id="cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+                <h4 style="margin-bottom:18px;">Cartes du set : {{ set.name }}</h4>
+                <div class="row">
+                    {% for card in cards_by_set[set.code]|default([]) %}
+                        {% if loop.index0 is divisible by(2) %}
+                            <div class="clearfix"></div>
+                        {% endif %}
+                        <div class="card-panel-col">
+                            <div class="card-panel-title">
+                                    {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
+                                    {{ card.name }}
+                                </div>
+                            <div class="card-panel">
+                                
+                                <div class="card-panel-content">
+                                    <div class="card-panel-info">
+                                        <strong>Type :</strong> {{ card.type }}<br>
+                                        <strong>Quantité :</strong> {{ card.quantity or '-' }}<br>
+                                        <strong>Boost :</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
+                                    </div>
+                                    <div class="card-panel-img">
+                                        <img src="{{ card.imagesrc }}" alt="{{ card.name }}">
+                                    </div>
+                                </div>
+                                <div class="card-panel-pack">
+                                    <strong>Pack :</strong> {{ card.pack }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
     </div>
 
     <script>
@@ -137,108 +190,30 @@
             }
         });
 
-        const cards = [
-            {% set first = true %}
-            {% for card in cards if card.cardset %}
-                {% if not first %},{% endif %}
-                {% set first = false %}
-                {
-                    name: "{{ card.name|e('js') }}",
-                    set_code: "{{ card.cardset.code|e('js') }}",
-                    imagesrc: "/bundles/cards/{{ card.code }}.jpg",
-                    quantity: {{ card.quantity|default('1') }},
-                    type: "{{ card.type ? card.type.name|e('js') : '' }}",
-                    boost: {{ card.boost|default('0') }},
-                    boostStar: {{ card.boostStar ? 'true' : 'false' }},
-                    pack: "{{ card.pack ? card.pack.name|e('js') : '' }}",
-                    isUnique: {{ card.isUnique ? 'true' : 'false' }}
-                }
-            {% endfor %}
-        ];
-
-        function updateSetInfos(filtered) {
-            const nbDiff = filtered.length;
-            const nbTotal = filtered.reduce((sum, card) => sum + (parseInt(card.quantity) || 1), 0);
-            const totalBoost = filtered.reduce((sum, card) => sum + (parseInt(card.boost) * (parseInt(card.quantity) || 1)), 0);
-            const totalBoostStar = filtered.reduce((sum, card) => sum + (card.boostStar === true || card.boostStar === 'true' ? (parseInt(card.quantity) || 1) : 0), 0);
-            const avgBoost = nbTotal > 0 ? (totalBoost / nbTotal).toFixed(2) : "0.00";
-
-            document.getElementById('set-infos').innerHTML = `
-                <strong>Cartes différentes :</strong> ${nbDiff} &nbsp;|&nbsp;
-                <strong>Nombre total de cartes :</strong> ${nbTotal} &nbsp;|&nbsp;
-                <strong>Total boost :</strong> ${totalBoost} &nbsp;|&nbsp;
-                <strong>Total boost étoile :</strong> ${totalBoostStar} &nbsp;|&nbsp;
-                <strong>Moyenne boost :</strong> ${avgBoost}
-            `;
+       
+        function showSetCards(setCode) {
+            document.querySelectorAll('.set-cards-panel').forEach(function(panel) {
+                panel.style.display = 'none';
+            });
+            var panel = document.getElementById('cards-' + setCode);
+            if(panel) panel.style.display = '';
+            document.querySelectorAll('.set-infos-panel').forEach(function(panel) {
+                panel.style.display = 'none';
+            });
+            var infos = document.getElementById('infos-' + setCode);
+            if(infos) infos.style.display = '';
+            document.querySelectorAll('.set-traits-panel').forEach(function(panel) {
+                panel.style.display = 'none';
+            });
+            var traits = document.getElementById('traits-' + setCode);
+            if(traits) traits.style.display = '';
         }
-
-        function updateCardsList() {
-            const select = document.getElementById('modular-sets');
-            const selectedSet = select.value;
-            const panelsList = document.getElementById('card-panels-list');
-            let filtered = cards.filter(card => card.set_code === selectedSet);
-
-            updateSetInfos(filtered);
-
-            if (filtered.length === 0) {
-                panelsList.innerHTML = "<em>Aucune carte pour ce set.</em>";
-            } else {
-                let html = '';
-                for (let i = 0; i < filtered.length; i += 2) {
-                    html += '<div class="clearfix"></div>';
-                    // Première colonne
-                    if (filtered[i]) {
-                        html += `<div class="card-panel-col">
-                            <div class="card-panel">
-                                <div class="card-panel-title">${
-                                    filtered[i].isUnique === true || filtered[i].isUnique === 'true' ? '<span class="icon-unique"></span> ' : ''
-                                }${filtered[i].name}</div>
-                                <div class="card-panel-content">
-                                    <div class="card-panel-info">
-                                        <strong>Type :</strong> ${filtered[i].type || '-'}<br>
-                                        <strong>Quantité :</strong> ${filtered[i].quantity || '-'}<br>
-                                        <strong>Boost :</strong> ${filtered[i].boost || '0'}${filtered[i].boostStar === true || filtered[i].boostStar === 'true' ? ' ★' : ''}
-                                    </div>
-                                    <div class="card-panel-img">
-                                        <img src="${filtered[i].imagesrc}" alt="${filtered[i].name}">
-                                    </div>
-                                </div>
-                                <div class="card-panel-pack">
-                                    <strong>Pack :</strong> ${filtered[i].pack || '-'}
-                                </div>
-                            </div>
-                        </div>`;
-                    }
-                    // Deuxième colonne
-                    if (filtered[i + 1]) {
-                        html += `<div class="card-panel-col">
-                            <div class="card-panel">
-                                <div class="card-panel-title">${
-                                    filtered[i + 1].isUnique === true || filtered[i + 1].isUnique === 'true' ? '<span class="icon-unique"></span> ' : ''
-                                }${filtered[i + 1].name}</div>
-                                <div class="card-panel-content">
-                                    <div class="card-panel-info">
-                                        <strong>Type :</strong> ${filtered[i + 1].type || '-'}<br>
-                                        <strong>Quantité :</strong> ${filtered[i + 1].quantity || '-'}<br>
-                                        <strong>Boost :</strong> ${filtered[i + 1].boost || '0'}${filtered[i + 1].boostStar === true || filtered[i + 1].boostStar === 'true' ? ' ★' : ''}
-                                    </div>
-                                    <div class="card-panel-img">
-                                        <img src="${filtered[i + 1].imagesrc}" alt="${filtered[i + 1].name}">
-                                    </div>
-                                </div>
-                                <div class="card-panel-pack">
-                                    <strong>Pack :</strong> ${filtered[i + 1].pack || '-'}
-                                </div>
-                            </div>
-                        </div>`;
-                    }
-                }
-                panelsList.innerHTML = html;
-            }
-        }
-
-        document.getElementById('modular-sets').addEventListener('change', updateCardsList);
-        window.addEventListener('DOMContentLoaded', updateCardsList);
+        document.getElementById('modular-sets').addEventListener('change', function() {
+            showSetCards(this.value);
+        });
+        window.addEventListener('DOMContentLoaded', function() {
+            showSetCards(document.getElementById('modular-sets').value);
+        });
     </script>
 
     <style>
@@ -253,7 +228,7 @@
             flex-direction: column;
             justify-content: space-between;
             background: linear-gradient(135deg, #e3f0ff 0%,rgb(145, 155, 172) 100%);
-            border-radius: 8px;
+            border-radius: 0px 0px 8px 8px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.06);
             padding: 12px 16px;
             margin-bottom: 16px;
@@ -263,7 +238,7 @@
         .card-panel-title {
             font-weight: bold;
             font-size: 1.2em;
-            margin-bottom: 10px;
+            margin-bottom: 0px;
             background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
             color: #fff;
             padding: 6px 12px;
