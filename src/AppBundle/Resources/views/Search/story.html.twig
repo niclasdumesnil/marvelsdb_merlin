@@ -75,8 +75,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for set in filtered_sets %}
-                        {% set set_cards = cards|filter(card => card.cardset and card.cardset.code == set.code) %}
+                    {% for set in filtered_modular_sets %}
+                        {% set set_cards = modular_cards_by_set[set.code]|default([]) %}
                         {% set nbDiff = set_cards|length %}
                         {% set nbTotal = set_cards|reduce((carry, card) => carry + (card.quantity|default(1)), 0) %}
                         {% set totalBoost = set_cards|reduce((carry, card) => carry + (card.boost|default(0) * card.quantity|default(1)), 0) %}
@@ -91,9 +91,9 @@
                             <td style="text-align:center; border-left:2px solid #1976d2; border-right:4px double #1976d2;">{{ avgBoost }}</td>
                             {% for type, label in type_label %}
                                 {% if loop.first %}
-                                    <td style="text-align:center; border-left:4px double #1976d2;">{{ set_type_counts[set.code][type] }}</td>
+                                    <td style="text-align:center; border-left:4px double #1976d2;">{{ modular_set_type_counts[set.code][type] }}</td>
                                 {% else %}
-                                    <td style="text-align:center; border-left:2px solid #1976d2;">{{ set_type_counts[set.code][type] }}</td>
+                                    <td style="text-align:center; border-left:2px solid #1976d2;">{{ modular_set_type_counts[set.code][type] }}</td>
                                 {% endif %}
                             {% endfor %}
                         </tr>
@@ -108,17 +108,17 @@
 
     <label for="modular-sets">Sélectionnez un set modular :</label>
     <select id="modular-sets" name="modular_set">
-        {% for set in filtered_sets %}
+        {% for set in filtered_modular_sets %}
             <option value="{{ set.code }}">{{ set.name }}</option>
         {% endfor %}
     </select>
 
     <div id="set-traits-list" style="margin: 12px 0 18px 0; font-size: 1.05em; background: #e3f0ff; border-radius: 8px; padding: 12px 18px;">
-        {% for set in filtered_sets %}
+        {% for set in filtered_modular_sets %}
             <div class="set-traits-panel" id="traits-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
                 <strong>Traits du set :</strong>
-                {% if traits_by_set[set.code] is not empty %}
-                    {{ traits_by_set[set.code]|join(', ') }}
+                {% if modular_traits_by_set[set.code] is not empty %}
+                    {{ modular_traits_by_set[set.code]|join(', ') }}
                 {% else %}
                     <em>Aucun trait</em>
                 {% endif %}
@@ -127,33 +127,32 @@
     </div>
 
     <div id="set-infos" style="margin: 18px 0 18px 0; font-size: 1.05em; background:rgb(188, 200, 223); border-radius: 8px; padding: 12px 18px;">
-        {% for set in filtered_sets %}
+        {% for set in filtered_modular_sets %}
             <div class="set-infos-panel" id="infos-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
-                <strong>Cartes différentes :</strong> {{ set_stats[set.code].nbDiff }} &nbsp;|&nbsp;
-                <strong>Nombre total de cartes :</strong> {{ set_stats[set.code].nbTotal }} &nbsp;|&nbsp;
-                <strong>Total boost :</strong> {{ set_stats[set.code].totalBoost }} &nbsp;|&nbsp;
-                <strong>Total boost étoile :</strong> {{ set_stats[set.code].totalBoostStar }} &nbsp;|&nbsp;
-                <strong>Moyenne boost :</strong> {{ set_stats[set.code].avgBoost }}
+                <strong>Cartes différentes :</strong> {{ modular_set_stats[set.code].nbDiff }} &nbsp;|&nbsp;
+                <strong>Nombre total de cartes :</strong> {{ modular_set_stats[set.code].nbTotal }} &nbsp;|&nbsp;
+                <strong>Total boost :</strong> {{ modular_set_stats[set.code].totalBoost }} &nbsp;|&nbsp;
+                <strong>Total boost étoile :</strong> {{ modular_set_stats[set.code].totalBoostStar }} &nbsp;|&nbsp;
+                <strong>Moyenne boost :</strong> {{ modular_set_stats[set.code].avgBoost }}
             </div>
         {% endfor %}
     </div>
 
     <div>
-        {% for set in filtered_sets %}
+        {% for set in filtered_modular_sets %}
             <div class="set-cards-panel" id="cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
                 <h4 style="margin-bottom:18px;">Cartes du set : {{ set.name }}</h4>
                 <div class="row">
-                    {% for card in cards_by_set[set.code]|default([]) %}
+                    {% for card in modular_cards_by_set[set.code]|default([]) %}
                         {% if loop.index0 is divisible by(2) %}
                             <div class="clearfix"></div>
                         {% endif %}
                         <div class="card-panel-col">
                             <div class="card-panel-title">
-                                    {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
-                                    {{ card.name }}
-                                </div>
+                                {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
+                                {{ card.name }}
+                            </div>
                             <div class="card-panel">
-                                
                                 <div class="card-panel-content">
                                     <div class="card-panel-info">
                                         <strong>Type :</strong> {{ card.type }}<br>

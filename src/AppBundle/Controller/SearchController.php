@@ -209,6 +209,31 @@ class SearchController extends Controller
 			->setParameter('type', 'modular');
 		$sets = $qb->getQuery()->getResult();
 
+		// Récupère tous les sets dont le type est 'villain'
+		$qb_villain = $em->createQueryBuilder();
+		$qb_villain->select('s')
+		    ->from('AppBundle:Cardset', 's')
+		    ->join('s.cardset_type', 't')
+		    ->where('t.code = :type')
+		    ->setParameter('type', 'villain');
+		$villain_sets = $qb_villain->getQuery()->getResult();
+
+		// Filtrage et tri alphabétique des sets villain
+		$filtered_villain_sets = array_filter($villain_sets, function($set) {
+		    $name = strtolower($set->getName());
+		    foreach([
+		        'campaign', 'shield executive board', 's.h.i.e.l.d. executive board', 'expert kang',
+		        'brawler', 'commander', 'defender', 'mission', 'the market', 'shield tech',
+		        'challenge', 'peacekeeper', 'community service', 'bad publicity', 'longshot', 'hope summers'
+		    ] as $forbidden) {
+		        if (strpos($name, $forbidden) !== false) return false;
+		    }
+		    return true;
+		});
+		usort($filtered_villain_sets, function($a, $b) {
+		    return strcasecmp($a->getName(), $b->getName());
+		});
+
 		$cards = $this->getDoctrine()
 		    ->getRepository('AppBundle:Card')
 		    ->findAll();
@@ -399,16 +424,17 @@ class SearchController extends Controller
 			"pagetitle" => "Story",
 			"pagedescription" => "Villains reference",
 			"modular_sets" => $sets,
-			"filtered_sets" => $filtered_sets, // Ajout du tableau filtré et trié
+			"filtered_modular_sets" => $filtered_sets, // Ajout du tableau filtré et trié
 			"cards" => $cards,
 			"type_label" => $type_label,
 			"type_max" => $type_max,
 			"type_min" => $type_min,
 			"type_avg" => $type_avg,
-			"set_type_counts" => $set_type_counts,
-			"traits_by_set" => $traits_by_set,
-			"cards_by_set" => $cards_by_set,
-			"set_stats" => $set_stats,
+			"modular_set_type_counts" => $set_type_counts,
+			"modular_traits_by_set" => $traits_by_set,
+			"modular_cards_by_set" => $cards_by_set,
+			"modular_set_stats" => $set_stats,
+			"filtered_villain_sets" => $filtered_villain_sets,
 		], $response);
 	}
 
