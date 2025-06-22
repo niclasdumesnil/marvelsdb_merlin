@@ -4,38 +4,78 @@
 <div style="margin-left:200px; margin-right:200px;">
     <h1>Stories</h1>
 
-    <button id="toggle-stats-btn" style="margin-bottom:18px; padding:10px 24px; background:#ff9800; color:#fff; border:none; border-radius:6px; font-size:1.1em; cursor:pointer;">
+    <button id="toggle-stats-btn" style="margin-bottom:18px; padding:10px 24px; background:linear-gradient(90deg, #1976d2 0%, #64b5f6 100%); color:#fff; border:none; border-radius:6px; font-size:1.1em; cursor:pointer;">
         Afficher les statistiques de tous les sets
     </button>
-    <div id="slide-panel-stats" style="max-height:0; overflow:hidden; transition:max-height 0.5s cubic-bezier(.4,2,.6,1); background:#fff3e0; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.07); padding:0 24px;">
+
+    {# Paragraphe d'informations sur le modular avec le plus et le moins de chaque type #}
+    <div style="margin-bottom:18px;">
+        <div style="display: flex; gap: 40px;">
+            <div>
+                <strong>Modular avec le plus de cartes par type :</strong><br>
+                {% for type, label in type_label %}
+                    <strong>{{ label|capitalize }} :</strong>
+                    {% if type_max[type].set %}
+                        {{ type_max[type].set }} ({{ type_max[type].count }})
+                    {% else %}
+                        Aucun
+                    {% endif %}
+                    <br>
+                {% endfor %}
+            </div>
+            <div>
+                <strong>Modular avec le moins de cartes par type :</strong><br>
+                {% for type, label in type_label %}
+                    <strong>{{ label|capitalize }} :</strong>
+                    {% if type_min[type].set %}
+                        {{ type_min[type].set }} ({{ type_min[type].count }})
+                    {% else %}
+                        Aucun
+                    {% endif %}
+                    <br>
+                {% endfor %}
+            </div>
+            <div>
+                <strong>Nombre moyen par type :</strong><br>
+                {% for type, label in type_label %}
+                    <strong>{{ label|capitalize }} :</strong>
+                    {{ type_avg[type].avg }}
+                    <br>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div id="slide-panel-stats" style="max-height:0; overflow:hidden; transition:max-height 0.5s cubic-bezier(.4,2,.6,1); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.07); padding:0 24px;">
         <h2 style="margin-top:24px;">Statistiques de tous les sets</h2>
         <div style="overflow-x:auto;">
             <table border="1" cellpadding="6" style="background:#fff; border-radius:8px; margin-top:10px; width:100%; border-collapse:collapse;">
+                <colgroup>
+                    <col style="width: 18%;">
+                    <col style="width: 6%; border-right:2px solid #1976d2;">
+                    <col style="width: 7%; border-right:2px solid #1976d2;">
+                    <col style="width: 7%; border-right:2px solid #1976d2;">
+                    <col style="width: 7%; border-right:2px solid #1976d2;">
+                    <col style="width: 8%; border-right:4px double #1976d2;">
+                    {% for type, label in type_label %}
+                        <col style="width: {{ 47 // type_label|length }}%;">
+                    {% endfor %}
+                </colgroup>
                 <thead>
-                    <tr style="background:#ff9800; color:#fff;">
+                    <tr>
                         <th>Set</th>
-                        <th>Cartes différentes</th>
-                        <th>Nombre total de cartes</th>
-                        <th>Total boost</th>
-                        <th>Total boost étoile</th>
-                        <th>Moyenne boost</th>
+                        <th style="text-align:center; border-right:2px solid #1976d2;">Different card</th>
+                        <th style="text-align:center; border-right:2px solid #1976d2;">Total card</th>
+                        <th style="text-align:center; border-right:2px solid #1976d2;">Total boost</th>
+                        <th style="text-align:center; border-right:2px solid #1976d2;">Total boost star</th>
+                        <th style="text-align:center; border-right:4px double #1976d2;">Average boost</th>
+                        {% for type, label in type_label %}
+                            <th style="text-align:center;">{{ label|capitalize }}</th>
+                        {% endfor %}
                     </tr>
                 </thead>
                 <tbody>
-                    {% for set in modular_sets if
-                        'campaign' not in set.name|lower
-                        and 'shield executive board' not in set.name|lower
-                        and 's.h.i.e.l.d. executive board' not in set.name|lower
-                        and 'expert kang' not in set.name|lower
-                        and 'brawler' not in set.name|lower
-                        and 'commander' not in set.name|lower
-                        and 'defender' not in set.name|lower
-                        and 'mission' not in set.name|lower
-                        and 'the market' not in set.name|lower
-                        and 'shield tech' not in set.name|lower
-                        and 'challenge' not in set.name|lower
-                        and 'peacekeeper' not in set.name|lower
-                    %}
+                    {% for set in filtered_sets %}
                         {% set set_cards = cards|filter(card => card.cardset and card.cardset.code == set.code) %}
                         {% set nbDiff = set_cards|length %}
                         {% set nbTotal = set_cards|reduce((carry, card) => carry + (card.quantity|default(1)), 0) %}
@@ -43,12 +83,19 @@
                         {% set totalBoostStar = set_cards|reduce((carry, card) => carry + (card.boostStar ? card.quantity|default(1) : 0), 0) %}
                         {% set avgBoost = nbTotal > 0 ? (totalBoost / nbTotal)|number_format(2, '.', '') : '0.00' %}
                         <tr>
-                            <td>{{ set.name }}</td>
-                            <td>{{ nbDiff }}</td>
-                            <td>{{ nbTotal }}</td>
-                            <td>{{ totalBoost }}</td>
-                            <td>{{ totalBoostStar }}</td>
-                            <td>{{ avgBoost }}</td>
+                            <td style="font-weight:bold; padding-left:10px;">{{ set.name }}</td>
+                            <td style="text-align:center; border-left:2px solid #1976d2;">{{ nbDiff }}</td>
+                            <td style="text-align:center; border-left:2px solid #1976d2;">{{ nbTotal }}</td>
+                            <td style="text-align:center; border-left:2px solid #1976d2;">{{ totalBoost }}</td>
+                            <td style="text-align:center; border-left:2px solid #1976d2;">{{ totalBoostStar }}</td>
+                            <td style="text-align:center; border-left:2px solid #1976d2; border-right:4px double #1976d2;">{{ avgBoost }}</td>
+                            {% for type, label in type_label %}
+                                {% if loop.first %}
+                                    <td style="text-align:center; border-left:4px double #1976d2;">{{ set_type_counts[set.code][type] }}</td>
+                                {% else %}
+                                    <td style="text-align:center; border-left:2px solid #1976d2;">{{ set_type_counts[set.code][type] }}</td>
+                                {% endif %}
+                            {% endfor %}
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -57,29 +104,16 @@
         <div style="height:24px;"></div>
     </div>
 
-    <div style="height: 24px;"></div> {# Ajoute un espace au-dessus de la sélection des sets #}
+    <div style="height: 24px;"></div>
 
     <label for="modular-sets">Sélectionnez un set modular :</label>
     <select id="modular-sets" name="modular_set">
-        {% for set in modular_sets if
-            'campaign' not in set.name|lower
-            and 'shield executive board' not in set.name|lower
-            and 's.h.i.e.l.d. executive board' not in set.name|lower
-            and 'expert kang' not in set.name|lower
-            and 'brawler' not in set.name|lower
-            and 'commander' not in set.name|lower
-            and 'defender' not in set.name|lower
-            and 'mission' not in set.name|lower
-            and 'the market' not in set.name|lower
-            and 'shield tech' not in set.name|lower
-            and 'challenge' not in set.name|lower
-            and 'peacekeeper' not in set.name|lower
-        %}
+        {% for set in filtered_sets %}
             <option value="{{ set.code }}">{{ set.name }}</option>
         {% endfor %}
     </select>
 
-    <div id="set-infos" style="margin: 18px 0 18px 0; font-size: 1.05em; background: #fff3e0; border-radius: 8px; padding: 12px 18px;">
+    <div id="set-infos" style="margin: 18px 0 18px 0; font-size: 1.05em; background:rgb(188, 200, 223); border-radius: 8px; padding: 12px 18px;">
         <!-- Les infos du set s'afficheront ici -->
     </div>
 
@@ -218,7 +252,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            background: #ffe5b4;
+            background: linear-gradient(135deg, #e3f0ff 0%,rgb(145, 155, 172) 100%);
             border-radius: 8px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.06);
             padding: 12px 16px;
@@ -230,7 +264,7 @@
             font-weight: bold;
             font-size: 1.2em;
             margin-bottom: 10px;
-            background: #ff9800;
+            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
             color: #fff;
             padding: 6px 12px;
             border-radius: 6px 6px 0 0;
@@ -260,7 +294,7 @@
         .card-panel-pack {
             margin-top: 12px;
             font-size: 0.95em;
-            color: #b26a00;
+            color: #111; /* Texte en noir */
             font-style: italic;
             text-align: right;
         }
@@ -281,6 +315,23 @@
             .card-panel-col {
                 width: 100%;
             }
+        }
+        /* Tableau statistiques */
+        #slide-panel-stats {
+            background: linear-gradient(135deg, #e3f0ff 0%, #b3cfff 100%);
+        }
+        #slide-panel-stats h2 {
+            color: #1976d2;
+        }
+        #slide-panel-stats table thead tr {
+            background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
+            color: #fff;
+        }
+        #slide-panel-stats table th {
+            background: none !important;
+        }
+        #slide-panel-stats table {
+            background: #fff;
         }
     </style>
 </div>

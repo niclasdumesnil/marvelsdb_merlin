@@ -213,11 +213,127 @@ class SearchController extends Controller
 		    ->getRepository('AppBundle:Card')
 		    ->findAll();
 
+		// --- Statistiques par type ---
+		$type_label = [
+			'Minion' => 'minion',
+			'Treachery' => 'treachery',
+			'Attachment' => 'attachment',
+			'Environment' => 'Environment',
+			'Side Scheme' => 'side scheme',
+			'Main Scheme' => 'manigance principale',
+			'Ally' => 'allié',
+			'Upgrade' => 'amélioration',
+			'Support' => 'support',
+			'Event' => 'événement'
+		];
+
+		// Filtrage et tri alphabétique des sets (désormais dans le contrôleur)
+		$filtered_sets = array_filter($sets, function($set) {
+			$name = strtolower($set->getName());
+			foreach([
+				'campaign', 'shield executive board', 's.h.i.e.l.d. executive board', 'expert kang',
+				'brawler', 'commander', 'defender', 'mission', 'the market', 'shield tech',
+				'challenge', 'peacekeeper', 'community service', 'bad publicity', 'longshot', 'hope summers'
+			] as $forbidden) {
+				if (strpos($name, $forbidden) !== false) return false;
+			}
+			return true;
+		});
+		// Tri alphabétique
+		usort($filtered_sets, function($a, $b) {
+			return strcasecmp($a->getName(), $b->getName());
+		});
+
+		// Préparation des stats
+		$type_max = [];
+		$type_min = [];
+		$type_avg = [];
+		$nb_sets = count($filtered_sets);
+
+		foreach ($type_label as $type => $label) {
+			$max_count = 0;
+			$max_set = '';
+			$min_count = null;
+			$min_set = '';
+			$total_count = 0;
+
+			foreach ($filtered_sets as $set) {
+				$set_code = $set->getCode();
+				// Filtre les cartes du set et du type voulu
+				$set_cards = array_filter($cards, function($card) use ($set_code, $type) {
+					return $card->getCardset() && $card->getCardset()->getCode() === $set_code
+						&& $card->getType() && $card->getType()->getName() === $type;
+				});
+				$count = 0;
+				foreach ($set_cards as $card) {
+					$qty = method_exists($card, 'getQuantity') ? $card->getQuantity() : 1;
+					$count += $qty ?: 1;
+				}
+				$total_count += $count;
+				if ($count > $max_count) {
+					$max_count = $count;
+					$max_set = $set->getName();
+				}
+				if (($min_count === null || ($count < $min_count && $count > 0))) {
+					$min_count = $count;
+					$min_set = $set->getName();
+				}
+			}
+			$avg_count = $nb_sets > 0 ? number_format($total_count / $nb_sets, 2, '.', '') : '0.00';
+			$type_max[$type] = ['set' => $max_set, 'count' => $max_count, 'label' => $label];
+			$type_min[$type] = ['set' => $min_set, 'count' => $min_count, 'label' => $label];
+			$type_avg[$type] = ['avg' => $avg_count, 'label' => $label];
+		}
+
+		// Calcul du nombre de cartes par type pour chaque set
+		$set_type_counts = [];
+		foreach ($filtered_sets as $set) {
+		    $set_code = $set->getCode();
+		    $set_type_counts[$set_code] = [];
+		    foreach ($type_label as $type => $label) {
+		        $type_cards = array_filter($cards, function($card) use ($set_code, $type) {
+		            return $card->getCardset() && $card->getCardset()->getCode() === $set_code
+		                && $card->getType() && $card->getType()->getName() === $type;
+		        });
+		        $count = 0;
+		        foreach ($type_cards as $card) {
+		            $qty = method_exists($card, 'getQuantity') ? $card->getQuantity() : 1;
+		            $count += $qty ?: 1;
+		        }
+		        $set_type_counts[$set_code][$type] = $count;
+		    }
+		}
+
+		// Retirer les types qui sont toujours à 0 dans tous les sets
+		$types_to_remove = [];
+		foreach ($type_label as $type => $label) {
+		    $all_zero = true;
+		    foreach ($set_type_counts as $set_counts) {
+		        if (!empty($set_counts[$type])) {
+		            $all_zero = false;
+		            break;
+		        }
+		    }
+		    if ($all_zero) {
+		        $types_to_remove[] = $type;
+		    }
+		}
+		foreach ($types_to_remove as $type) {
+		    unset($type_label[$type]);
+		    // Optionnel : tu peux aussi les retirer de $type_max, $type_min, $type_avg si tu les utilises
+		}
+
 		return $this->render('AppBundle:Search:story.html.twig', [
 			"pagetitle" => "Story",
 			"pagedescription" => "Villains reference",
 			"modular_sets" => $sets,
-			"cards" => $cards
+			"filtered_sets" => $filtered_sets, // Ajout du tableau filtré et trié
+			"cards" => $cards,
+			"type_label" => $type_label,
+			"type_max" => $type_max,
+			"type_min" => $type_min,
+			"type_avg" => $type_avg,
+			"set_type_counts" => $set_type_counts,
 		], $response);
 	}
 
