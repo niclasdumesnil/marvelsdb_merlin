@@ -1,0 +1,118 @@
+{# filepath: c:\github\marvelsdb_merlin\src\AppBundle\Resources\views\Search\set_encounter-cards.html.twig #}
+{# 
+    Paramètres attendus :
+    - cards : tableau des cartes à afficher
+    - color1 : couleur de début du dégradé (ex: #1976d2 ou #a080c6)
+    - color2 : couleur de fin du dégradé (ex: #64b5f6 ou #e0c3fc)
+#}
+<div class="row">
+    {% for card in cards|default([]) %}
+        {% if loop.index0 is divisible by(3) %}
+            <div class="clearfix"></div>
+        {% endif %}
+        <div class="card-panel-col">
+            <div class="card-panel-title" style="background: linear-gradient(90deg, {{ color1 }} 0%, {{ color2 }} 100%); color: #fff; border-radius: 4px; padding: 4px 10px;">
+                {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
+                {{ card.name }}
+            </div>
+            <div class="card-panel">
+                <div class="card-panel-content">
+                    <div class="card-panel-info">
+                        <strong>Type:</strong> {{ card.type }}<br>
+                        <strong>Quantity:</strong> {{ card.quantity }}<br>
+                        <strong>Boost:</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
+                    </div>
+                    <div class="card-panel-img">
+                        <img src="{{ card.imagesrc }}" alt="{{ card.name }}"
+                             style="{% if card.type == 'Side Scheme' %}max-width:180px;{% else %}max-width:120px;{% endif %} height:auto; max-height:180px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                    </div>
+                </div>
+                <div class="card-panel-pack">
+                    <strong>Pack: </strong>
+                    <span class="card-pack-highlight">
+                        {{ card.pack }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<style>
+.card-panel-col {
+    width: 33.3333%;
+    float: left;
+    box-sizing: border-box;
+    padding: 8px;
+}
+@media (max-width: 900px) {
+    .card-panel-col {
+        width: 100%;
+    }
+}
+.card-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #e3f0ff 0%,rgb(145, 155, 172) 100%);
+    border-radius: 0px 0px 8px 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    min-height: 220px;
+    position: relative;
+}
+.card-panel-title {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 0px;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px 6px 0 0;
+    text-align: left;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+    letter-spacing: 0.5px;
+}
+.card-panel-content {
+    display: flex;
+    flex: 1;
+}
+.card-panel-info {
+    font-size: 0.97em;
+    color: #444;
+    flex: 1;
+}
+.card-panel-img {
+    margin-left: 20px;
+}
+.card-panel-img img {
+    max-width: 120px;
+    height: auto;
+    max-height: 180px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.card-panel-pack {
+    margin-top: 12px;
+    font-size: 0.95em;
+    color: #111;
+    font-style: italic;
+    text-align: right;
+}
+.card-pack-highlight {
+    background: #ffe082 !important;
+    color: #222 !important;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-weight: bold;
+}
+.icon-unique {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    background: url('/bundles/icons/unique.svg') no-repeat center center;
+    background-size: contain;
+    vertical-align: middle;
+    margin-right: 0px;
+}
+</style>

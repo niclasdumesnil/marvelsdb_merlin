@@ -14,27 +14,51 @@
         </button>
     </div>
 
-    <div id="combined-stats" style="margin-bottom: 24px; font-size: 1.08em; background: #111; color: #fff; border-radius: 8px; padding: 14px 22px; font-weight: bold;">
-        {% set modular_code = filtered_modular_sets|first ? filtered_modular_sets|first.code : '' %}
-        {% set villain_code = filtered_villain_sets|first ? filtered_villain_sets|first.code : '' %}
-        {% set modular_stats = modular_set_stats[modular_code]|default({'nbDiff':0,'nbTotal':0,'totalBoost':0,'totalBoostStar':0,'avgBoost':'0.00'}) %}
-        {% set villain_stats = villain_set_stats[villain_code]|default({'nbDiff':0,'nbTotal':0,'totalBoost':0,'totalBoostStar':0,'avgBoost':'0.00'}) %}
-        {% set sum_nbDiff = modular_stats.nbDiff + villain_stats.nbDiff %}
-        {% set sum_nbTotal = modular_stats.nbTotal + villain_stats.nbTotal %}
-        {% set sum_totalBoost = modular_stats.totalBoost + villain_stats.totalBoost %}
-        {% set sum_totalBoostStar = modular_stats.totalBoostStar + villain_stats.totalBoostStar %}
-        {% set sum_avgBoost = (sum_nbTotal > 0) 
-            ? ((modular_stats.totalBoost + villain_stats.totalBoost) / sum_nbTotal)|number_format(2, '.', '') 
-            : '0.00' %}
-        <span>Statistiques combinées des sets sélectionnés :</span>
-        <span style="margin-left: 18px;">
-            <strong>Cartes différentes :</strong> <span id="sum-nbDiff">{{ sum_nbDiff }}</span> &nbsp;|&nbsp;
-            <strong>Nombre total de cartes :</strong> <span id="sum-nbTotal">{{ sum_nbTotal }}</span> &nbsp;|&nbsp;
-            <strong>Total boost :</strong> <span id="sum-totalBoost">{{ sum_totalBoost }}</span> &nbsp;|&nbsp;
-            <strong>Total boost étoile :</strong> <span id="sum-totalBoostStar">{{ sum_totalBoostStar }}</span> &nbsp;|&nbsp;
-            <strong>Moyenne boost :</strong> <span id="sum-avgBoost">{{ sum_avgBoost }}</span>
-        </span>
-    </div>
+    {# Statistiques combinées #}
+    {% set modular_code = filtered_modular_sets|first ? filtered_modular_sets|first.code : '' %}
+    {% set villain_code = filtered_villain_sets|first ? filtered_villain_sets|first.code : '' %}
+    {% set modular_stats = modular_set_stats[modular_code]|default({'nbDiff':0,'nbTotal':0,'totalBoost':0,'totalBoostStar':0,'avgBoost':'0.00'}) %}
+    {% set villain_stats = villain_set_stats[villain_code]|default({'nbDiff':0,'nbTotal':0,'totalBoost':0,'totalBoostStar':0,'avgBoost':'0.00'}) %}
+    {% set sum_nbDiff = modular_stats.nbDiff + villain_stats.nbDiff %}
+    {% set sum_nbTotal = modular_stats.nbTotal + villain_stats.nbTotal %}
+    {% set sum_totalBoost = modular_stats.totalBoost + villain_stats.totalBoost %}
+    {% set sum_totalBoostStar = modular_stats.totalBoostStar + villain_stats.totalBoostStar %}
+    {% set sum_avgBoost = (sum_nbTotal > 0) 
+        ? ((modular_stats.totalBoost + villain_stats.totalBoost) / sum_nbTotal)|number_format(2, '.', '') 
+        : '0.00' %}
+    {% set combined_stats = {
+        nbDiff: sum_nbDiff,
+        nbTotal: sum_nbTotal,
+        totalBoost: sum_totalBoost,
+        totalBoostStar: sum_totalBoostStar,
+        avgBoost: sum_avgBoost
+    } %}
+
+    {% set modular_type_counts = modular_set_type_counts[modular_code]|default({}) %}
+    {% set villain_type_counts = villain_set_type_counts[villain_code]|default({}) %}
+    {% set combined_type_counts = {} %}
+    {% for type, count in modular_type_counts %}
+        {% set combined_type_counts = combined_type_counts|merge({ (type): count + (villain_type_counts[type]|default(0)) }) %}
+    {% endfor %}
+    {% for type, count in villain_type_counts %}
+        {% if combined_type_counts[type] is not defined %}
+            {% set combined_type_counts = combined_type_counts|merge({ (type): count }) %}
+        {% endif %}
+    {% endfor %}
+
+    {% set modular_boost_counts = modular_set_boost_counts[modular_code]|default({}) %}
+    {% set villain_boost_counts = villain_set_boost_counts[villain_code]|default({}) %}
+    {% set combined_boost_counts = {} %}
+    {% for boost, count in modular_boost_counts %}
+        {% set combined_boost_counts = combined_boost_counts|merge({ (boost): count + (villain_boost_counts[boost]|default(0)) }) %}
+    {% endfor %}
+    {% for boost, count in villain_boost_counts %}
+        {% if combined_boost_counts[boost] is not defined %}
+            {% set combined_boost_counts = combined_boost_counts|merge({ (boost): count }) %}
+        {% endif %}
+    {% endfor %}
+
+    <div id="combined-stats-panel" style="margin-bottom: 24px;"></div>
 
     <div style="display: flex; align-items: flex-end; gap: 32px; margin-bottom: 18px;">
         <div>
@@ -153,50 +177,27 @@
                     </div>
                 {% endfor %}
             </div>
-            <div id="set-infos" style="margin: 18px 0 18px 0; font-size: 1.05em; background:rgb(188, 200, 223); border-radius: 8px; padding: 12px 18px;">
-                {% for set in filtered_modular_sets %}
-                    <div class="set-infos-panel" id="infos-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
-                        <strong>Cartes différentes :</strong> {{ modular_set_stats[set.code].nbDiff }} &nbsp;|&nbsp;
-                        <strong>Nombre total de cartes :</strong> {{ modular_set_stats[set.code].nbTotal }} &nbsp;|&nbsp;
-                        <strong>Total boost :</strong> {{ modular_set_stats[set.code].totalBoost }} &nbsp;|&nbsp;
-                        <strong>Total boost étoile :</strong> {{ modular_set_stats[set.code].totalBoostStar }} &nbsp;|&nbsp;
-                        <strong>Moyenne boost :</strong> {{ modular_set_stats[set.code].avgBoost }}
-                    </div>
-                {% endfor %}
-            </div>
+           {# Statistiques du set modular (bleu) - un bloc par set #}
+{% for set in filtered_modular_sets %}
+    <div class="set-infos-panel" id="infos-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+        {% include 'AppBundle:Search:set_stats.html.twig' with {
+            stats: modular_set_stats[set.code],
+            color: '#1976d2',
+            label: 'Statistiques du set modular sélectionné :',
+            type_counts: modular_set_type_counts[set.code],
+            boost_counts: modular_set_boost_counts[set.code]
+        } %}
+    </div>
+{% endfor %}
             <div>
                 {% for set in filtered_modular_sets %}
                     <div class="set-cards-panel" id="cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
                         <h4 style="margin-bottom:18px;">Cartes du set : {{ set.name }}</h4>
-                        <div class="row">
-                            {% for card in modular_cards_by_set[set.code]|default([]) %}
-                                {% if loop.index0 is divisible by(3) %}
-                                    <div class="clearfix"></div>
-                                {% endif %}
-                                <div class="card-panel-col">
-                                    <div class="card-panel-title">
-                                        {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
-                                        {{ card.name }}
-                                    </div>
-                                    <div class="card-panel">
-                                        <div class="card-panel-content">
-                                            <div class="card-panel-info">
-                                                <strong>Type :</strong> {{ card.type }}<br>
-                                                <strong>Quantité :</strong> {{ card.quantity }}<br>
-                                                <strong>Boost :</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
-                                            </div>
-                                            <div class="card-panel-img">
-                                                <img src="{{ card.imagesrc }}" alt="{{ card.name }}"
-                                                    style="{% if card.type == 'Side Scheme' %}max-width:180px;{% else %}max-width:120px;{% endif %} height:auto; max-height:180px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-                                            </div>
-                                        </div>
-                                        <div class="card-panel-pack">
-                                            <strong>Pack :</strong> {{ card.pack }}
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
+                        {% include 'AppBundle:Search:set_encounter-cards.html.twig' with {
+                            cards: modular_cards_by_set[set.code],
+                            color1: '#1976d2',
+                            color2: '#64b5f6'
+                        } %}
                     </div>
                 {% endfor %}
             </div>
@@ -215,51 +216,28 @@
                                 <em>Aucun trait</em>
                             {% endif %}
                         </div>
-                        <div class="villain-set-infos-panel" id="villain-infos-{{ set.code }}" style="margin-bottom: 18px; font-size: 1.05em; background:#a080c6; color: #fff; border-radius: 8px; padding: 12px 18px;">
-                            <strong>Cartes différentes :</strong> {{ villain_set_stats[set.code].nbDiff }} &nbsp;|&nbsp;
-                            <strong>Nombre total de cartes :</strong> {{ villain_set_stats[set.code].nbTotal }} &nbsp;|&nbsp;
-                            <strong>Total boost :</strong> {{ villain_set_stats[set.code].totalBoost }} &nbsp;|&nbsp;
-                            <strong>Total boost étoile :</strong> {{ villain_set_stats[set.code].totalBoostStar }} &nbsp;|&nbsp;
-                            <strong>Moyenne boost :</strong> {{ villain_set_stats[set.code].avgBoost }}
-                        </div>
-                        
-                         <h4 style="margin-bottom:18px;">
+                        {% include 'AppBundle:Search:set_stats.html.twig' with {
+                            stats: villain_set_stats[set.code],
+                            color: '#a080c6',
+                            label: 'Statistiques du set villain sélectionné :',
+                            type_counts: villain_set_type_counts[set.code],
+                            boost_counts: villain_set_boost_counts[set.code]
+                        } %}
+                        <h4 style="margin-bottom:18px;">
                             Cartes du set villain : {{ set.name }}
                         </h4>
-                        <div class="row">
-                            {% for card in villain_cards_by_set[set.code]|default([]) %}
-                                {% if loop.index0 is divisible by(3) %}
-                                    <div class="clearfix"></div>
-                                {% endif %}
-                                <div class="card-panel-col">
-                                    <div class="card-panel-title" style="background: linear-gradient(90deg, #a080c6 0%, #e0c3fc 100%); color: #fff; border-radius: 4px; padding: 4px 10px;">
-                                        {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
-                                        {{ card.name }}
-                                    </div>
-                                    <div class="card-panel">
-                                        <div class="card-panel-content">
-                                            <div class="card-panel-info">
-                                                <strong>Type :</strong> {{ card.type }}<br>
-                                                <strong>Quantité :</strong> {{ card.quantity }}<br>
-                                                <strong>Boost :</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
-                                            </div>
-                                            <div class="card-panel-img">
-                                                <img src="{{ card.imagesrc }}" alt="{{ card.name }}"
-                                                    style="{% if card.type == 'Side Scheme' %}max-width:180px;{% else %}max-width:120px;{% endif %} height:auto; max-height:180px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-                                            </div>
-                                        </div>
-                                        <div class="card-panel-pack">
-                                            <strong>Pack :</strong> {{ card.pack }}
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
+                        {% include 'AppBundle:Search:set_encounter-cards.html.twig' with {
+                            cards: villain_cards_by_set[set.code],
+                            color1: '#a080c6',
+                            color2: '#e0c3fc'
+                        } %}
                     </div>
                 {% endfor %}
             </div>
         </div>
     </div>
+
+    
 </div>
 
 <script>
@@ -345,15 +323,12 @@ document.getElementById('villain-sets').addEventListener('change', function() {
     if(cards) cards.style.display = '';
 });
 
-// Fonction pour recalculer et afficher les stats globales
-function updateCombinedStats() {
-    // Récupère les codes sélectionnés
+function renderCombinedStats() {
     var modularCode = document.getElementById('modular-sets').value;
     var villainCode = document.getElementById('villain-sets').value;
 
-    // Récupère les stats depuis les variables Twig rendues dans le template
-    var modularStats = window.allModularStats && window.allModularStats[modularCode] ? window.allModularStats[modularCode] : {nbDiff:0,nbTotal:0,totalBoost:0,totalBoostStar:0,avgBoost:'0.00'};
-    var villainStats = window.allVillainStats && window.allVillainStats[villainCode] ? window.allVillainStats[villainCode] : {nbDiff:0,nbTotal:0,totalBoost:0,totalBoostStar:0,avgBoost:'0.00'};
+    var modularStats = window.allModularStats[modularCode] || {nbDiff:0,nbTotal:0,totalBoost:0,totalBoostStar:0,avgBoost:'0.00'};
+    var villainStats = window.allVillainStats[villainCode] || {nbDiff:0,nbTotal:0,totalBoost:0,totalBoostStar:0,avgBoost:'0.00'};
 
     var sum_nbDiff = modularStats.nbDiff + villainStats.nbDiff;
     var sum_nbTotal = modularStats.nbTotal + villainStats.nbTotal;
@@ -361,108 +336,108 @@ function updateCombinedStats() {
     var sum_totalBoostStar = modularStats.totalBoostStar + villainStats.totalBoostStar;
     var sum_avgBoost = sum_nbTotal > 0 ? ((modularStats.totalBoost + villainStats.totalBoost) / sum_nbTotal).toFixed(2) : '0.00';
 
-    document.getElementById('sum-nbDiff').textContent = sum_nbDiff;
-    document.getElementById('sum-nbTotal').textContent = sum_nbTotal;
-    document.getElementById('sum-totalBoost').textContent = sum_totalBoost;
-    document.getElementById('sum-totalBoostStar').textContent = sum_totalBoostStar;
-    document.getElementById('sum-avgBoost').textContent = sum_avgBoost;
+    // Combine type counts
+    var modularTypeCounts = window.allModularTypeCounts[modularCode] || {};
+    var villainTypeCounts = window.allVillainTypeCounts[villainCode] || {};
+    var combinedTypeCounts = {};
+    Object.keys(modularTypeCounts).forEach(function(type) {
+        combinedTypeCounts[type] = (modularTypeCounts[type] || 0) + (villainTypeCounts[type] || 0);
+    });
+    Object.keys(villainTypeCounts).forEach(function(type) {
+        if (combinedTypeCounts[type] === undefined) {
+            combinedTypeCounts[type] = villainTypeCounts[type];
+        }
+    });
+
+    // Combine boost counts
+    var modularBoostCounts = window.allModularBoostCounts[modularCode] || {};
+    var villainBoostCounts = window.allVillainBoostCounts[villainCode] || {};
+    var combinedBoostCounts = {};
+    Object.keys(modularBoostCounts).forEach(function(boost) {
+        combinedBoostCounts[boost] = (modularBoostCounts[boost] || 0) + (villainBoostCounts[boost] || 0);
+    });
+    Object.keys(villainBoostCounts).forEach(function(boost) {
+        if (combinedBoostCounts[boost] === undefined) {
+            combinedBoostCounts[boost] = villainBoostCounts[boost];
+        }
+    });
+
+    // Génère le HTML (reprend le style de set_stats.html.twig)
+    var html = `
+    <div style="margin-bottom: 18px; font-size: 1.08em; background: #111; color: #fff; border-radius: 8px; padding: 14px 22px; font-weight: bold;">
+        <span>Statistiques combinées des sets sélectionnés :</span>
+        <span style="margin-left: 18px;">
+            <strong>Cartes différentes :</strong> ${sum_nbDiff} &nbsp;|&nbsp;
+            <strong>Nombre total de cartes :</strong> ${sum_nbTotal} &nbsp;|&nbsp;
+            <strong>Total boost :</strong> ${sum_totalBoost} &nbsp;|&nbsp;
+            <strong>Total boost étoile :</strong> ${sum_totalBoostStar} &nbsp;|&nbsp;
+            <strong>Moyenne boost :</strong> ${sum_avgBoost}
+        </span>
+    </div>
+    <div style="display: flex; gap: 32px; margin-bottom: 18px;">
+        <div style="flex:1;">
+            <div style="font-weight:bold; margin-bottom:8px;">Répartition par type</div>
+            ${
+                Object.keys(combinedTypeCounts).filter(function(type){
+                    return !['Ally','Support','Upgrade','Event'].includes(type);
+                }).map(function(type){
+                    var maxType = Math.max.apply(null, Object.values(combinedTypeCounts));
+                    var count = combinedTypeCounts[type];
+                    var width = maxType > 0 ? Math.floor(count / maxType * 100) : 0;
+                    return `
+                    <div style="display:flex; align-items:center; margin-bottom:6px;">
+                        <span style="width:90px; display:inline-block;">${type}</span>
+                        <div style="background:#fff; border-radius:4px; height:18px; flex:1; margin:0 8px; border:1px solid #ccc; position:relative;">
+                            <div style="background:#111; height:100%; width:${width}%; border-radius:4px;"></div>
+                            <span style="position:absolute; left:8px; top:0; color:#fff; font-size:0.95em; line-height:18px;">${count}</span>
+                        </div>
+                        <span style="width:32px; text-align:right;">/${sum_nbTotal}</span>
+                    </div>
+                    `;
+                }).join('')
+            }
+        </div>
+        <div style="flex:1;">
+            <div style="font-weight:bold; margin-bottom:8px;">Répartition par boost</div>
+            ${
+                Object.keys(combinedBoostCounts).map(function(boost){
+                    var maxBoost = Math.max.apply(null, Object.values(combinedBoostCounts));
+                    var count = combinedBoostCounts[boost];
+                    var width = maxBoost > 0 ? Math.floor(count / maxBoost * 100) : 0;
+                    return `
+                    <div style="display:flex; align-items:center; margin-bottom:6px;">
+                        <span style="width:40px; display:inline-block;">${boost}</span>
+                        <div style="background:#fff; border-radius:4px; height:18px; flex:1; margin:0 8px; border:1px solid #ccc; position:relative;">
+                            <div style="background:#111; height:100%; width:${width}%; border-radius:4px;"></div>
+                            <span style="position:absolute; left:8px; top:0; color:#fff; font-size:0.95em; line-height:18px;">${count}</span>
+                        </div>
+                        <span style="width:32px; text-align:right;">/${sum_nbTotal}</span>
+                    </div>
+                    `;
+                }).join('')
+            }
+        </div>
+    </div>
+    `;
+    document.getElementById('combined-stats-panel').innerHTML = html;
 }
 
-// Expose les stats PHP côté JS pour accès rapide
+// Mets à jour à chaque changement de set
+document.getElementById('modular-sets').addEventListener('change', renderCombinedStats);
+document.getElementById('villain-sets').addEventListener('change', renderCombinedStats);
+window.addEventListener('DOMContentLoaded', renderCombinedStats);
+</script>
+
+<script>
 window.allModularStats = {{ modular_set_stats|json_encode|raw }};
 window.allVillainStats = {{ villain_set_stats|json_encode|raw }};
-
-// Ajoute le recalcul lors du changement de set
-document.getElementById('modular-sets').addEventListener('change', function() {
-    // ... panels ...
-    updateCombinedStats();
-});
-document.getElementById('villain-sets').addEventListener('change', function() {
-    // ... panels ...
-    updateCombinedStats();
-});
-
-// Appelle au chargement pour initialiser
-window.addEventListener('DOMContentLoaded', function() {
-    updateCombinedStats();
-});
+window.allModularTypeCounts = {{ modular_set_type_counts|json_encode|raw }};
+window.allVillainTypeCounts = {{ villain_set_type_counts|json_encode|raw }};
+window.allModularBoostCounts = {{ modular_set_boost_counts|json_encode|raw }};
+window.allVillainBoostCounts = {{ villain_set_boost_counts|json_encode|raw }};
 </script>
 
 <style>
-    .card-panel-col {
-        width: 33.3333%;
-        float: left;
-        box-sizing: border-box;
-        padding: 8px;
-    }
-    @media (max-width: 900px) {
-        div[style*="margin-left:200px"] {
-            margin-left: 10px !important;
-            margin-right: 10px !important;
-        }
-        .card-panel-col {
-            width: 100%;
-        }
-    }
-    .card-panel {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        background: linear-gradient(135deg, #e3f0ff 0%,rgb(145, 155, 172) 100%);
-        border-radius: 0px 0px 8px 8px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-        padding: 12px 16px;
-        margin-bottom: 16px;
-        min-height: 220px;
-        position: relative;
-    }
-    .card-panel-title {
-        font-weight: bold;
-        font-size: 1.2em;
-        margin-bottom: 0px;
-        background: linear-gradient(90deg, #1976d2 0%, #64b5f6 100%);
-        color: #fff;
-        padding: 6px 12px;
-        border-radius: 6px 6px 0 0;
-        text-align: left;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.07);
-        letter-spacing: 0.5px;
-    }
-    .card-panel-content {
-        display: flex;
-        flex: 1;
-    }
-    .card-panel-info {
-        font-size: 0.97em;
-        color: #444;
-        flex: 1;
-    }
-    .card-panel-img {
-        margin-left: 20px;
-    }
-    .card-panel-img img {
-        max-width: 120px;
-        height: auto;
-        max-height: 180px;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .card-panel-pack {
-        margin-top: 12px;
-        font-size: 0.95em;
-        color: #111;
-        font-style: italic;
-        text-align: right;
-    }
-    .icon-unique {
-        display: inline-block;
-        width: 18px;
-        height: 18px;
-        background: url('/bundles/icons/unique.svg') no-repeat center center;
-        background-size: contain;
-        vertical-align: middle;
-        margin-right: 0px;
-    }
     #slide-panel-stats {
         background: linear-gradient(135deg, #e3f0ff 0%, #b3cfff 100%);
     }

@@ -1,0 +1,59 @@
+{# 
+    Paramètres attendus :
+    - stats : dict avec nbDiff, nbTotal, totalBoost, totalBoostStar, avgBoost
+    - color : couleur principale (ex: #1976d2, #a080c6, #111)
+    - label : titre à afficher (ex: "Statistiques combinées", "Statistiques du set modular", ...)
+    - type_counts : dict [type => count] (ex: {'Minion': 3, ...})
+    - boost_counts : dict [boost => count] (ex: {'0': 2, '1': 4, ...})
+#}
+<div style="margin-bottom: 18px; font-size: 1.08em; background: {{ color }}; color: #fff; border-radius: 8px; padding: 14px 22px; font-weight: bold;">
+    <span>{{ label }}</span>
+    <span style="margin-left: 18px;">
+        <strong>Cartes différentes :</strong> {{ stats.nbDiff|default(0) }} &nbsp;|&nbsp;
+        <strong>Nombre total de cartes :</strong> {{ stats.nbTotal|default(0) }} &nbsp;|&nbsp;
+        <strong>Total boost :</strong> {{ stats.totalBoost|default(0) }} &nbsp;|&nbsp;
+        <strong>Total boost étoile :</strong> {{ stats.totalBoostStar|default(0) }} &nbsp;|&nbsp;
+        <strong>Moyenne boost :</strong> {{ stats.avgBoost|default('0.00') }}
+    </span>
+</div>
+
+<div style="display: flex; gap: 32px; margin-bottom: 18px;">
+    <div style="flex:1;">
+        <div style="font-weight:bold; margin-bottom:8px;">Répartition par type</div>
+        {% set max_type = 1 %}
+        {% if type_counts is defined and type_counts|length > 0 %}
+            {% set sorted_types = type_counts|sort %}
+            {% set max_type = sorted_types|last %}
+        {% endif %}
+        {% for type, count in type_counts|default({}) %}
+            {% if type != 'Ally' and type != 'Support' and type != 'Upgrade' and type != 'Event' %}
+            <div style="display:flex; align-items:center; margin-bottom:6px;">
+                <span style="width:90px; display:inline-block;">{{ type }}</span>
+                <div style="background:#fff; border-radius:4px; height:18px; flex:1; margin:0 8px; border:1px solid #ccc; position:relative;">
+                    <div style="background:{{ color }}; height:100%; width:{% if max_type > 0 %}{{ (count / max_type * 100)|round(0, 'floor') }}{% else %}0{% endif %}%; border-radius:4px;"></div>
+                    <span style="position:absolute; left:8px; top:0; color:#fff; font-size:0.95em; line-height:18px;">{{ count }}</span>
+                </div>
+                <span style="width:32px; text-align:right;">/{{ stats.nbTotal|default(0) }}</span>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <div style="flex:1;">
+        <div style="font-weight:bold; margin-bottom:8px;">Répartition par boost</div>
+        {% set max_boost = 1 %}
+        {% if boost_counts is defined and boost_counts|length > 0 %}
+            {% set sorted_boosts = boost_counts|sort %}
+            {% set max_boost = sorted_boosts|last %}
+        {% endif %}
+        {% for boost, count in boost_counts|default({}) %}
+            <div style="display:flex; align-items:center; margin-bottom:6px;">
+                <span style="width:40px; display:inline-block;">{{ boost }}</span>
+                <div style="background:#fff; border-radius:4px; height:18px; flex:1; margin:0 8px; border:1px solid #ccc; position:relative;">
+                    <div style="background:{{ color }}; height:100%; width:{% if max_boost > 0 %}{{ (count / max_boost * 100)|round(0, 'floor') }}{% else %}0{% endif %}%; border-radius:4px;"></div>
+                    <span style="position:absolute; left:8px; top:0; color:#fff; font-size:0.95em; line-height:18px;">{{ count }}</span>
+                </div>
+                <span style="width:32px; text-align:right;">/{{ stats.nbTotal|default(0) }}</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>

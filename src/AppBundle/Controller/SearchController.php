@@ -253,19 +253,21 @@ class SearchController extends Controller
 
 		// Génère un tableau [set_code => [cards...]] pour un type de set
 		$cardsBySet = function($sets, $cards, $excludeTypes = []) use ($getCardType, $getCardPack, $getCardQuantity) {
+			// Ajoute les types à exclure systématiquement
+			$excludeTypes = array_merge($excludeTypes, ['ally', 'support', 'upgrade', 'event']);
 			$result = [];
 			foreach ($sets as $set) {
 				$set_code = $set->getCode();
 				$result[$set_code] = [];
 				foreach ($cards as $card) {
 					if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
-						$type_name = $getCardType($card);
-						if (in_array(strtolower($type_name), $excludeTypes)) continue;
+						$type_name = strtolower($getCardType($card));
+						if (in_array($type_name, $excludeTypes)) continue;
 						$result[$set_code][] = [
 							'name' => $card->getName(),
 							'imagesrc' => '/bundles/cards/' . $card->getCode() . '.jpg',
 							'quantity' => $getCardQuantity($card),
-							'type' => $type_name,
+							'type' => $getCardType($card),
 							'boost' => method_exists($card, 'getBoost') ? $card->getBoost() : 0,
 							'boostStar' => method_exists($card, 'getBoostStar') ? $card->getBoostStar() : false,
 							'pack' => $getCardPack($card),
@@ -359,17 +361,36 @@ class SearchController extends Controller
 			return $counts;
 		};
 
+		$setBoostCounts = function($sets, $cards_by_set) {
+			$counts = [];
+			foreach ($sets as $set) {
+				$set_code = $set->getCode();
+				$counts[$set_code] = ['0' => 0, '1' => 0, '2' => 0, '3+' => 0];
+				foreach ($cards_by_set[$set_code] as $card) {
+					$boost = isset($card['boost']) ? intval($card['boost']) : 0;
+					$qty = isset($card['quantity']) ? $card['quantity'] : 1;
+					if ($boost === 0) $counts[$set_code]['0'] += $qty;
+					elseif ($boost === 1) $counts[$set_code]['1'] += $qty;
+					elseif ($boost === 2) $counts[$set_code]['2'] += $qty;
+					else $counts[$set_code]['3+'] += $qty;
+				}
+			}
+			return $counts;
+		};
+
 		// --- Modular ---
 		$modular_cards_by_set = $cardsBySet($filtered_sets, $cards);
 		$modular_set_stats = $setStats($modular_cards_by_set);
 		$modular_traits_by_set = $traitsBySet($filtered_sets, $cards);
 		$modular_set_type_counts = $setTypeCounts($filtered_sets, $modular_cards_by_set, $type_label);
+		$modular_set_boost_counts = $setBoostCounts($filtered_sets, $modular_cards_by_set);
 
 		// --- Villain ---
 		$villain_cards_by_set = $cardsBySet($filtered_villain_sets, $cards, ['villain', 'main scheme']);
 		$villain_set_stats = $setStats($villain_cards_by_set);
 		$villain_traits_by_set = $traitsBySet($filtered_villain_sets, $cards);
 		$villain_set_type_counts = $setTypeCounts($filtered_villain_sets, $villain_cards_by_set, $type_label);
+		$villain_set_boost_counts = $setBoostCounts($filtered_villain_sets, $villain_cards_by_set);
 
 		// Retirer les types qui sont toujours à 0 dans tous les sets
 		$types_to_remove = [];
@@ -395,6 +416,9 @@ class SearchController extends Controller
 			"cards" => $cards,
 			"type_label" => $type_label,
 			"modular_set_type_counts" => $modular_set_type_counts,
+			"villain_set_type_counts" => $villain_set_type_counts,
+			"modular_set_boost_counts" => $modular_set_boost_counts,
+			"villain_set_boost_counts" => $villain_set_boost_counts,
 			"modular_traits_by_set" => $modular_traits_by_set,
 			"modular_cards_by_set" => $modular_cards_by_set,
 			"modular_set_stats" => $modular_set_stats,
