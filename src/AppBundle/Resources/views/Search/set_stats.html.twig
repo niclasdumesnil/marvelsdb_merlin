@@ -26,7 +26,7 @@
             {% set max_type = sorted_types|last %}
         {% endif %}
         {% for type, count in type_counts|default({}) %}
-            {% if type != 'Ally' and type != 'Support' and type != 'Upgrade' and type != 'Event' %}
+            {% if type != 'Ally' and type != 'Support' and type != 'Upgrade' and type != 'Event' and type != 'Main Scheme' %}
             <div style="display:flex; align-items:center; margin-bottom:6px;">
                 <span style="width:90px; display:inline-block;">{{ type }}</span>
                 <div style="background:#fff; border-radius:4px; height:18px; flex:1; margin:0 8px; border:1px solid #ccc; position:relative;">
