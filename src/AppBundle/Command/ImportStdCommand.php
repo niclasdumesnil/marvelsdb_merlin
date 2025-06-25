@@ -585,6 +585,7 @@ class ImportStdCommand extends ContainerAwareCommand
 				'traits',
 				'text',
 				'cost',
+				'cost_per_hero',
 				'resource_physical',
 				'resource_mental',
 				'resource_energy',
