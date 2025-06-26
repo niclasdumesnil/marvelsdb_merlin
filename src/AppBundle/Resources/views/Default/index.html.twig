@@ -110,11 +110,12 @@
             |filter(pack => pack.visibility is not defined or pack.visibility != 'false')
             |sort((a, b) => a.name < b.name ? -1 : 1)
         %}
+        {% set half = (filtered_packs|length // 2 + filtered_packs|length % 2) %}
         <ul style="flex: 1; border-radius: 8px; padding: 1rem; background: rgb(30, 47, 63); color: #fff; padding-left: 30px;">
-            {% for pack in filtered_packs|slice(0, (filtered_packs|length // 2 + filtered_packs|length % 2)) %}
+            {% for pack in filtered_packs[:half] %}
                 <li>
                     {{ pack.name }} by {{ pack.creator }}
-                    {% if pack.status is defined and pack.status == 'beta' %}
+                    {% if pack.status is defined and (pack.status == 'beta' or pack.status == 'alpha') %}
                         <span style="
                             display: inline-block;
                             margin-left: 8px;
@@ -124,17 +125,17 @@
                             background: rgb(216, 150, 8);
                             color: #fff;
                         ">
-                            Beta
+                           {{pack.status}}
                         </span>
                     {% endif %}
                 </li>
             {% endfor %}
         </ul>
         <ul style="flex: 1; border-radius: 8px; padding: 1rem; background: rgb(30, 47, 63); color: #fff; padding-left: 30px;">
-            {% for pack in filtered_packs|slice((filtered_packs|length // 2 + filtered_packs|length % 2)) %}
+            {% for pack in filtered_packs[half:] %}
                 <li>
                     {{ pack.name }} by {{ pack.creator }}
-                    {% if pack.status is defined and pack.status == 'beta' %}
+                    {% if pack.status is defined and (pack.status == 'beta' or pack.status == 'alpha') %}
                         <span style="
                             display: inline-block;
                             margin-left: 8px;
@@ -144,7 +145,7 @@
                             background: rgb(216, 150, 8);
                             color: #fff;
                         ">
-                            Beta
+                           {{pack.status}}
                         </span>
                     {% endif %}
                 </li>
