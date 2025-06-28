@@ -3,9 +3,54 @@
 
 {% block body %}
 
+<style>
+.custom-keyword-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px 32px;
+    margin-bottom: 24px;
+}
+.custom-keyword-col {
+    flex: 1 1 320px;
+    min-width: 300px;
+    max-width: 48%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.custom-keyword {
+    display: block;
+    background: #2196f3;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 6px 6px 0 0;
+    margin: 12px 0 0 0;
+    font-weight: bold;
+    font-size: 1.1em;
+    box-shadow: 0 2px 8px rgba(33,150,243,0.08);
+}
+.custom-keyword-desc {
+    background: #e3f2fd;
+    color: #222;
+    padding: 8px 14px;
+    border-radius: 0 0 6px 6px;
+    margin-bottom: 12px;
+    font-size: 1em;
+}
+@media (max-width: 900px) {
+    .custom-keyword-list {
+        flex-direction: column;
+        gap: 0;
+    }
+    .custom-keyword-col {
+        max-width: 100%;
+    }
+}
+</style>
+
 <div class="main white container rules-reference">
 
-	<h2>The latest version of the rules are available on FFG website!</h1>
+    <h2>The latest version of the rules are available on FFG website!</h2>
 
     <a href="https://www.fantasyflightgames.com/en/products/marvel-champions-the-card-game/"
        class="btn btn-primary"
@@ -13,6 +58,63 @@
        rel="noopener noreferrer">
         FFG website
     </a>
+
+    <h3>Custom keyword</h3>
+
+    <div class="custom-keyword-list">
+        <div class="custom-keyword-col">
+            <span class="custom-keyword">Agile X</span>
+            <div class="custom-keyword-desc">
+                Reduce damage taken from undefended villain and villainous minion attacks by X. (default is 1)
+            </div>
+
+            <span class="custom-keyword">Alias</span>
+            <div class="custom-keyword-desc">
+                If you control a card with a matching subtitle, discard it and play this card for free.
+            </div>
+
+            <span class="custom-keyword">Armored X</span>
+            <div class="custom-keyword-desc">
+                Reduce the amount of damage this character takes from each attack by X.
+            </div>
+
+            <span class="custom-keyword">Drain X</span>
+            <div class="custom-keyword-desc">
+                When this keyword is triggered by a character, deal X damage to that character’s target. Then, if the target took that damage, heal X damage from the character who triggered drain.
+            </div>
+
+            <span class="custom-keyword">Fleeting</span>
+            <div class="custom-keyword-desc">
+                After the phase ends, discard this card.
+            </div>
+
+            <span class="custom-keyword">Fragile</span>
+            <div class="custom-keyword-desc">
+                Attacks against this character gain overkill.
+            </div>
+        </div>
+        <div class="custom-keyword-col">
+            <span class="custom-keyword">Investigate</span>
+            <div class="custom-keyword-desc">
+                Look at the top 3 cards of the encounter deck. Choose and discard 1 of those cards. Place the rest back on top of the encounter deck in order.
+            </div>
+
+            <span class="custom-keyword">Reckless</span>
+            <div class="custom-keyword-desc">
+                After this character enters play, place 1 threat on each scheme.
+            </div>
+
+            <span class="custom-keyword">Seek</span>
+            <div class="custom-keyword-desc">
+                Discard cards from the top of (y) deck until you discard an (x) card.
+            </div>
+
+            <span class="custom-keyword">Summon</span>
+            <div class="custom-keyword-desc">
+                Search the deck, discard pile, or anywhere in or out of play for a specific card, then shuffle the deck if it was searched in this way.
+            </div>
+        </div>
+    </div>
 
 </div>
 
