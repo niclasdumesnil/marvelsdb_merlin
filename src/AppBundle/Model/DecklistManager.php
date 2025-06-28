@@ -145,14 +145,29 @@ class DecklistManager
 	{
 		$qb = $this->getQueryBuilder();
 		$qb->addSelect($this->popularityString.' AS HIDDEN popularity');
+
+		// Correction : recherche sur tous les codes liés à la carte
+		$codes = [$card->getCode()];
+		if ($card->getDuplicateOf()) {
+			$codes[] = $card->getDuplicateOf()->getCode();
+		}
+		if ($card->getDuplicates()) {
+			foreach ($card->getDuplicates() as $dupe) {
+				$codes[] = $dupe->getCode();
+			}
+		}
+
 		$qb->innerJoin('d.slots', "s");
-		$qb->andWhere("s.card = :card");
-		$qb->setParameter("card", $card);
+		$qb->innerJoin('s.card', 'c');
+		$qb->andWhere("c.code IN (:codes)");
+		$qb->setParameter("codes", $codes);
+
 		if ($ignoreEmptyDescriptions){
 			$qb->andWhere('LENGTH(d.descriptionHtml) > 199');
 		}
 		$qb->addOrderBy('popularity', 'DESC');
 		$qb->addOrderBy('d.dateCreation', 'DESC');
+		$this->logger->info('Recherche decks pour codes : '.implode(', ', $codes));
 		return $this->getPaginator($qb->getQuery());
 	}
 

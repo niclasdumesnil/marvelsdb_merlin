@@ -84,7 +84,7 @@ class DefaultController extends Controller
 
 		$paginator = $decklist_manager->findDecklistsByTrending();
 		$iterator = $paginator->getIterator();
-		while($iterator->valid() && count($decklists_by_popular) < 5) // Limite à 5
+		while($iterator->valid() && count($decklists_by_popular) < 3) // Limite à 3
 		{
 			$decklist = $iterator->current();
 						
@@ -107,7 +107,7 @@ class DefaultController extends Controller
 		$paginator = $decklist_manager->findDecklistsByAge(true);
 		$iterator = $paginator->getIterator();
 		$userCheck = [];
-		while($iterator->valid() && count($decklists_by_recent) < 5) // Limite à 5
+		while($iterator->valid() && count($decklists_by_recent) < 3) // Limite à 3
 		{
 			$decklist = $iterator->current();
 			if (!isset($userCheck[$decklist->getUser()->getId()])){
