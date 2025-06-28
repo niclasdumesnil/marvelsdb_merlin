@@ -47,21 +47,17 @@
         </div>
     </div>
     <div>
-    {% if isNewUI %}
         <form method="post" action="{{ path('deck_initbuild') }}">
-    {% endif %}
-    {% if hero.code == '44001a'%}
-        <p><button style="background-image: linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,154,0,1) 10%, rgba(208,222,33,1) 20%, rgba(79,220,74,1) 30%, rgba(63,218,216,1) 40%, rgba(47,201,226,1) 50%, rgba(28,127,238,1) 60%, rgba(95,21,242,1) 70%, rgba(186,12,248,1) 80%, rgba(251,7,217,1) 90%, rgba(255,0,0,1) 100%); color: #222;" name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
-    {% else %}
-        {% if hero.pack.creator != "" %}
-            <p><button style="background-image: linear-gradient(90deg, rgb(18, 120, 216) 0%, rgba(7,77,143,1) 100%); color: #fff;" name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
-        {% else %}
-            <p><button name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
-        {% endif %}
-    {% endif %}
-    {% if isNewUI %}
+            {% if hero.code == '44001a'%}
+                <p><button style="background-image: linear-gradient(90deg, rgba(255,0,0,1) 0%, rgba(255,154,0,1) 10%, rgba(208,222,33,1) 20%, rgba(79,220,74,1) 30%, rgba(63,218,216,1) 40%, rgba(47,201,226,1) 50%, rgba(28,127,238,1) 60%, rgba(95,21,242,1) 70%, rgba(186,12,248,1) 80%, rgba(251,7,217,1) 90%, rgba(255,0,0,1) 100%); color: #222;" name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
+            {% else %}
+                {% if hero.pack.creator != "" %}
+                    <p><button style="background-image: linear-gradient(90deg, rgb(18, 120, 216) 0%, rgba(7,77,143,1) 100%); color: #fff;" name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
+                {% else %}
+                    <p><button name="hero" value="{{ hero.code }}" type="submit" class="btn btn-primary btn-block">Create {{hero.name}} Deck</button></p>
+                {% endif %}
+            {% endif %}
         </form>
-    {% endif %}
     </div>
 </div>
 

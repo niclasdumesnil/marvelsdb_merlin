@@ -1,6 +1,8 @@
 {% extends 'AppBundle::layout.html.twig' %}
 {% import "AppBundle::macros.html.twig" as macros %}
 
+{% set isNewUI = app.user is defined and app.user and app.user.isNewUI %}
+
 {% block javascripts %}
     {% javascripts '@AppBundle/Resources/public/js/app.deckinit.js' %}
     <script src="{{ asset_url }}"></script>
@@ -45,12 +47,24 @@
         cursor: pointer;
         transition: background 0.2s, color 0.2s;
     }
-    .hero-filter-btn.active-filter {
-        background: #111;
-        color: #fff;
-        border-color: #111;
-    }
 </style>
+{% if isNewUI %}
+<style>
+.hero-filter-btn.active-filter {
+    background: #1976d2;
+    color: #fff;
+    border-color: #1976d2;
+}
+</style>
+{% else %}
+<style>
+.hero-filter-btn.active-filter {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+}
+</style>
+{% endif %}
 
 <div class="main white container">
 
