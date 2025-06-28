@@ -61,37 +61,39 @@ class DefaultController extends Controller
 			throw new \Exception("Ran out of heroes for spotlight.");
 		}
 
+		// HERO : max 3 decks, un seul deck par utilisateur
 		$paginator = $decklist_manager->findDecklistsByHero($card, true);
 		$iterator = $paginator->getIterator();
-		$userCheck = [];
-		while($iterator->valid() && count($decklists_by_hero) < 10)
+		$userCheckHero = [];
+		$decklists_by_hero = [];
+		while($iterator->valid() && count($decklists_by_hero) < 3)
 		{
 			$decklist = $iterator->current();
 			$hero = $decklist->getCharacter();
-			
-			if (!isset($userCheck[$decklist->getUser()->getId()])){
+			if (!isset($userCheckHero[$decklist->getUser()->getId()])){
 				$decklists_by_hero[] = [
 					'hero_meta' => json_decode($hero->getMeta()),
 					'faction' => $hero->getFaction(),
 					'decklist' => $decklist,
 					'meta' => json_decode($decklist->getMeta())
 				];
-				$userCheck[$decklist->getUser()->getId()] = true;
-				$dupe_deck_list[$decklist->getId()] = true;
+				$userCheckHero[$decklist->getUser()->getId()] = true;
 			}
 			$iterator->next();
 		}
 
+		// POPULAR : max 3 decks, un seul deck par utilisateur
 		$paginator = $decklist_manager->findDecklistsByTrending();
 		$iterator = $paginator->getIterator();
-		while($iterator->valid() && count($decklists_by_popular) < 3) // Limite à 3
+		$userCheckPopular = [];
+		$decklists_by_popular = [];
+		while($iterator->valid() && count($decklists_by_popular) < 3)
 		{
 			$decklist = $iterator->current();
-						
 			if (
 				$decklist->getCharacter()->getCode() != $card->getCode()
-				&& !isset($dupe_deck_list[$decklist->getId()])
-				&& $decklist->getCharacter()->getPack()->GetVisibility() !="false" 
+				&& $decklist->getCharacter()->getPack()->GetVisibility() != "false"
+				&& !isset($userCheckPopular[$decklist->getUser()->getId()])
 			)
 			{
 				$decklists_by_popular[] = [
@@ -100,22 +102,31 @@ class DefaultController extends Controller
 					'decklist' => $decklist,
 					'meta' => json_decode($decklist->getMeta())
 				];
-				$dupe_deck_list[$decklist->getId()] = true;
+				$userCheckPopular[$decklist->getUser()->getId()] = true;
 			}
 			$iterator->next();
 		}
+
+		// RECENT : max 3 decks, un seul deck par utilisateur
 		$paginator = $decklist_manager->findDecklistsByAge(true);
 		$iterator = $paginator->getIterator();
-		$userCheck = [];
-		while($iterator->valid() && count($decklists_by_recent) < 3) // Limite à 3
+		$userCheckRecent = [];
+		$decklists_by_recent = [];
+		while($iterator->valid() && count($decklists_by_recent) < 3)
 		{
 			$decklist = $iterator->current();
-			if (!isset($userCheck[$decklist->getUser()->getId()])){
-				if ($decklist->getCharacter()->getCode() != $card->getCode() && !isset($dupe_deck_list[$decklist->getId()]) && $decklist->getCharacter()->getPack()->GetVisibility() !="false" ) {
-					$decklists_by_recent[] = ['hero_meta' => json_decode($decklist->getCharacter()->getMeta()), 'faction' => $decklist->getCharacter()->getFaction(), 'decklist' => $decklist, 'meta' => json_decode($decklist->getMeta()) ];
-					$userCheck[$decklist->getUser()->getId()] = true;
-					$dupe_deck_list[$decklist->getId()] = true;
-				}
+			if (
+				$decklist->getCharacter()->getCode() != $card->getCode()
+				&& $decklist->getCharacter()->getPack()->GetVisibility() != "false"
+				&& !isset($userCheckRecent[$decklist->getUser()->getId()])
+			) {
+				$decklists_by_recent[] = [
+					'hero_meta' => json_decode($decklist->getCharacter()->getMeta()),
+					'faction' => $decklist->getCharacter()->getFaction(),
+					'decklist' => $decklist,
+					'meta' => json_decode($decklist->getMeta())
+				];
+				$userCheckRecent[$decklist->getUser()->getId()] = true;
 			}
 			$iterator->next();
 		}
@@ -178,12 +189,16 @@ class DefaultController extends Controller
 		$iterator = $paginator->getIterator();
 		$card_of_the_day_decklists = [];
 		$no_dupe_heroes = [];
-		while($iterator->valid() && count($card_of_the_day_decklists) < 8)
+		while($iterator->valid() && count($card_of_the_day_decklists) < 3)
 		{
 			$decklist = $iterator->current();
-			if (!isset($no_dupe_heroes[$decklist->getCharacter()->getId()]) && !isset($dupe_deck_list[$decklist->getId()])) {
-				$card_of_the_day_decklists[] = ['hero_meta' => json_decode($decklist->getCharacter()->getMeta()), 'faction' => $decklist->getCharacter()->getFaction(), 'decklist' => $decklist, 'meta' => json_decode($decklist->getMeta()) ];
-				$dupe_deck_list[$decklist->getId()] = true;
+			if (!isset($no_dupe_heroes[$decklist->getCharacter()->getId()])) {
+				$card_of_the_day_decklists[] = [
+					'hero_meta' => json_decode($decklist->getCharacter()->getMeta()),
+					'faction' => $decklist->getCharacter()->getFaction(),
+					'decklist' => $decklist,
+					'meta' => json_decode($decklist->getMeta())
+				];
 				$no_dupe_heroes[$decklist->getCharacter()->getId()] = true;
 			}
 			$iterator->next();
