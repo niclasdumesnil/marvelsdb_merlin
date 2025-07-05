@@ -72,10 +72,7 @@
 	<div class="row">
 		<div class="col-md-12">
 			<h1 id="deck-name">{{ deck.name }} 
-				<!-- Ajoute le bouton Deck en image où tu veux dans la page, par exemple sous le deck -->
-				<button type="button" id="btn-deck-image" class="btn btn-default">
-					<span class="fa fa-image"></span> Deck Image
-				</button>
+				
 			</h1>
 			{% if deck.problem %}
 			<div class="alert alert-danger" role="alert">{{ deck_validation_helper.problemLabel(deck.problem) }}</div>
@@ -93,9 +90,15 @@
 
 		<!-- Build Controls -->
 		<div class="col-md-6 hidden-print">
+				
 
 			<div style="margin-bottom:20px" id="btn-group-deck">
 				<div style="margin-bottom:5px">
+					<div style="margin-bottom:5px">
+						<button type="button" id="btn-deck-image" class="btn" style="background-color: #000; color: #fff;">
+							<span class="fa fa-image"></span> Deck Image
+						</button>
+					</div>
 					{% if is_owner and editable %}
 					<a href="{{ path('deck_edit', {deck_id:deck_id}) }}" class="btn btn-primary"><span class="fa fa-pencil"></span> Edit</a>
 					<a href="{{ path('deck_publish_form', {deck_id:deck_id}) }}" id="btn-publish" class="btn btn-success"><span class="fa fa-share"></span> Publish</a>
@@ -103,8 +106,9 @@
 					{% endif %}
 
 					<a href="{{ path('deck_clone', {deck_id:deck_id}) }}" id="btn-clone" class="btn btn-info"><span class="fa fa-clone"></span> Clone</a>
-
-					</div>
+					<!-- Ajoute le bouton Deck image où tu veux dans la page -->
+					
+				</div>
 					<div>
 					<div class="btn-group">
 						<button type="button" class="btn btn-default dropdown-toggle " data-toggle="dropdown">
@@ -137,6 +141,7 @@
 				</div>
 			</div>
 
+			
 			<p>
 				Version {{ deck.version }}
 			</p>
@@ -176,11 +181,6 @@
 
 	</div><!-- .row -->
 </div><!-- .container -->
-
-<!-- Ajoute le bouton Deck en image où tu veux dans la page, par exemple sous le deck -->
-<button type="button" id="btn-deck-image" class="btn btn-default">
-    <span class="fa fa-image"></span> Deck en image
-</button>
 
 {% include 'AppBundle:Modale:odds.html.twig' %}
 {% include 'AppBundle:Modale:delete.html.twig' %}
