@@ -80,7 +80,12 @@
 	<div class="col-sm-12" style="margin-bottom:10px">
             <input type="checkbox" id="show-fanmade-affinity" checked>
             Display FanMade Affinity &amp; Basic cards
-    </div>
+
+            &nbsp;&nbsp; <!-- Ajoute un espace ici -->
+
+            <input type="checkbox" id="show-traits-tags" checked style="accent-color: #111;">
+            <span style="margin-left:4px;">Display Traits Tags</span>
+	</div>
 
 	<!-- Search Bar -->
 	<div class="col-sm-12" style="margin-bottom:10px">
@@ -121,7 +126,7 @@
 					<th class="cost"><a href="#" data-sort="cost" title="Cost">Cost</a></th>
 					<th class="type"><a href="#" data-sort="type_code" title="Type">Type</a></th>
 					<th class="faction"><a href="#" data-sort="faction_code" title="Faction">Aspect</a></th>
-					<th class="fm_code"><a href="#" title="fm">Custom</a></th>
+					<th class="fm_code"><a href="#" title="fm">Tag</a></th>
 				</tr>
 			</thead>
 			<tbody id="collection-table" class="collection"></tbody>
@@ -136,9 +141,31 @@
     background: #2196f3;
     color: #fff;
     border-radius: 6px;
-    padding: 1px 6px;
-    font-weight: normal;
-    font-size: 0.8em;
+    padding: 1px 8px;
+    font-size: 0.85em;
+    margin-left: 6px;
+    font-weight: bold;
+    display: inline-block;
+}
+.custom_tag {
+    background: rgb(161, 169, 175);
+    color: #fff;
+    border-radius: 6px;
+    padding: 1px 8px;
+    font-size: 0.85em;
+    margin-left: 6px;
+    font-weight: bold;
+    display: inline-block;
+}
+.trait_tag {
+    background: #111;
+    color: #fff;
+    border-radius: 6px;
+    padding: 1px 8px;
+    font-size: 0.85em;
+    margin-left: 6px;
+    font-weight: bold;
+    display: inline-block;
 }
 </style>
 

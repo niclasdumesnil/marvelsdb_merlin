@@ -451,7 +451,7 @@ ui.chaos = function() {
 						var duped = [];
 						dupe.duplicated_by.forEach(function (another_id) {
 							var another_dupe = app.data.cards.findById(another_id);
-							if (another_dupe && ui.in_selected_packs(another_dupe, filters)) {
+							if (another_dupe && ui.in_selected_packs(another_duge, filters)) {
 								duped.push(another_dupe);
 							}
 						});
@@ -728,26 +728,52 @@ ui.get_filters = function get_filters(prefix) {
  * @memberOf ui
  */
 ui.update_list_template = function update_list_template() {
-	switch (Config['display-column']) {
-	case 1:
-		DisplayColumnsTpl = _.template(
-			'<tr>'
+    switch (Config['display-column']) {
+    case 1:
+        DisplayColumnsTpl = _.template(
+             '<tr>'
 				+ '<td><div class="btn-group" data-toggle="buttons"><%= radios %></div></td>'
-				+ '<td><span class="fa fa-circle fg-<%= card.faction_code %>"></span> <a class="card card-tip <% if (typeof(card.faction2_code) !== "undefined") { %> fg-dual <% } %>" data-code="<%= card.code %>" href="<%= url %>" data-target="#cardModal" data-remote="false" data-toggle="modal">'
-				+ '<%= card.name %></a>'
+				+ '<td>'
+				+ '<span class="fa fa-circle fg-<%= card.faction_code %>"></span> '
+				+ '<a class="card card-tip<% if (typeof(card.faction2_code) !== "undefined") { %> fg-dual<% } %>"'
+				+ ' data-code="<%= card.code %>" href="<%= url %>" data-target="#cardModal" data-remote="false" data-toggle="modal">'
+				+ '<%= card.name %>'
+				+ '<% if (card.custom) { %> <span class="custom_tag"><%= card.custom %></span><% } %>'
+				+ '</a>'
 				+ '<% if (card.exceptional) { %> <span class="icon-eldersign" style="color:orange;" title="Exceptional. Double xp cost and limit one per deck."></span> <% } %>'
 				+ '</td>'
 				+ '<td class="resources"><%= resources %></td>'
 				+ '<td class="cost"><%= card.cost %></td>'
 				+ '<td class="type" style="text-align : left;"><span class="" title="<%= card.type_name %>"><%= card.type_name %></span> <% if (card.slot) { %> - <%= card.slot %> <% } %></td>'
 				+ '<td class="faction"><span class="fg-<%= card.faction_code %>" title="<%= card.faction_name %>"><%= card.faction_name %></span></td>'
-				+ '<td class="fm_code"><% if (fanmade === "Yes") { %><span class="fm_code_yes"><%= card.pack_name %></span><% } else { %><% } %></td>'
+				+ '<td class="fm_code">'
+				+ '<% if (fanmade === "Yes") { %><span class="fm_code_yes"><%= card.pack_name %></span><% } %>'
+				+ '<% if (card.text && card.text.indexOf("Team-Up") !== -1) { %> <span class="custom_tag">Team-Up</span><% } %>'
+				+ '<% if (card.custom) { %> <span class="custom_tag"><%= card.custom %></span><% } %>'
+				// Ajout des traits comme tags noirs, avec remplacement S.H.I.E.L.D. -> SHIELD
+				+ '<% if (card.traits && window.showTraitsTags !== false) { '
+				+ 'var traitArr = [];'
+				+ 'var buffer = [];'
+				+ 'card.traits.split(".").forEach(function(part) { '
+				+ '  var p = part.trim();'
+				+ '  if(p === "S" || p === "H" || p === "I" || p === "E" || p === "L" || p === "D") {'
+				+ '    buffer.push(p);'
+				+ '    if(p === "D") { traitArr.push(buffer.join(".") + "."); buffer = []; }'
+				+ '  } else if(p) {'
+				+ '    if(buffer.length) { traitArr.push(buffer.join(".") + "."); buffer = []; }'
+				+ '    traitArr.push(p);'
+				+ '  }'
+				+ '});'
+				+ 'if(buffer.length) { traitArr.push(buffer.join(".") + "."); }'
+				+ 'traitArr.forEach(function(t) { if(t==="S.H.I.E.L.D.") t="SHIELD"; %>'
+				+ '<span class="trait_tag"><%= t %></span>'
+				+ '<% }); } %>'
 			+ '</tr>'
-		);
-		break;
-	case 2:
-		DisplayColumnsTpl = _.template(
-			'<div class="col-sm-6">'
+        );
+        break;
+    case 2:
+        DisplayColumnsTpl = _.template(
+            '<div class="col-sm-6">'
 				+ '<div class="media">'
 					+ '<div class="media-left"><img class="media-object"  onerror="this.onerror=null;this.src=\'/bundles/cards/<%= card.code %>.png\';" src="/bundles/cards/<%= card.code %>.jpg" alt="<%= card.name %>"></div>'
 					+ '<div class="media-body">'
@@ -756,11 +782,11 @@ ui.update_list_template = function update_list_template() {
 					+ '</div>'
 				+ '</div>'
 			+ '</div>'
-		);
-		break;
-	case 3:
-		DisplayColumnsTpl = _.template(
-			'<div class="col-sm-4">'
+        );
+        break;
+    case 3:
+        DisplayColumnsTpl = _.template(
+            '<div class="col-sm-4">'
 				+ '<div class="media">'
 					+ '<div class="media-left"><img class="media-object" onerror="this.onerror=null;this.src=\'/bundles/cards/<%= card.code %>.png\';" src="/bundles/cards/<%= card.code %>.jpg" alt="<%= card.name %>"></div>'
 					+ '<div class="media-body">'
@@ -769,8 +795,9 @@ ui.update_list_template = function update_list_template() {
 					+ '</div>'
 				+ '</div>'
 			+ '</div>'
-		);
-	}
+        );
+        break;
+    }
 }
 
 
@@ -885,7 +912,7 @@ ui.refresh_list = _.debounce(function refresh_list() {
 				var duped = [];
 				dupe.duplicated_by.forEach(function (another_id) {
 					var another_dupe = app.data.cards.findById(another_id);
-					if (another_dupe && ui.in_selected_packs(another_dupe, filters)) {
+					if (another_dupe && ui.in_selected_packs(another_duge, filters)) {
 						duped.push(another_dupe);
 					}
 				});
@@ -1024,11 +1051,19 @@ ui.on_dom_loaded = function on_dom_loaded() {
 	app.card_modal && $('#filter-text').on('typeahead:selected typeahead:autocompleted', app.card_modal.typeahead);
 
 	// ...dans ui.on_dom_loaded ou juste après l'initialisation de la page...
-
 var cb = document.getElementById('show-fanmade-affinity');
 if (cb) {
     cb.addEventListener('change', function() {
         // Vide le cache pour forcer le recalcul des lignes
+        CardDivs = [[],[],[]];
+        app.ui.refresh_lists();
+    });
+}
+var cbTraits = document.getElementById('show-traits-tags');
+window.showTraitsTags = cbTraits ? cbTraits.checked : true;
+if (cbTraits) {
+    cbTraits.addEventListener('change', function() {
+        window.showTraitsTags = cbTraits.checked;
         CardDivs = [[],[],[]];
         app.ui.refresh_lists();
     });
