@@ -75,9 +75,11 @@
     <li class="nav-item" role="presentation">
         <a class="nav-link" id="fanmade-tab-newui" data-toggle="tab" href="#fanmade_heroes_newui" role="tab" aria-controls="fanmade_heroes_newui" aria-selected="false">Fan made</a>
     </li>
+    {% if app.user is defined and app.user and app.user.donation == '1' %}
     <li class="nav-item" role="presentation">
         <a class="nav-link" id="private-tab-newui" data-toggle="tab" href="#private_heroes_newui" role="tab" aria-controls="private_heroes_newui" aria-selected="false">Private</a>
     </li>
+    {% endif %}
 </ul>
 <div class="tab-content" id="heroTypeTabsContentNewUI">
     <div class="tab-pane fade" id="ffg_heroes_newui" role="tabpanel" aria-labelledby="ffg-tab-newui">
@@ -114,6 +116,7 @@
             {% endfor %}
         </div>
     </div>
+    {% if app.user is defined and app.user and app.user.donation == '1' %}
     <div class="tab-pane fade" id="private_heroes_newui" role="tabpanel" aria-labelledby="private-tab-newui">
         <div style="margin-bottom: 8px; display: flex; gap: 8px;">
             <button type="button" class="hero-filter-btn active-filter" data-filter="all" data-pane="private_heroes_newui">All heroes</button>
@@ -131,6 +134,7 @@
             {% endfor %}
         </div>
     </div>
+    {% endif %}
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
