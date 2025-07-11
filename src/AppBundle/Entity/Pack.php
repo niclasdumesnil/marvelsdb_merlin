@@ -8,6 +8,7 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
 		return [
 				'code' => $this->code,
 				'pack_type' => $this->pack_type ? $this->pack_type->getCode() : null,
+				'pack_type_name' => $this->pack_type ? $this->pack_type->getName() : null, // Ajouté ici
 				'date_release' => $this->dateRelease ? $this->dateRelease->format('Y-m-d') : null,
 				'name' => $this->name,
 				'position' => $this->position,
@@ -475,5 +476,14 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
     public function getPackType()
     {
         return $this->pack_type;
+    }
+    /**
+     * Get pack_type_name
+     *
+     * @return string|null
+     */
+    public function getPackTypeName()
+    {
+        return $this->pack_type ? $this->pack_type->getName() : null;
     }
 }

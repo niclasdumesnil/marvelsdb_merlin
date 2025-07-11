@@ -24,7 +24,7 @@
 <div class="tab-content" id="packsTabsContent">
     <div class="tab-pane fade show active" id="ffg" role="tabpanel" aria-labelledby="ffg-tab">
         <ol>
-            <label style="background-color:rgba(219, 198, 198, 0.55); padding: 4px 8px; border-radius: 4px; margin-top: 0; margin-bottom: 0.5em; display: inline-block;">FFG</label>
+            <span style="display:inline-block; background:rgb(70, 68, 68); color:#fff; border-radius:6px; padding:2px 12px; margin:6px 0 6px 0; font-weight:semi;">FFG</span>
             {% for pack in data %}
                 {% if pack.creator == 'FFG' %}
                     {% if pack.type == 'core' or pack.type == 'story' or pack.type =='encounter' %}
@@ -48,7 +48,7 @@
     </div>
     <div class="tab-pane fade" id="fanmade" role="tabpanel" aria-labelledby="fanmade-tab">
         <ol>
-            <label style="background-color:rgba(219, 198, 198, 0.55); padding: 4px 8px; border-radius: 4px; margin-top: 0; margin-bottom: 0.5em; display: inline-block;">Fan made</label>
+            {#<label style="background-color:rgba(219, 198, 198, 0.55); padding: 4px 8px; border-radius: 4px; margin-top: 0; margin-bottom: 0.5em; display: inline-block;">Fan made</label>#}
             {% set fan_types = [] %}
             {% for pack in data %}
                 {% if pack.creator != 'FFG' and pack.visibility != "false" and (pack.type is not empty) and (pack.type not in fan_types) %}
@@ -56,6 +56,10 @@
                 {% endif %}
             {% endfor %}
             {% for type in fan_types %}
+                {% set first_pack = (data|filter(p => p.creator != 'FFG' and p.visibility != "false" and p.type == type)|first) %}
+                <span style="display:inline-block; background:rgb(9, 58, 2); color:#fff; border-radius:6px; padding:2px 12px; margin:6px 0 6px 0; font-weight:semi;">
+                    {{ first_pack.type_name }}
+                </span>
                 {% for pack in data %}
                     {% if pack.creator != 'FFG' and pack.visibility != "false" and pack.type == type %}
                         <li style="margin-left:0em;">
@@ -73,28 +77,41 @@
                     {% endif %}
                 {% endfor %}
                 <br>
-            {% endfor %}
+             {% endfor %}
         </ol>
     </div>
     {% if app.user and app.user.donation == "1" %}
     <div class="tab-pane fade" id="private" role="tabpanel" aria-labelledby="private-tab">
         <ol>
-            <label style="background-color:rgba(219, 198, 198, 0.55); padding: 4px 8px; border-radius: 4px; margin-top: 0; margin-bottom: 0.5em; display: inline-block;">Private</label>
+            {# Affichage par type comme pour fanmade #}
+            {% set private_types = [] %}
             {% for pack in data %}
-                {% if pack.creator != 'FFG' and pack.visibility == "false" %}
-                    <li style="margin-left:0em;">
-                        <a title="{{ pack.name }}" href="{{ pack.url }}">{{ pack.name }}
-                            {% set color = creator_colors[pack.creator] ?? creator_colors['default'] %}
-                            {% set label = creator_labels[pack.creator] ?? (pack.creator ?? 'Unknown') %}
-                            <span style="font-size: 10px; color: white; background-color: {{ color }}; display: inline-flex;
-                                align-items: center; border-radius: 8px; padding: 2px 12px;">{{ label }}</span>
+                {% if pack.creator != 'FFG' and pack.visibility == "false" and (pack.type is not empty) and (pack.type not in private_types) %}
+                    {% set private_types = private_types|merge([pack.type]) %}
+                {% endif %}
+            {% endfor %}
+            {% for type in private_types %}
+                {% set first_pack = (data|filter(p => p.creator != 'FFG' and p.visibility == "false" and p.type == type)|first) %}
+                <span style="display:inline-block; background:rgb(9, 58, 2); color:#fff; border-radius:6px; padding:2px 12px; margin:6px 0 6px 0; font-weight:semi;">
+                    {{ first_pack.type_name }}
+                </span>
+                {% for pack in data %}
+                    {% if pack.creator != 'FFG' and pack.visibility == "false" and pack.type == type %}
+                        <li style="margin-left:0em;">
+                            <a title="{{ pack.name }}" href="{{ pack.url }}">{{ pack.name }}
+                                {% set color = creator_colors[pack.creator] ?? creator_colors['default'] %}
+                                {% set label = creator_labels[pack.creator] ?? (pack.creator ?? 'Unknown') %}
+                                <span style="font-size: 10px; color: white; background-color: {{ color }}; display: inline-flex;
+                                    align-items: center; border-radius: 8px; padding: 2px 12px;">{{ label }}</span>
                             {% if pack.status == "beta" or pack.status == "alpha" %}
                                 <span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
                                     align-items: center; border-radius: 8px; padding: 2px 12px;">{{ pack.status ?? 'Official' }}</span>
                             {% endif %}
-                        </a>
-                    </li>
-                {% endif %}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                <br>
             {% endfor %}
         </ol>
     </div>

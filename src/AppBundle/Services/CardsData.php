@@ -113,6 +113,7 @@ class CardsData
 					"available" => $pack->getDateRelease() ? $pack->getDateRelease()->format('Y-m-d') : '',
 					"known" => intval($real),
 					"type"=> $pack->getPackType()->Getcode(), 
+					"type_name"=> $pack->getPackType()->getName(), 
 					"creator" => $pack->getCreator() ?? "FFG",
 					"status" => $pack->getStatus() ?? "Official",
 					"theme" => $pack->getTheme() ?? "Marvel",
