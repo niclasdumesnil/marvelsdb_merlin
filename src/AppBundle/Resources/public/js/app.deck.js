@@ -1210,12 +1210,19 @@ deck.can_include_card = function can_include_card(card, limit_count, hard_count)
 			}
 
 			 // Vérification du coût
-    		if (option.cost !== undefined && option.cost !== null) {
-       			if (parseInt(card.cost, 10) > parseInt(option.cost, 10)) {
-            		continue;
-      		 	}
-    		}
-			
+            if (option.cost !== undefined && option.cost !== null) {
+                   if (parseInt(card.cost, 10) > parseInt(option.cost, 10)) {
+                    continue;
+               	}
+            }
+
+            // Vérification de la ressource (ex: resource_energy, resource_physical, etc.)
+            if (option.ressource !== undefined && option.ressource !== null) {
+                // option.ressource doit être le nom du champ, ex: "resource_energy"
+                if (!card[option.ressource] || card[option.ressource] <= 0) {
+                    continue;
+                }
+            }
 
 			if (limit_count && option.use_deck_limit) {
 				// Need to include the deck limit amount for each card
