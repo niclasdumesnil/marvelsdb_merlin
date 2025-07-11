@@ -3,6 +3,8 @@
 
 {% block body %}
 
+<div class="beta-banner">BETA</div>
+
 <div class="main container">
 <h1 class="site-title hidden-xs">FAN MADE MCDB</h1>
 <div class="site-slogan">Deckbuilder and Card Database with Custom Content for the Marvel Champions LCG
@@ -41,6 +43,24 @@
 		}
 	}
 
+	.beta-banner {
+    position: fixed;
+    top: 40px;
+    right: -60px;
+    z-index: 9999;
+    width: 240px;
+    text-align: center;
+    background: #1976d2;
+    color: #fff;
+    font-size: 2rem;
+    font-weight: bold;
+    letter-spacing: 0.2em;
+    padding: 12px 0;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    pointer-events: none;
+    user-select: none;
+}
 </style>
 
 <div class="main container front-block">
