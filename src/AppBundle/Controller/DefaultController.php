@@ -209,19 +209,23 @@ class DefaultController extends Controller
 
 		$packs = $this->getDoctrine()->getRepository('AppBundle:Pack')->findBy([], ['dateRelease' => 'DESC']);
 
+		// Ajout du nombre d'utilisateurs
+		$user_count = $this->getDoctrine()->getRepository('AppBundle:User')->count([]);
+
 		// 1640210361
 
 		return $this->render('AppBundle:Default:index.html.twig', [
-		'pagetitle' =>  "$game_name Deckbuilder",
-		'pagedescription' => "Build your deck for $game_name by $publisher_name. Browse the cards and the thousand of decklists submitted by the community. Publish your own decks and get feedback.",
-		'decklists_by_popular' => $decklists_by_popular,
-		'decklists_by_recent' => $decklists_by_recent,
-		'hero_highlight' => $card,
-		'hero_highlight_meta' => json_decode($card->getMeta()),
-		'card_of_the_day' => $card_of_the_day_info,
-		'card_of_the_day_decklists' => $card_of_the_day_decklists,
-		'decklists_by_hero' => $decklists_by_hero,
-		'packs' => array_slice($packs, 0, 30) // Limit to 30 packs for performance
+			'pagetitle' =>  "$game_name Deckbuilder",
+			'pagedescription' => "Build your deck for $game_name by $publisher_name. Browse the cards and the thousand of decklists submitted by the community. Publish your own decks and get feedback.",
+			'decklists_by_popular' => $decklists_by_popular,
+			'decklists_by_recent' => $decklists_by_recent,
+			'hero_highlight' => $card,
+			'hero_highlight_meta' => json_decode($card->getMeta()),
+			'card_of_the_day' => $card_of_the_day_info,
+			'card_of_the_day_decklists' => $card_of_the_day_decklists,
+			'decklists_by_hero' => $decklists_by_hero,
+			'packs' => array_slice($packs, 0, 30), // Limit to 30 packs for performance
+			'user_count' => $user_count // <-- Ajouté ici
 		], $response);
 	}
 
