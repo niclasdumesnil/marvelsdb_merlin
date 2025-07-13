@@ -143,6 +143,8 @@ class DecklistManager
 
 	public function findDecklistsByCard(Card $card, $ignoreEmptyDescriptions = FALSE)
 	{
+		$this->descmaxcount = 15; // Ajouté ici pour initialiser la variable au début de la fonction
+
 		$qb = $this->getQueryBuilder();
 		$qb->addSelect($this->popularityString.' AS HIDDEN popularity');
 
@@ -163,7 +165,7 @@ class DecklistManager
 		$qb->setParameter("codes", $codes);
 
 		if ($ignoreEmptyDescriptions){
-			$qb->andWhere('LENGTH(d.descriptionHtml) > 199');
+			$qb->andWhere('LENGTH(d.descriptionHtml) > ' . $this->descmaxcount);
 		}
 		$qb->addOrderBy('popularity', 'DESC');
 		$qb->addOrderBy('d.dateCreation', 'DESC');
@@ -173,12 +175,14 @@ class DecklistManager
 
 	public function findDecklistsByHero(Card $character, $ignoreEmptyDescriptions = FALSE)
 	{
+		$this->descmaxcount = 15; // Ajouté ici pour initialiser la variable au début de la fonction
+
 		$qb = $this->getQueryBuilder();
 		$qb->addSelect($this->popularityString.' AS HIDDEN popularity');
 		$qb->andWhere('d.character = :character');
 		$qb->setParameter('character', $character);
 		if ($ignoreEmptyDescriptions){
-			$qb->andWhere('LENGTH(d.descriptionHtml) > 199');
+			$qb->andWhere('LENGTH(d.descriptionHtml) > ' . $this->descmaxcount);
 		}
 		$qb->orderBy('popularity', 'DESC');
 		return $this->getPaginator($qb->getQuery());
