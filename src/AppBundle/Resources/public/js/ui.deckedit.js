@@ -748,7 +748,7 @@ ui.update_list_template = function update_list_template() {
 				+ '<td class="faction"><span class="fg-<%= card.faction_code %>" title="<%= card.faction_name %>"><%= card.faction_name %></span></td>'
 				+ '<td class="fm_code">'
 				+ '<% if (fanmade === "Yes") { %><span class="fm_code_yes"><%= card.pack_name %></span><% } %>'
-				+ '<% if (card.text && card.text.indexOf("Team-Up") !== -1) { %> <span class="custom_tag">Team-Up</span><% } %>'
+				+ '<% if (card.text && card.text.toLowerCase().indexOf("team-up") !== -1) { %> <span class="custom_tag">Team-Up</span><% } %>'
 				+ '<% if (card.custom) { %> <span class="custom_tag"><%= card.custom %></span><% } %>'
 				// Ajout des traits comme tags noirs, avec remplacement S.H.I.E.L.D. -> SHIELD et S.W.O.R.D. -> SWORD
 				+ '<% if (card.traits && window.showTraitsTags !== false) { '
