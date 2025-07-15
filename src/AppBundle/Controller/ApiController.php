@@ -434,37 +434,29 @@ class ApiController extends Controller
 
 		$pack = $this->getDoctrine()->getRepository('AppBundle:Pack')->findOneBy(array('code' => $pack_code));
 		if(!$pack) {
-		    // Modification : retourne une erreur 404 explicite si le pack n'existe pas, au lieu de provoquer une erreur 500 serveur.
-		    $response->setStatusCode(404);
-		    $response->setContent(json_encode(['error' => 'Pack not found']));
-		    return $response;
+			$response->setStatusCode(404);
+			$response->setContent(json_encode(['error' => 'Pack not found']));
+			return $response;
 		}
 
-		$conditions = $this->get('cards_data')->syntax("e:$pack_code");
-		$this->get('cards_data')->validateConditions($conditions);
-		$query = $this->get('cards_data')->buildQueryFromConditions($conditions);
+		// Nouvelle logique : récupération directe des cartes via la relation pack
+		$cards = [];
+		$last_modified = null;
+		$cardEntities = $this->getDoctrine()->getRepository('AppBundle:Card')->findBy(['pack' => $pack]);
 
-		$cards = array();
-        $last_modified = null;
+		foreach ($cardEntities as $cardEntity) {
+			if (empty($last_modified) || $last_modified < $cardEntity->getDateUpdate()) {
+				$last_modified = $cardEntity->getDateUpdate();
+			}
+			$cards[] = $this->get('cards_data')->getCardInfo($cardEntity, true, "en");
+		}
 
-        // Correction : éviter l'appel à getDonation() sur un utilisateur non connecté
-        $user = $this->getUser();
-        $donation = $user ? $user->getDonation() : null;
-
-        if($query && $rows = $this->get('cards_data')->get_search_rows($conditions, "set", false, true, $donation))
-        {
-            for($rowindex = 0; $rowindex < count($rows); $rowindex++) {
-                if(empty($last_modified) || $last_modified < $rows[$rowindex]->getDateUpdate()) $last_modified = $rows[$rowindex]->getDateUpdate();
-            }
-            $response->setLastModified($last_modified);
-            if ($response->isNotModified($request)) {
-                return $response;
-            }
-            for($rowindex = 0; $rowindex < count($rows); $rowindex++) {
-                $card = $this->get('cards_data')->getCardInfo($rows[$rowindex], true, "en");
-                $cards[] = $card;
-            }
-        }
+		if ($last_modified) {
+			$response->setLastModified($last_modified);
+			if ($response->isNotModified($request)) {
+				return $response;
+			}
+		}
 
 		$content = json_encode($cards);
 		if(isset($jsonp))
