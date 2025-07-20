@@ -474,10 +474,11 @@ class BuilderController extends Controller
 			try {
 				$meta_json = json_decode($meta);
 				if ($meta_json && isset($meta_json->aspect)) {
-					if ($meta_json->aspect == "leadership" || $meta_json->aspect == "protection" || $meta_json->aspect == "justice" || $meta_json->aspect == "aggression" || $meta_json->aspect == "pool" || $meta_json->aspect == "determination") {
+					if ($meta_json->aspect == "leadership" || $meta_json->aspect == "protection" || $meta_json->aspect == "justice" || $meta_json->aspect == "aggression" || $meta_json->aspect == "pool" || $meta_json->aspect == "determination" || $meta_json->aspect == "hero" // <-- AJOUT ICI
+					) {
 
 					} else {
-						return false;
+						return new Response('Invalid aspect in meta', 400);
 					}
 				}
 			} catch (Exception $e){

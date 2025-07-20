@@ -1111,8 +1111,18 @@ deck.get_invalid_cards = function get_invalid_cards() {
 deck.can_include_card = function can_include_card(card, limit_count, hard_count) {
 	var hero = app.data.cards.findById(hero_code);
 
-	// hide heroes
-	if (card.type_code === "hero") {
+	
+	// Exception : autoriser les cartes du set asset_of_shield_by_merlin pour le héros agent_of_shield_by_merlin
+    if (
+        hero &&
+        hero.card_set_code === 'agent_of_shield_by_merlin' &&
+        card.card_set_code === 'asset_of_shield_by_merlin'
+    ) {
+        return true;
+    }
+
+    // hide heroes
+    if (card.type_code === "hero") {
 		return false;
 	}
 	if (card.faction_code === "encounter") {

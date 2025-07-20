@@ -32,8 +32,6 @@
 	<i class="fa fa-spinner fa-spin fa-5x"></i>
 </div>
 
-
-
 {% include 'AppBundle:Builder:table-suggestions.html.twig' %}
 
 <form method="POST" action="{{ path('deck_save') }}" id="save_form" role="form" style="margin-bottom:1em">
@@ -49,6 +47,16 @@
 	<input type="hidden" name="xp_spent">
 	<input type="hidden" name="faction_code" value="{{ deck.character.code }}">
 	<input type="hidden" name="tags">
+
+	{% if deck.character.code == '253001a' %}
+		<div class="row" id="asset-shield-special-table-row">
+			<div class="col-sm-12" style="margin-top:1px;">
+				<span style="font-weight:bold;">Asset of Shield Special deck</span>
+				<div id="asset-shield-table-container"></div>
+			</div>
+		</div>
+	{% endif %}
+
 	<div class="form-group">
 		<label for="name">Name</label>
 		<input type="text" class="form-control decklist-name" name="name" value="{{ deck.name }}">

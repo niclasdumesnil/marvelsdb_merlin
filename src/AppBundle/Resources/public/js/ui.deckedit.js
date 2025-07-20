@@ -667,6 +667,8 @@ ui.setup_event_handlers = function setup_event_handlers() {
 
 	$('thead').on('click', 'a[data-sort]', ui.on_table_sort_click);
 
+
+
 }
 
 ui.in_selected_packs = function in_selected_packs(card, filters) {
@@ -1099,7 +1101,98 @@ ui.on_all_loaded = function on_all_loaded() {
 	var hero = app.data.cards.findById(app.deck.get_hero_code());
 	app.suggestions.query("sugg-"+hero.code);
 
+	var heroCode = app.deck.get_hero_code && app.deck.get_hero_code();
+	ui.render_special_deck_section(heroCode);
 };
+ui.render_special_deck_section = function(heroCode) {
+    // Toujours vider le conteneur avant
+    $('#asset-shield-table-container').empty();
+
+    if (heroCode === '253001a') {
+        var assetCards = app.data.cards.find({ card_set_code: 'asset_of_shield_by_merlin' });
+
+        var html = '<table class="table table-condensed table-hover" style="margin-bottom:10px">'
+            + '<thead><tr>'
+            + '<th style="min-width:85px">Quantité</th>'
+            + '<th>Name</th>'
+            + '<th class="resources">Icons</th>'
+            + '<th class="cost">Cost</th>'
+            + '<th class="type">Type</th>'
+            + '<th class="faction">Aspect</th>'
+            + '<th class="fm_code">Tag</th>'
+            + '</tr></thead><tbody>';
+
+        assetCards.forEach(function(card) {
+            // Radios quantité
+            var radios = '';
+            var maxqty = card.maxqty || Math.min(3, card.deck_limit || 3);
+            for (var i = 0; i <= maxqty; i++) {
+                radios += '<label class="btn btn-xs btn-default' + (i == card.indeck ? ' active' : '') + '">'
+                    + '<input type="radio" name="qty-asset-' + card.code + '" value="' + i + '"' + (i == card.indeck ? ' checked' : '') + '>' + i
+                    + '</label>';
+            }
+
+            // Icônes ressources
+            var $span = $('<span>');
+            if(card.resource_physical && card.resource_physical > 0) $span.append(app.format.resource(card.resource_physical, 'physical'));
+            if(card.resource_mental && card.resource_mental > 0) $span.append(app.format.resource(card.resource_mental, 'mental'));
+            if(card.resource_energy && card.resource_energy > 0) $span.append(app.format.resource(card.resource_energy, 'energy'));
+            if(card.resource_wild && card.resource_wild > 0) $span.append(app.format.resource(card.resource_wild, 'wild'));
+
+            // Lien vers la carte
+            var cardUrl = Routing.generate('cards_zoom', {card_code: card.code});
+            var cardLink = '<a class="card card-tip" data-code="' + card.code + '" href="' + cardUrl + '" data-target="#cardModal" data-remote="false" data-toggle="modal">' + card.name + '</a>';
+
+            // Tags (traits)
+            var traitTags = '';
+            if (card.traits && window.showTraitsTags !== false) {
+                var traitArr = [];
+                var buffer = [];
+                card.traits.split(".").forEach(function(part) {
+                    var p = part.trim();
+                    if(p === "S" || p === "H" || p === "I" || p === "E" || p === "L" || p === "D" || p === "W" || p === "O" || p === "R") {
+                        buffer.push(p);
+                        if((buffer.join(".") === "S.H.I.E.L.D") && p === "D") { traitArr.push(buffer.join(".") + "."); buffer = []; }
+                        else if((buffer.join(".") === "S.W.O.R.D") && p === "D") { traitArr.push(buffer.join(".") + "."); buffer = []; }
+                    } else if(p) {
+                        if(buffer.length) { traitArr.push(buffer.join(".") + "."); buffer = []; }
+                        traitArr.push(p);
+                    }
+                });
+                if(buffer.length) { traitArr.push(buffer.join(".") + "."); }
+                traitArr.forEach(function(t) {
+                    if(t==="S.H.I.E.L.D.") t="SHIELD";
+                    if(t==="S.W.O.R.D.") t="SWORD";
+                    traitTags += '<span class="trait_tag">' + t + '</span>';
+                });
+            }
+
+            html += '<tr>'
+                + '<td><div class="btn-group" data-toggle="buttons">' + radios + '</div></td>'
+                + '<td>' + cardLink + '</td>'
+                + '<td class="resources">' + $span.html() + '</td>'
+                + '<td>' + (card.cost !== undefined ? card.cost : '') + '</td>'
+                + '<td>' + (card.type_name || card.type_code || '') + '</td>'
+                + '<td>' + (card.faction_name || card.faction_code || '') + '</td>'
+                + '<td>' + traitTags + '</td>'
+                + '</tr>';
+        });
+
+        html += '</tbody></table>';
+
+        $('#asset-shield-table-container').html(html);
+
+        // Gestion du changement de quantité
+        $('#asset-shield-table-container').off('change', 'input[type=radio]');
+        $('#asset-shield-table-container').on('change', 'input[type=radio]', function() {
+            var code = $(this).attr('name').replace('qty-asset-', '');
+            var quantity = parseInt($(this).val(), 10);
+            app.ui.on_quantity_change(code, quantity);
+        });
+    }
+};
+
+
 
 ui.read_config_from_storage();
 
