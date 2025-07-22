@@ -1,0 +1,40 @@
+{% for row in 0..(cards|length-1)//3 %}
+<div class="row" style="margin-bottom:12px;">
+{% for col in 0..2 %}
+{% if row*3+col < cards|length %}
+{% set card = cards[row*3+col] %}
+<div class="col-sm-4 display-spoiler-card" style="display: flex; flex-direction: column;">
+    <h4 style="min-height:24pxpx;">
+        {% include 'AppBundle:Search:card-name-with-link.html.twig' %}
+        <span style="font-weight:normal; color:#888; font-size:0.95em;">
+            (x{{ card.quantity|default(1) }})
+        </span>
+		<div style="height:5px;"></div>
+    </h4>
+    <div style="flex:1; display: flex; flex-direction: column;">
+        <div style="display: flex; align-items: flex-start; margin-top: 0;">
+            <div style="flex:2;">
+                {% include 'AppBundle:Search:card-faction.html.twig' %}
+                {% include 'AppBundle:Search:card-info.html.twig' %}
+            </div>
+            {% if card.imagesrc is defined and card.imagesrc %}
+                <div style="flex:1; display:flex; justify-content:flex-end;">
+					<img src="{{ card.imagesrc }}" alt="{{ card.name }}"
+                         style="max-width:
+						 {% if card.type_code == 'side_scheme' or card.type_code == 'player_side_scheme' or card.type_code == 'main_scheme' %}
+						 125px{% else %}80px{% endif %}; margin-left:10px; border-radius:4px;">
+                </div>
+            {% endif %}
+        </div>
+        <div style="width:100%; margin-top:8px;">
+            {% include 'AppBundle:Search:card-text.html.twig' %}
+            {% include 'AppBundle:Search:card-flavor.html.twig' %}
+            {% include 'AppBundle:Search:card-illustrator.html.twig' %}
+            {% include 'AppBundle:Search:card-pack.html.twig' %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+</div>
+{% endfor %}
