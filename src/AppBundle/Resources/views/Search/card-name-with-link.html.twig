@@ -5,7 +5,7 @@
 {% if card.quantity|default(1) > 0 and not card.is_unique %}
     {% set qty_class = 'qty' %}
     {% if QtyColor is not defined or QtyColor == 'false' %}
-	    {% if card.faction_code in ['determination', 'basic', 'aggression', 'protection', 'pool', 'leadership'] %}
+	    {% if card.faction_code in ['determination', 'basic', 'aggression', 'protection', 'pool', 'leadership', 'encounter'] %}
             {% set qty_class = 'qty-white' %}
         {% endif %}
 	{% endif %}
@@ -19,7 +19,7 @@
       align-items: center; border-radius: 12px; padding: 2px 12px 2px;">{{card.status ?? 'Official'}}
     </span>
 {% endif %} 
-{% if card.status == "beta" %}
+{% if card.status == "beta" or card.status == "alpha" %}
     <span style="font-size: 12px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
     align-items: center; border-radius: 8px; padding: 2px 12px ;">{{card.status ?? 'Official'}}
     </span>

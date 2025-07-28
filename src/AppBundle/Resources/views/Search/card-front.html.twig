@@ -5,7 +5,13 @@
         <div class="col-sm-7">
             <div>
                 <div class="panel panel-default border-{{ card.faction_code }} {% if card.faction2_code is defined %} border-dual {% endif %}">
-                    <div class="panel-heading border-{{ card.faction_code }} bg-{{ card.faction_code }} {% if card.faction2_code is defined %} bg-dual border-dual{% endif %}">
+                    <div class="panel-heading border-{{ card.faction_code }} bg-{{ card.faction_code }} {% if card.faction2_code is defined %} bg-dual border-dual{% endif %}"
+                        {% if card.faction_code == 'encounter' and card.type_code == 'villain' %}
+                            style="background: linear-gradient(90deg, rgb(49, 5, 124) 0%, rgb(49, 5, 124) 100%); color: #fff;"
+                        {% elseif card.faction_code == 'encounter' %}
+                            style="background: linear-gradient(90deg, rgb(155, 96, 7) 0%, rgb(155, 96, 7) 100%); color: #fff;"
+                        {% endif %}
+                    >
                         <h3 class="panel-title">
                             {% include 'AppBundle:Search:card-name-with-link.html.twig' %}
                         </h3>
