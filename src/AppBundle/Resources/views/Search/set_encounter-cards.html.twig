@@ -12,25 +12,25 @@
         {% endif %}
         <div class="card-panel-col">
             <div class="card-panel-title" style="background: linear-gradient(90deg, {{ color1 }} 0%, {{ color2 }} 100%); color: #fff; border-radius: 4px; padding: 4px 10px;">
-                {% if card.isUnique %}<span class="icon-unique"></span>{% endif %}
+                {% if card.is_unique %}<span class="icon-unique"></span>{% endif %}
                 {{ card.name }}
             </div>
             <div class="card-panel">
                 <div class="card-panel-content">
                     <div class="card-panel-info">
-                        <strong>Type:</strong> {{ card.type }}<br>
+                        <strong>Type:</strong> {{ card.type_code }}<br>
                         <strong>Quantity:</strong> {{ card.quantity }}<br>
-                        <strong>Boost:</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boostStar %} ★{% endif %}
+                        <strong>Boost:</strong> {{ card.boost is not null ? card.boost : '0' }}{% if card.boost_star %} ★{% endif %}
                     </div>
                     <div class="card-panel-img">
                         <img src="{{ card.imagesrc }}" alt="{{ card.name }}"
-                             style="{% if card.type == 'Side Scheme' %}max-width:180px;{% else %}max-width:120px;{% endif %} height:auto; max-height:180px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                             style="{% if card.type_code == 'side_scheme' %}max-width:180px;{% else %}max-width:120px;{% endif %} height:auto; max-height:180px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
                     </div>
                 </div>
                 <div class="card-panel-pack">
                     <strong>Pack: </strong>
                     <span class="card-pack-highlight">
-                        {{ card.pack }}
+                        {{ card.pack_name }}
                     </span>
                 </div>
             </div>

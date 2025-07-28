@@ -251,9 +251,9 @@ class SearchController extends Controller
 			return $card->getPack() ? $card->getPack()->getName() : '';
 		};
 
-		// Génère un tableau [set_code => [cards...]] pour un type de set
-		$cardsBySet = function($sets, $cards, $excludeTypes = []) use ($getCardType, $getCardPack, $getCardQuantity) {
-			// Ajoute les types à exclure systématiquement
+		$that = $this; // pour accéder à $this dans le closure
+
+		$cardsBySet = function($sets, $cards, $excludeTypes = []) use ($getCardType, $getCardPack, $getCardQuantity, $that, &$availability) {
 			$excludeTypes = array_merge($excludeTypes, ['ally', 'support', 'upgrade', 'event']);
 			$result = [];
 			foreach ($sets as $set) {
@@ -263,16 +263,25 @@ class SearchController extends Controller
 					if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
 						$type_name = strtolower($getCardType($card));
 						if (in_array($type_name, $excludeTypes)) continue;
-						$result[$set_code][] = [
-							'name' => $card->getName(),
-							'imagesrc' => '/bundles/cards/' . $card->getCode() . '.jpg',
-							'quantity' => $getCardQuantity($card),
-							'type' => $getCardType($card),
-							'boost' => method_exists($card, 'getBoost') ? $card->getBoost() : 0,
-							'boostStar' => method_exists($card, 'getBoostStar') ? $card->getBoostStar() : false,
-							'pack' => $getCardPack($card),
-							'isUnique' => method_exists($card, 'getIsUnique') ? $card->getIsUnique() : false,
-						];
+
+						$cardinfo = $that->get('cards_data')->getCardInfo($card, false, true);
+
+						// Ajout de la clé 'available' comme dans displayAction
+						$pack = $card->getPack();
+						if ($pack) {
+							$pack_code = $pack->getCode();
+							if (!isset($availability[$pack_code])) {
+								$availability[$pack_code] = false;
+								if ($pack->getDateRelease() && $pack->getDateRelease() <= new \DateTime()) {
+									$availability[$pack_code] = true;
+								}
+							}
+							$cardinfo['available'] = $availability[$pack_code];
+						} else {
+							$cardinfo['available'] = false;
+						}
+
+						$result[$set_code][] = $cardinfo;
 					}
 				}
 			}
@@ -291,7 +300,7 @@ class SearchController extends Controller
 					$qty = $card['quantity'];
 					$nbTotal += $qty;
 					$totalBoost += ($card['boost'] ?: 0) * $qty;
-					if ($card['boostStar']) $totalBoostStar += $qty;
+					if (isset($card['boostStar']) && $card['boostStar']) $totalBoostStar += $qty;
 				}
 				$avgBoost = $nbTotal > 0 ? number_format($totalBoost / $nbTotal, 2, '.', '') : '0.00';
 				$stats[$set_code] = [
@@ -334,7 +343,7 @@ class SearchController extends Controller
 			'Treachery' => 'treachery',
 			'Attachment' => 'attachment',
 			'Environment' => 'Environment',
-			'Side Scheme' => 'side scheme',
+			'Side Scheme' => 'manigance secondaire',
 			'Main Scheme' => 'manigance principale',
 			'Ally' => 'allié',
 			'Upgrade' => 'amélioration',
@@ -350,7 +359,7 @@ class SearchController extends Controller
 				foreach ($type_label as $type => $label) {
 					$count = 0;
 					foreach ($cards_by_set[$set_code] as $card) {
-						if ($card['type'] === $type) {
+						if (isset($card['type_name']) && $card['type_name'] === $type) {
 							$qty = isset($card['quantity']) && $card['quantity'] !== null ? $card['quantity'] : 1;
 							$count += $qty;
 						}

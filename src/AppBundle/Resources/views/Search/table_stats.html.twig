@@ -30,7 +30,7 @@
                 {% set nbDiff = set_cards|length %}
                 {% set nbTotal = set_cards|reduce((carry, card) => carry + (card.quantity|default(1)), 0) %}
                 {% set totalBoost = set_cards|reduce((carry, card) => carry + (card.boost|default(0) * card.quantity|default(1)), 0) %}
-                {% set totalBoostStar = set_cards|reduce((carry, card) => carry + (card.boostStar ? card.quantity|default(1) : 0), 0) %}
+                {% set totalBoostStar = set_cards|reduce((carry, card) => carry + (card.boost_star ? card.quantity|default(1) : 0), 0) %}
                 {% set avgBoost = nbTotal > 0 ? (totalBoost / nbTotal)|number_format(2, '.', '') : '0.00' %}
                 <tr>
                     <td style="font-weight:bold; padding-left:10px;">{{ set.name }}</td>

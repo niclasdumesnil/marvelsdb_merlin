@@ -1,6 +1,7 @@
 {% extends 'AppBundle::layout.html.twig' %}
 
 {% block body %}
+{% set show_spoilers = true %}
 <div style="margin-left:200px; margin-right:200px;">
     <h1>Stories</h1>
 
@@ -15,16 +16,16 @@
     </div>
 
     {# Statistiques combinées #}
-    {% set modular_code = filtered_modular_sets|first ? filtered_modular_sets|first.code : '' %}
-    {% set villain_code = filtered_villain_sets|first ? filtered_villain_sets|first.code : '' %}
+    {% set modular_code = (filtered_modular_sets|length > 0) ? filtered_modular_sets|first.code : '' %}
+    {% set villain_code = (filtered_villain_sets|length > 0) ? filtered_villain_sets|first.code : '' %}
     {% set modular_stats = modular_set_stats[modular_code]|default({'nbDiff':0,'nbTotal':0,'totalBoost':0,'totalBoostStar':0,'avgBoost':'0.00'}) %}
     {% set villain_stats = villain_set_stats[villain_code]|default({'nbDiff':0,'nbTotal':0,'totalBoost':0,'totalBoostStar':0,'avgBoost':'0.00'}) %}
     {% set sum_nbDiff = modular_stats.nbDiff + villain_stats.nbDiff %}
     {% set sum_nbTotal = modular_stats.nbTotal + villain_stats.nbTotal %}
     {% set sum_totalBoost = modular_stats.totalBoost + villain_stats.totalBoost %}
     {% set sum_totalBoostStar = modular_stats.totalBoostStar + villain_stats.totalBoostStar %}
-    {% set sum_avgBoost = (sum_nbTotal > 0) 
-        ? ((modular_stats.totalBoost + villain_stats.totalBoost) / sum_nbTotal)|number_format(2, '.', '') 
+    {% set sum_avgBoost = sum_nbTotal > 0
+        ? ((modular_stats.totalBoost + villain_stats.totalBoost) / sum_nbTotal)|number_format(2, '.', '')
         : '0.00' %}
     {% set combined_stats = {
         nbDiff: sum_nbDiff,
@@ -80,6 +81,7 @@
     </div>
 
     {# TABLEAU MODULAR #}
+    {% if filtered_modular_sets|length > 0 %}
     <div id="slide-panel-stats" style="max-height:0; overflow:hidden; transition:max-height 0.5s cubic-bezier(.4,2,.6,1); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.07); padding:0 24px;">
         <h2 style="margin-top:24px;">Statistiques de tous les sets modulaires</h2>
         {% include 'AppBundle:Search:table_stats.html.twig' with {
@@ -91,8 +93,10 @@
             color2: '#64b5f6'
         } %}
     </div>
+    {% endif %}
 
     {# TABLEAU VILLAIN #}
+    {% if filtered_villain_sets|length > 0 %}
     <div id="villain-stats-table" style="display:none; margin-bottom: 24px;">
         <div style="overflow-x:auto;">
             <table border="1" cellpadding="6" style="background:#fff; border-radius:8px; margin-top:10px; width:100%; border-collapse:collapse;">
@@ -124,9 +128,16 @@
                     {% for set in filtered_villain_sets %}
                         {% set set_cards = villain_cards_by_set[set.code]|default([]) %}
                         {% set nbDiff = set_cards|length %}
-                        {% set nbTotal = set_cards|reduce((carry, card) => carry + (card.quantity|default(1)), 0) %}
-                        {% set totalBoost = set_cards|reduce((carry, card) => carry + (card.boost|default(0) * card.quantity|default(1)), 0) %}
-                        {% set totalBoostStar = set_cards|reduce((carry, card) => carry + (card.boostStar ? card.quantity|default(1) : 0), 0) %}
+                        {% set nbTotal = 0 %}
+                        {% set totalBoost = 0 %}
+                        {% set totalBoostStar = 0 %}
+                        {% for card in set_cards %}
+                            {% set nbTotal = nbTotal + (card.quantity|default(1)) %}
+                            {% set totalBoost = totalBoost + (card.boost|default(0) * card.quantity|default(1)) %}
+                            {% if card.boost_star %}
+                                {% set totalBoostStar = totalBoostStar + (card.quantity|default(1)) %}
+                            {% endif %}
+                        {% endfor %}
                         {% set avgBoost = nbTotal > 0 ? (totalBoost / nbTotal)|number_format(2, '.', '') : '0.00' %}
                         <tr>
                             <td style="font-weight:bold; padding-left:10px;">{{ set.name }}</td>
@@ -149,6 +160,7 @@
         </div>
         <div style="height:24px;"></div>
     </div>
+    {% endif %}
 
     {# ONGLET MODULAR / VILLAIN #}
     <div style="margin-top: 32px;">
@@ -166,78 +178,84 @@
         <div id="tab-modular-content" style="display: block;">
             {# --- INFOS MODULAR --- #}
             <div id="set-traits-list" style="margin: 12px 0 18px 0; font-size: 1.05em; background: #e3f0ff; border-radius: 8px; padding: 12px 18px;">
-                {% for set in filtered_modular_sets %}
-                    <div class="set-traits-panel" id="traits-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
-                        <strong>Traits du set :</strong>
-                        {% if modular_traits_by_set[set.code] is not empty %}
-                            {{ modular_traits_by_set[set.code]|join(', ') }}
-                        {% else %}
-                            <em>Aucun trait</em>
-                        {% endif %}
-                    </div>
-                {% endfor %}
+                {% if filtered_modular_sets|length > 0 %}
+                    {% for set in filtered_modular_sets %}
+                        <div class="set-traits-panel" id="traits-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+                            <strong>Traits du set :</strong>
+                            {% if modular_traits_by_set[set.code] is not empty %}
+                                {{ modular_traits_by_set[set.code]|join(', ') }}
+                            {% else %}
+                                <em>Aucun trait</em>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
             </div>
-           {# Statistiques du set modular (bleu) - un bloc par set #}
-{% for set in filtered_modular_sets %}
-    <div class="set-infos-panel" id="infos-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
-        {% include 'AppBundle:Search:set_stats.html.twig' with {
-            stats: modular_set_stats[set.code],
-            color: '#1976d2',
-            label: 'Statistiques du set modular sélectionné :',
-            type_counts: modular_set_type_counts[set.code],
-            boost_counts: modular_set_boost_counts[set.code]
-        } %}
-    </div>
-{% endfor %}
-            <div>
+            {# Statistiques du set modular (bleu) - un bloc par set #}
+            {% if filtered_modular_sets|length > 0 %}
                 {% for set in filtered_modular_sets %}
-                    <div class="set-cards-panel" id="cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
-                        <h4 style="margin-bottom:18px;">Cartes du set : {{ set.name }}</h4>
-                        {% include 'AppBundle:Search:set_encounter-cards.html.twig' with {
-                            cards: modular_cards_by_set[set.code],
-                            color1: '#1976d2',
-                            color2: '#64b5f6'
+                    <div class="set-infos-panel" id="infos-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+                        {% include 'AppBundle:Search:set_stats.html.twig' with {
+                            stats: modular_set_stats[set.code],
+                            color: '#1976d2',
+                            label: 'Statistiques du set modular sélectionné :',
+                            type_counts: modular_set_type_counts[set.code],
+                            boost_counts: modular_set_boost_counts[set.code]
                         } %}
                     </div>
                 {% endfor %}
+            {% endif %}
+            <div>
+                {% if filtered_modular_sets|length > 0 %}
+                    {% for set in filtered_modular_sets %}
+                        <div class="set-cards-panel" id="cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+                            <h4 style="margin-bottom:18px;">Cartes du set : {{ set.name }}</h4>
+                            {% if modular_cards_by_set[set.code]|length > 0 %}
+                                {% include 'AppBundle:Search:display-card-spoiler.html.twig' with {
+                                    cards: modular_cards_by_set[set.code]
+                                } %}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
 
         <div id="tab-villain-content" style="display:none;">
             {# --- INFOS VILLAIN --- #}
             <div>
-                {% for set in filtered_villain_sets %}
-                    <div class="villain-cards-panel" id="villain-cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
-                        <div class="villain-traits-panel" id="villain-traits-{{ set.code }}" style="margin: 12px 0 18px 0; font-size: 1.05em; background:rgb(215, 195, 216); border-radius: 8px; padding: 12px 18px; color: #222;">
-                            <strong>Traits du set :</strong>
-                            {% if villain_traits_by_set[set.code] is not empty %}
-                                {{ villain_traits_by_set[set.code]|join(', ') }}
-                            {% else %}
-                                <em>Aucun trait</em>
+                {% if filtered_villain_sets|length > 0 %}
+                    {% for set in filtered_villain_sets %}
+                        <div class="villain-cards-panel" id="villain-cards-{{ set.code }}" style="{% if not loop.first %}display:none;{% endif %}">
+                            <div class="villain-traits-panel" id="villain-traits-{{ set.code }}" style="margin: 12px 0 18px 0; font-size: 1.05em; background:rgb(215, 195, 216); border-radius: 8px; padding: 12px 18px; color: #222;">
+                                <strong>Traits du set :</strong>
+                                {% if villain_traits_by_set[set.code] is not empty %}
+                                    {{ villain_traits_by_set[set.code]|join(', ') }}
+                                {% else %}
+                                    <em>Aucun trait</em>
+                                {% endif %}
+                            </div>
+                            {% include 'AppBundle:Search:set_stats.html.twig' with {
+                                stats: villain_set_stats[set.code],
+                                color: '#a080c6',
+                                label: 'Statistiques du set villain sélectionné :',
+                                type_counts: villain_set_type_counts[set.code],
+                                boost_counts: villain_set_boost_counts[set.code]
+                            } %}
+                            <h4 style="margin-bottom:18px;">
+                                Cartes du set villain : {{ set.name }}
+                            </h4>
+                            {% if villain_cards_by_set[set.code]|length > 0 %}
+                                {% include 'AppBundle:Search:display-card-spoiler.html.twig' with {
+                                    cards: villain_cards_by_set[set.code]
+                                } %}
                             {% endif %}
                         </div>
-                        {% include 'AppBundle:Search:set_stats.html.twig' with {
-                            stats: villain_set_stats[set.code],
-                            color: '#a080c6',
-                            label: 'Statistiques du set villain sélectionné :',
-                            type_counts: villain_set_type_counts[set.code],
-                            boost_counts: villain_set_boost_counts[set.code]
-                        } %}
-                        <h4 style="margin-bottom:18px;">
-                            Cartes du set villain : {{ set.name }}
-                        </h4>
-                        {% include 'AppBundle:Search:set_encounter-cards.html.twig' with {
-                            cards: villain_cards_by_set[set.code],
-                            color1: '#a080c6',
-                            color2: '#e0c3fc'
-                        } %}
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
     </div>
-
-    
 </div>
 
 <script>
@@ -289,38 +307,60 @@ function showTab(tab) {
 }
 document.getElementById('tab-modular').addEventListener('click', function() { showTab('modular'); });
 document.getElementById('tab-villain').addEventListener('click', function() { showTab('villain'); });
-window.addEventListener('DOMContentLoaded', function() { showTab('modular'); });
+window.addEventListener('DOMContentLoaded', function() {
+    // Affiche le panel correspondant au set sélectionné au chargement (modular)
+    var modularCode = document.getElementById('modular-sets').value;
+    document.querySelectorAll('.set-traits-panel, .set-infos-panel, .set-cards-panel').forEach(function(el) {
+        el.style.display = 'none';
+    });
+    var traits = document.getElementById('traits-' + modularCode);
+    var infos = document.getElementById('infos-' + modularCode);
+    var cards = document.getElementById('cards-' + modularCode);
+    if(traits) traits.style.display = '';
+    if(infos) infos.style.display = '';
+    if(cards) cards.style.display = '';
+
+    // Affiche le panel correspondant au set sélectionné au chargement (villain)
+    var villainCode = document.getElementById('villain-sets').value;
+    document.querySelectorAll('.villain-traits-panel, .villain-set-infos-panel, .villain-cards-panel').forEach(function(el) {
+        el.style.display = 'none';
+    });
+    var vtraits = document.getElementById('villain-traits-' + villainCode);
+    var vinfos = document.getElementById('villain-infos-' + villainCode);
+    var vcards = document.getElementById('villain-cards-' + villainCode);
+    if(vtraits) vtraits.style.display = '';
+    if(vinfos) vinfos.style.display = '';
+    if(vcards) vcards.style.display = '';
+});
 
 // Modular set selection
 document.getElementById('modular-sets').addEventListener('change', function() {
     var code = this.value;
-    // Hide all modular panels
     document.querySelectorAll('.set-traits-panel, .set-infos-panel, .set-cards-panel').forEach(function(el) {
         el.style.display = 'none';
     });
-    // Show selected modular panels
     var traits = document.getElementById('traits-' + code);
     var infos = document.getElementById('infos-' + code);
     var cards = document.getElementById('cards-' + code);
     if(traits) traits.style.display = '';
     if(infos) infos.style.display = '';
     if(cards) cards.style.display = '';
+    renderCombinedStats();
 });
 
 // Villain set selection
 document.getElementById('villain-sets').addEventListener('change', function() {
     var code = this.value;
-    // Hide all villain panels
     document.querySelectorAll('.villain-traits-panel, .villain-set-infos-panel, .villain-cards-panel').forEach(function(el) {
         el.style.display = 'none';
     });
-    // Show selected villain panels
     var traits = document.getElementById('villain-traits-' + code);
     var infos = document.getElementById('villain-infos-' + code);
     var cards = document.getElementById('villain-cards-' + code);
     if(traits) traits.style.display = '';
     if(infos) infos.style.display = '';
     if(cards) cards.style.display = '';
+    renderCombinedStats();
 });
 
 function renderCombinedStats() {
@@ -455,4 +495,5 @@ window.allVillainBoostCounts = {{ villain_set_boost_counts|json_encode|raw }};
         background: #fff;
     }
 </style>
+
 {% endblock %}
