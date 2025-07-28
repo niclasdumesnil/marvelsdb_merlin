@@ -7,13 +7,13 @@ imports:
 # Put parameters here that don't need to change on each machine where the app is deployed
 # http://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
-    locale: en
+    locale: fr
     locale_names:
         en: English
-        qc: Francais
+        fr: Francais
     supported_locales:
         - en
-        - qc
+        - fr
     default_locale: en
 
 sensio_framework_extra:
@@ -114,7 +114,7 @@ jms_i18n_routing:
     strategy: custom
     hosts:
         en: "%website_url%"
-        qc: "www.fr.%website_url%" 
+        fr: "www.fr.%website_url%" 
     redirect_to_host: true
     
 # Swiftmailer Configuration
