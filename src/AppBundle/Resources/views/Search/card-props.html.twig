@@ -72,42 +72,48 @@
   	{% trans %}Threat{% endtrans %}: {{ macros.format_integer(card.threat, card.threat_star, not card.threat_fixed) }}.
 	{% endif %}
 {% else %}
-	{% if card.resource_mental or card.resource_physical or card.resource_energy or card.resource_wild %}
-    <div>
-    {% trans %}Resource{% endtrans %}:
-    {% if app.user is defined and app.user and app.user.isNewUI %}
-        {% if card.resource_mental %}{% for i in 1..card.resource_mental %}
-            <span title="Mental" class="icon icon-mental color-mental"
-                  style="border:0px solid rgb(53, 59, 73); border-radius:4px; background:rgba(255,255,255,0.25); padding:4px 6px; margin:0 2px; display:inline-block; font-size:1.1em; vertical-align:middle;"></span>
-        {% endfor %}{% endif %}
-        {% if card.resource_physical %}{% for i in 1..card.resource_physical %}
-            <span title="Physical" class="icon icon-physical color-physical"
-                  style="border:0px solid rgb(53, 59, 73); border-radius:4px; background:rgba(255,255,255,0.25); padding:4px 6px; margin:0 2px; display:inline-block; font-size:1.1em; vertical-align:middle;"></span>
-        {% endfor %}{% endif %}
-        {% if card.resource_energy %}{% for i in 1..card.resource_energy %}
-            <span title="Energy" class="icon icon-energy color-energy"
-                  style="border:0px solid rgb(53, 59, 73); border-radius:4px; background:rgba(255,255,255,0.25); padding:4px 6px; margin:0 2px; display:inline-block; font-size:1.1em; vertical-align:middle;"></span>
-        {% endfor %}{% endif %}
-        {% if card.resource_wild %}{% for i in 1..card.resource_wild %}
-            <span title="Wild" class="icon icon-wild color-wild"
-                  style="border:0px solid rgb(53, 59, 73); border-radius:4px; background:rgba(255,255,255,0.25); padding:4px 6px; margin:0 2px; display:inline-block; font-size:1.1em; vertical-align:middle;"></span>
-        {% endfor %}{% endif %}
-    {% else %}
-        {% if card.resource_mental %}{% for i in 1..card.resource_mental %}
-            <span title="Mental" class="icon icon-mental color-mental" display:inline-block;"></span>
-        {% endfor %}{% endif %}
-        {% if card.resource_physical %}{% for i in 1..card.resource_physical %}
-            <span title="Physical" class="icon icon-physical color-physical" display:inline-block;"></span>
-        {% endfor %}{% endif %}
-        {% if card.resource_energy %}{% for i in 1..card.resource_energy %}
-            <span title="Energy" class="icon icon-energy color-energy" display:inline-block;"></span>
-        {% endfor %}{% endif %}
-        {% if card.resource_wild %}{% for i in 1..card.resource_wild %}
-            <span title="Wild" class="icon icon-wild color-wild" display:inline-block;"></span>
-        {% endfor %}{% endif %}
+    {% if card.resource_mental or card.resource_physical or card.resource_energy or card.resource_wild %}
+        {% set resource_bars = {
+            'mental':   'border-left: 3px solid #007bff; padding-left:0.7em; margin-top:0.5em; display:inline-block;',
+            'physical': 'border-left: 3px solid #dc3545; padding-left:0.7em; margin-top:0.5em; display:inline-block;',
+            'energy':   'border-left: 3px solid #ffc107; padding-left:0.7em; margin-top:0.5em; display:inline-block;',
+            'wild':     'border-left: 3px solid #28a745; padding-left:0.7em; margin-top:0.5em; display:inline-block;'
+        } %}
+        <div>
+            {% if card.resource_mental %}
+                <span style="{{ resource_bars['mental'] }}">
+                    <span style="font-weight:bold;">{% trans %}Resource{% endtrans %}:</span>
+                    {% for i in 1..card.resource_mental %}
+                        <span title="Mental" class="icon icon-mental color-mental" style="margin:0 2px; display:inline-block;"></span>
+                    {% endfor %}
+                </span>
+            {% endif %}
+            {% if card.resource_physical %}
+                <span style="{{ resource_bars['physical'] }}">
+                    <span style="font-weight:bold;">{% trans %}Resource{% endtrans %}:</span>
+                    {% for i in 1..card.resource_physical %}
+                        <span title="Physical" class="icon icon-physical color-physical" style="margin:0 2px; display:inline-block;"></span>
+                    {% endfor %}
+                </span>
+            {% endif %}
+            {% if card.resource_energy %}
+                <span style="{{ resource_bars['energy'] }}">
+                    <span style="font-weight:bold;">{% trans %}Resource{% endtrans %}:</span>
+                    {% for i in 1..card.resource_energy %}
+                        <span title="Energy" class="icon icon-energy color-energy" style="margin:0 2px; display:inline-block;"></span>
+                    {% endfor %}
+                </span>
+            {% endif %}
+            {% if card.resource_wild %}
+                <span style="{{ resource_bars['wild'] }}">
+                    <span style="font-weight:bold;">{% trans %}Resource{% endtrans %}:</span>
+                    {% for i in 1..card.resource_wild %}
+                        <span title="Wild" class="icon icon-wild color-wild" style="margin:0 2px; display:inline-block;"></span>
+                    {% endfor %}
+                </span>
+            {% endif %}
+        </div>
     {% endif %}
-    </div>
-	{% endif %}
 {% endif %}
 
 
