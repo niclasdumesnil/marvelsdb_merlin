@@ -33,6 +33,11 @@
                         {% endif %}
                     </div>
                 </div>
+                {# Ajout ici sous le panel #}
+                {% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': card } %}
+                {% if card.linked_card is defined %}
+                    <div style="height: 32px;"></div>
+                {% endif %}
             </div>
         </div>
         <div class="col-sm-5" style="margin-bottom:0em; text-align:center;">
@@ -41,7 +46,6 @@
                 alt="{{ card.name }}"
                 class="img-responsive"
                 style="max-height:400px; margin:auto; border-radius:12px;">
-            {% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': card } %}
         </div>
     </div>
 
@@ -73,6 +77,8 @@
                         {% endif %}
                     </div>
                 </div>
+                {# Ajout ici sous le panel du verso #}
+                {% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': back } %}
             </div>
             <div class="col-sm-5" style="margin-bottom:0em; text-align:center;">
                 <img id="card-image-{{ card.linked_card.id }}"
@@ -80,7 +86,6 @@
                     alt="{{ card.linked_card.name }}"
                     class="img-responsive"
                     style="max-height:400px; margin:auto; border-radius:12px;">
-                {% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': back } %}
             </div>
         </div>
     {% endif %}
