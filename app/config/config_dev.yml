@@ -44,3 +44,11 @@ fos_user:
 
 #swiftmailer:
 #    delivery_address: me@example.com
+
+parameters:
+    default_locale: fr
+
+jms_i18n_routing:
+    hosts:
+        en: "en.%website_url%"
+        fr: "%website_url%"
