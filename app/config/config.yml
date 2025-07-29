@@ -14,7 +14,7 @@ parameters:
     supported_locales:
         - en
         - fr
-    default_locale: fr
+    default_locale: en
 
 sensio_framework_extra:
   router:
@@ -113,8 +113,8 @@ jms_i18n_routing:
     locales: "%supported_locales%"
     strategy: custom
     hosts:
-        en: "www.en.%website_url%"
-        fr: "%website_url%" 
+        en: "%website_url%"
+        fr: "www.fr.%website_url%"
     redirect_to_host: true
     
 # Swiftmailer Configuration
