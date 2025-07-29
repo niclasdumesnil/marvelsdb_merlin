@@ -305,7 +305,7 @@ class ImportStdCommand extends ContainerAwareCommand
 		$default_locale = $this->getContainer()->getParameter('locale');
 
 		// Ajout d'une variable pour contrôler la génération multilingue
-		$generate_all_locales = false; // Passe à false pour ne faire que l'EN
+		$generate_all_locales = true; // Passe à false pour ne faire que l'EN
 
 		foreach($supported_locales as $supported_locale) {
 			if (!$generate_all_locales && $supported_locale !== 'en') {
