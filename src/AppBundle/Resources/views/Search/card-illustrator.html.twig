@@ -1,7 +1,7 @@
 {% if card.illustrator is not empty %}
 <div class="card-illustrator" style="background:rgba(133, 130, 116, 0.1); border-radius:6px; padding:0.3em 0.7em; margin-top:0.5em; display:inline-block;">
     <span class="fa fa-paint-brush text-warning" style="margin-right:0.4em;"></span>
-    <span style="font-weight:bold;">Illustrator:</span>
+    <span style="font-weight:bold;">{% trans %}Illustrator{% endtrans %}:</span>
     <span style="font-style:italic;">{{ card.illustrator }}</span>
 </div>
 {% endif %}
