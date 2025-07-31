@@ -35,7 +35,18 @@
 	</span>
 	</td>
 	<td data-th="Traits" style="width : 170px;"><span class="{% if card.spoiler is defined and not show_spoilers %} spoiler{% endif %}">{{ card.traits }}</span></td>
-	<td data-th="Set" style="width : 180px;">{{ card.pack_name }} {{ card.position }}</td>
+	<td data-th="Set" style="width : 180px;">
+	{% if card.creator is defined and card.creator != "FFG" %}
+            <span style="font-size: 14px; color: white; background-color: rgb(18, 120, 216); display: inline-flex; align-items: center; padding: 1px 18px;">
+                {{ card.pack_name }} {{ card.position }}
+            </span>
+	{% else %}
+	<span style="font-size: 14px;"> 
+ 	{{ card.pack_name }} {{ card.position }}
+	 </span>
+	{% endif %}
+	
+	</td>
 	<td data-th="Set" style="width : 180px;">{% if card.card_set_code is defined %}<a href="/find?q=m:{{card.card_set_code}}&sort=set&view=list&decks=encounter">{{card.card_set_name}}</a> {% if card.set_position %}{{card.set_position}}{% if card.quantity > 1 %}-{{card.set_position+card.quantity-1}}{% endif %}{% endif %}{% endif %}</td>
 </tr>
 {% endfor %}
