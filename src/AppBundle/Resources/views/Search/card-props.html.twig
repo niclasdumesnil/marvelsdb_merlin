@@ -82,7 +82,7 @@
         <div>
             {% if card.resource_mental %}
                 <span style="{{ resource_bars['mental'] }}">
-                    <span style="font-weight:bold;">{% trans %}Resource{% endtrans %}:</span>
+                    <span >{% trans %}Resource{% endtrans %}:</span>
                     {% for i in 1..card.resource_mental %}
                         <span title="Mental" class="icon icon-mental color-mental" style="margin:0 2px; display:inline-block;"></span>
                     {% endfor %}
@@ -90,7 +90,7 @@
             {% endif %}
             {% if card.resource_physical %}
                 <span style="{{ resource_bars['physical'] }}">
-                    <span style="font-weight:bold;">{% trans %}Resource{% endtrans %}:</span>
+                    <span>{% trans %}Resource{% endtrans %}:</span>
                     {% for i in 1..card.resource_physical %}
                         <span title="Physical" class="icon icon-physical color-physical" style="margin:0 2px; display:inline-block;"></span>
                     {% endfor %}
@@ -98,7 +98,7 @@
             {% endif %}
             {% if card.resource_energy %}
                 <span style="{{ resource_bars['energy'] }}">
-                    <span style="font-weight:bold;">{% trans %}Resource{% endtrans %}:</span>
+                    <span>{% trans %}Resource{% endtrans %}:</span>
                     {% for i in 1..card.resource_energy %}
                         <span title="Energy" class="icon icon-energy color-energy" style="margin:0 2px; display:inline-block;"></span>
                     {% endfor %}
@@ -106,7 +106,7 @@
             {% endif %}
             {% if card.resource_wild %}
                 <span style="{{ resource_bars['wild'] }}">
-                    <span style="font-weight:bold;">{% trans %}Resource{% endtrans %}:</span>
+                    <span>{% trans %}Resource{% endtrans %}:</span>
                     {% for i in 1..card.resource_wild %}
                         <span title="Wild" class="icon icon-wild color-wild" style="margin:0 2px; display:inline-block;"></span>
                     {% endfor %}
