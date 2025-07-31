@@ -14,7 +14,7 @@
     </span>
 	
 {% endif %}
-{% if card.status == "released" %}
+{% if card.status == "released" or card.status == "sealed" %}
     <span style="font-size: 12px; color: white; background-color: rgb(0, 48, 27); display: inline-flex;
       align-items: center; border-radius: 12px; padding: 2px 12px 2px;">{{card.status ?? 'Official'}}
     </span>
