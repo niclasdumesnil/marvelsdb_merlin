@@ -125,22 +125,35 @@ class DeckValidationHelper
 	public function canIncludeCard($deck, $slot, $deck_options = []) {
 		$card = $slot->getCard();
 		$indeck = $slot->getQuantity();
+
 		// hide heroes
 		if ($card->getType()->getCode() === "hero") {
 			return false;
 		}
-		
+
 		$hero = $deck->getCharacter();
 		$restrictions = $card->getRestrictions();
-		return true;
 
+		// Vérification des restrictions spécifiques à la carte
 		if ($restrictions){
 			$parsed = $this->parseReqString($restrictions);
-			if ($parsed && $parsed['hero'] && !isset($parsed['hero'][$hero->getCode()]) ){
+			if ($parsed && isset($parsed['hero']) && !isset($parsed['hero'][$hero->getCode()]) ){
 				return false;
 			}
 		}
 
+		// vérifier la/les faction(s) du héros vis à vis des cartes à faction multiples
+		$heroFaction = $hero->getFaction() ? $hero->getFaction()->getCode() : null;
+
+		// Autoriser si la carte a au moins une faction du héros (hors basic/hero)
+		if (
+			($card->getFaction()->getCode() === $heroFaction) ||
+			($card->getFaction2() && $card->getFaction2()->getCode() === $heroFaction) ||
+			($card->getFaction()->getCode() === 'basic')
+		) {
+			return true;
+		}
+		
 		// validate deck. duplicating code from app.deck.js but in php
 		if ($deck_options){
 			foreach($deck_options as $option) {

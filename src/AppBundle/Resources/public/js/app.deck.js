@@ -34,7 +34,9 @@ var date_creation,
 		cost_limit: "A card exceeds the maximum allowed cost"
 	},
 	header_tpl = _.template('<h5><span class="icon icon-<%= code %>"></span> <%= name %> (<%= quantity %>)</h5>'),
-	card_line_tpl = _.template('<span class="icon icon-<%= card.type_code %> icon-<%= card.faction_code %>"></span><% if (typeof(card.faction2_code) !== "undefined") { %><span class="icon icon-<%= card.faction2_code %>"></span> <% } %> <a href="<%= card.url %>" class="card card-tip <% if (typeof(card.faction2_code) !== "undefined") { %> fg-dual <% } %>" data-toggle="modal" data-remote="false" data-target="#cardModal" data-code="<%= card.code %>"><%= card.name %></a>'),
+	card_line_tpl = _.template(
+    '<a href="<%= card.url %>" class="card card-tip<% if (card.faction2_code) { %> fg-dual<% } %>" data-toggle="modal" data-remote="false" data-target="#cardModal" data-code="<%= card.code %>"> <%= card.name %></a>'
+),
 	layouts = {},
 	layout_data = {};
 
@@ -758,67 +760,71 @@ deck.create_card_group = function(cards, context){
 }
 
 deck.create_card = function create_card(card){
-	var $div = $('<div>').addClass(deck.can_include_card(card) ? '' : 'invalid-card');
+    var $div = $('<div>').addClass(deck.can_include_card(card) ? '' : 'invalid-card');
 
-	$div.append($(card_line_tpl({card:card})));
+    $div.append($(card_line_tpl({card:card})));
+    if(card.is_unique == true) {
+        $div.prepend(' •');
+    }
+    if(card.faction_code == "hero") {
+        $div.prepend('<span class="fa fa-user" style="color:grey;" title="Hero specific cards. Cannot be removed"></span>');
+    } else {
+        // Ajoute le cercle de la faction 2 d'abord (pour garder l'ordre visuel)
+        if (card.faction2_code) {
+            $div.prepend(' <span class="fa fa-circle fg-'+card.faction2_code+'" title="'+card.faction2_code+'"></span>');
+        }
+        // Puis le cercle de la faction principale
+        if (card.card_set_code) {
+            $div.prepend(' <span class="fa fa-user fg-'+card.faction_code+'" title="Hero specific cards. Cannot be removed"></span>');
+        } else {
+            $div.prepend(' <span class="fa fa-circle fg-'+card.faction_code+'" title="'+card.faction_code+'"></span>');
+        }
+    }
 
-	if(card.is_unique == true) {
-		$div.prepend(' •');
-	}
-	if(card.faction_code == "hero") {
-		$div.prepend('<span class="fa fa-user" style="color:grey;" title="Hero specific cards. Cannot be removed"></span>');
-	} else {
-		if (card.card_set_code) {
-			$div.prepend(' <span class="fa fa-user fg-'+card.faction_code+'" title="Hero specific cards. Cannot be removed"></span>');
-		} else {
-			$div.prepend(' <span class="fa fa-circle fg-'+card.faction_code+'" title="'+card.faction_code+'"></span>');
-		}
-	}
+    $div.prepend(card.indeck+'x ');
 
-	$div.prepend(card.indeck+'x ');
+    var $span = $('<span style="float: right"></span>');
 
-	var $span = $('<span style="float: right"></span>');
-
-	if(card.resource_physical && card.resource_physical > 0) {
-		$span.append(app.format.resource(card.resource_physical, 'physical'));
-	}
-	if(card.resource_mental && card.resource_mental > 0) {
-		$span.append(app.format.resource(card.resource_mental, 'mental'));
-	}
-	if(card.resource_energy && card.resource_energy > 0) {
-		$span.append(app.format.resource(card.resource_energy, 'energy'));
-	}
-	if(card.resource_wild && card.resource_wild > 0) {
-		$span.append(app.format.resource(card.resource_wild, 'wild'));
-	}
+    if(card.resource_physical && card.resource_physical > 0) {
+        $span.append(app.format.resource(card.resource_physical, 'physical'));
+    }
+    if(card.resource_mental && card.resource_mental > 0) {
+        $span.append(app.format.resource(card.resource_mental, 'mental'));
+    }
+    if(card.resource_energy && card.resource_energy > 0) {
+        $span.append(app.format.resource(card.resource_energy, 'energy'));
+    }
+    if(card.resource_wild && card.resource_wild > 0) {
+        $span.append(app.format.resource(card.resource_wild, 'wild'));
+    }
 
 
-	if (!no_collection){
-		var pack = app.data.packs.findById(card.pack_code);
-		var in_collection = false;
-		if (collection[pack.id]) {
-			in_collection = true;
-		} else {
-			if (card.duplicated_by) {
-				card.duplicated_by.forEach(function (dupe_code) {
-					var dupe_card = app.data.cards.findById(dupe_code);
-					if (dupe_card) {
-						pack = app.data.packs.findById(dupe_card.pack_code);
-						if (collection[pack.id]) {
-							in_collection = true;
-						}
-					}
-				});
-			}
-		}
-		if (!in_collection) {
-			$div.append(' <span class="fa fa-question" title="This card is not part of your collection"></span>');
-		}
-	}
+    if (!no_collection){
+        var pack = app.data.packs.findById(card.pack_code);
+        var in_collection = false;
+        if (collection[pack.id]) {
+            in_collection = true;
+        } else {
+            if (card.duplicated_by) {
+                card.duplicated_by.forEach(function (dupe_code) {
+                    var dupe_card = app.data.cards.findById(dupe_code);
+                    if (dupe_card) {
+                        pack = app.data.packs.findById(dupe_card.pack_code);
+                        if (collection[pack.id]) {
+                            in_collection = true;
+                        }
+                    }
+                });
+            }
+        }
+        if (!in_collection) {
+            $div.append(' <span class="fa fa-question" title="This card is not part of your collection"></span>');
+        }
+    }
 
-	$div.append($span);
+    $div.append($span);
 
-	return $div;
+    return $div;
 }
 
 /**
@@ -1146,7 +1152,10 @@ deck.can_include_card = function can_include_card(card, limit_count, hard_count)
 
 	// if an aspect is set, allow that, otherwise allow all cards because
 	if (deck.meta.aspect) {
-		if (deck.meta.aspect == card.faction_code) {
+		if (
+			deck.meta.aspect == card.faction_code ||
+			(typeof card.faction2_code !== "undefined" && deck.meta.aspect == card.faction2_code)
+		) {
 			return true;
 		}
 		if (deck.requirements && deck.requirements.aspects) {
@@ -1154,7 +1163,13 @@ deck.can_include_card = function can_include_card(card, limit_count, hard_count)
 				// allowed all aspects basically
 				return true;
 			}
-			if ((!deck.meta.aspect2) || (deck.meta.aspect2 && deck.meta.aspect2 == card.faction_code)) {
+			if (
+				(!deck.meta.aspect2) ||
+				(deck.meta.aspect2 && (
+					deck.meta.aspect2 == card.faction_code ||
+					(typeof card.faction2_code !== "undefined" && deck.meta.aspect2 == card.faction2_code)
+				))
+			) {
 				return true;
 			}
 		}
@@ -1278,6 +1293,21 @@ deck.can_include_card = function can_include_card(card, limit_count, hard_count)
 					continue;
 				}
 			}
+
+			if (option.faction) {
+    var valid_faction = false;
+    for (var j = 0; j < option.faction.length; j++) {
+        var f = option.faction[j];
+        if (
+            f == card.faction_code ||
+            (typeof card.faction2_code !== "undefined" && f == card.faction2_code)
+        ) {
+            valid_faction = true;
+            break;
+        }
+    }
+    if (!valid_faction) continue;
+}
 
 			// If we got to this point, the card matches all of our options so include it.
 			return true;

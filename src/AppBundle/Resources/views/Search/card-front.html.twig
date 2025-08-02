@@ -1,15 +1,36 @@
+{% macro faction_color(code) %}
+    {% set colors = {
+        'leadership': '#2b80c5',
+        'protection': '#107116',
+        'aggression': '#cc3038',
+        'justice': '#ead51b',
+        'basic': '#808080',
+        'determination': '#493f64'
+    } %}
+    {{ colors[code]|default('#888') }}
+{% endmacro %}
+
+{% import _self as macros %}
+
 {% if app.user is defined and app.user and app.user.isNewUI %}
     {% include 'AppBundle:Search:card-front-newui.html.twig' %}    
 {% else %}
     <div class="row">
         <div class="col-sm-7">
             <div>
-                <div class="panel panel-default border-{{ card.faction_code }} {% if card.faction2_code is defined %} border-dual {% endif %}">
-                    <div class="panel-heading border-{{ card.faction_code }} bg-{{ card.faction_code }} {% if card.faction2_code is defined %} bg-dual border-dual{% endif %}"
-                        {% if card.faction_code == 'encounter' and card.type_code == 'villain' %}
-                            style="background: linear-gradient(90deg, rgb(49, 5, 124) 0%, rgb(49, 5, 124) 100%); color: #fff;"
-                        {% elseif card.faction_code == 'encounter' %}
-                            style="background: linear-gradient(90deg, rgb(155, 96, 7) 0%, rgb(155, 96, 7) 100%); color: #fff;"
+                <div class="panel panel-default
+                    {% if card.faction2_code is defined %}
+                        border-dual-gradient
+                    {% else %}
+                        border-{{ card.faction_code }}
+                    {% endif %}"
+                    {% if card.faction2_code is defined %}
+                        style="--dual-gradient: linear-gradient(90deg, {{ macros.faction_color(card.faction_code) }}, {{ macros.faction_color(card.faction2_code) }});"
+                    {% endif %}
+                >
+                    <div class="panel-heading border-{{ card.faction_code }} bg-{{ card.faction_code }}{% if card.faction2_code is defined %} panel-heading-dual-gradient{% endif %}"
+                        {% if card.faction2_code is defined %}
+                            style="--dual-gradient-color1: {{ macros.faction_color(card.faction_code) }}; --dual-gradient-color2: {{ macros.faction_color(card.faction2_code) }};"
                         {% endif %}
                     >
                         <h3 class="panel-title">
@@ -55,8 +76,18 @@
             <div class="col-sm-7">
                 {# Affiche le texte du back #}
                 {% set back = card.linked_card %}
-                <div class="panel panel-default border-{{ back.faction_code }} {% if back.faction2_code is defined %} border-dual {% endif %}">
-                    <div class="panel-heading border-{{ back.faction_code }} bg-{{ back.faction_code }} {% if back.faction2_code is defined %} bg-dual border-dual{% endif %}">
+                <div class="panel panel-default
+                    {% if back.faction2_code is defined %}
+                        border-dual-gradient
+                    {% else %}
+                        border-{{ back.faction_code }}
+                    {% endif %}"
+                    {% if back.faction2_code is defined %}
+                        style="--dual-gradient: linear-gradient(90deg, {{ macros.faction_color(back.faction_code) }}, {{ macros.faction_color(back.faction2_code) }});"
+                    {% endif %}
+                >
+                    <div class="panel-heading border-{{ back.faction_code }} bg-{{ back.faction_code }}{% if back.faction2_code is defined %} panel-heading-dual-gradient{% endif %}"
+                         style="--dual-gradient-color1: {{ macros.faction_color(back.faction_code) }}; --dual-gradient-color2: {{ macros.faction_color(back.faction2_code) }};">
                         <h3 class="panel-title">
                             {% include 'AppBundle:Search:card-name-with-link.html.twig' with { 'card': back } %}
                         </h3>
@@ -91,3 +122,18 @@
         </div>
     {% endif %}
 {% endif %}
+
+<style>
+.border-dual-gradient {
+    border: 1px solid transparent !important;
+    border-radius: 8px;
+    background: linear-gradient(white, white) padding-box, var(--dual-gradient, #888) border-box;
+}
+.panel-default[class*="border-"] {
+    border-width: 1px !important;
+}
+.panel-heading-dual-gradient {
+    background: linear-gradient(90deg, var(--dual-gradient-color1, #888) 0%, var(--dual-gradient-color1, #888) 40%, var(--dual-gradient-color2, #888) 60%, var(--dual-gradient-color2, #888) 100%) !important;
+}
+</style>
+
