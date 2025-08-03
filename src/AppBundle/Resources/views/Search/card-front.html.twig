@@ -19,17 +19,25 @@
         <div class="col-sm-7">
             <div>
                 <div class="panel panel-default
-                    {% if card.faction2_code is defined %}
+                    
+                    {% if card.faction2_code is defined and card.faction2_code %}
                         border-dual-gradient
                     {% else %}
                         border-{{ card.faction_code }}
                     {% endif %}"
-                    {% if card.faction2_code is defined %}
+                    {% if card.faction2_code is defined and card.faction2_code %}
                         style="--dual-gradient: linear-gradient(90deg, {{ macros.faction_color(card.faction_code) }}, {{ macros.faction_color(card.faction2_code) }});"
                     {% endif %}
                 >
-                    <div class="panel-heading border-{{ card.faction_code }} bg-{{ card.faction_code }}{% if card.faction2_code is defined %} panel-heading-dual-gradient{% endif %}"
-                        {% if card.faction2_code is defined %}
+                    <div class="panel-heading border-{{ card.faction_code }} bg-{{ card.faction_code }}{% if card.faction2_code is defined and card.faction2_code %} panel-heading-dual-gradient{% endif %}"
+                        
+                        {% if card.faction_code == 'encounter' and card.type_code == 'villain' %} test villain
+                            style="background: linear-gradient(90deg, rgb(49, 5, 124) 0%, rgb(49, 5, 124) 100%); color: #fff;"
+                        {% elseif card.faction_code == 'encounter' %}
+                            style="background: linear-gradient(90deg, rgb(155, 96, 7) 0%, rgb(155, 96, 7) 100%); color: #fff;"
+                        {% endif %}
+                                             
+                        {% if card.faction2_code is defined and card.faction2_code %}
                             style="--dual-gradient-color1: {{ macros.faction_color(card.faction_code) }}; --dual-gradient-color2: {{ macros.faction_color(card.faction2_code) }};"
                         {% endif %}
                     >
@@ -77,17 +85,27 @@
                 {# Affiche le texte du back #}
                 {% set back = card.linked_card %}
                 <div class="panel panel-default
-                    {% if back.faction2_code is defined %}
+                    {% if back.faction2_code is defined and back.faction2_code %}
                         border-dual-gradient
                     {% else %}
                         border-{{ back.faction_code }}
                     {% endif %}"
-                    {% if back.faction2_code is defined %}
+                    {% if back.faction2_code is defined and back.faction2_code %}
                         style="--dual-gradient: linear-gradient(90deg, {{ macros.faction_color(back.faction_code) }}, {{ macros.faction_color(back.faction2_code) }});"
                     {% endif %}
                 >
-                    <div class="panel-heading border-{{ back.faction_code }} bg-{{ back.faction_code }}{% if back.faction2_code is defined %} panel-heading-dual-gradient{% endif %}"
-                         style="--dual-gradient-color1: {{ macros.faction_color(back.faction_code) }}; --dual-gradient-color2: {{ macros.faction_color(back.faction2_code) }};">
+                    <div class="panel-heading border-{{ back.faction_code }} bg-{{ back.faction_code }}{% if back.faction2_code is defined and back.faction2_code %} panel-heading-dual-gradient{% endif %}"
+                         
+                        {% if back.faction_code == 'encounter' and card.type_code == 'villain' %} test villain
+                            style="background: linear-gradient(90deg, rgb(49, 5, 124) 0%, rgb(49, 5, 124) 100%); color: #fff;"
+                        {% elseif back.faction_code == 'encounter' %}
+                            style="background: linear-gradient(90deg, rgb(155, 96, 7) 0%, rgb(155, 96, 7) 100%); color: #fff;"
+                        {% endif %}
+                         
+                         {% if back.faction2_code is defined and back.faction2_code %}
+                            style="--dual-gradient-color1: {{ macros.faction_color(back.faction_code) }}; --dual-gradient-color2: {{ macros.faction_color(back.faction2_code) }};"
+                         {% endif %}
+                    >
                         <h3 class="panel-title">
                             {% include 'AppBundle:Search:card-name-with-link.html.twig' with { 'card': back } %}
                         </h3>
