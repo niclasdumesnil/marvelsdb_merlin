@@ -114,11 +114,13 @@ class DeckValidationHelper
 	{
 		$invalidCards = [];
 		$deck_options = json_decode($deck->getCharacter()->getdeckOptions());
-		foreach ( $deck->getSlots() as $slot ) {
-			if(! $this->canIncludeCard($deck, $slot, $deck_options)) {
+		foreach ($deck->getSlots() as $slot) {
+			if (!$this->canIncludeCard($deck, $slot, $deck_options)) {
 				$invalidCards[] = $slot->getCard();
 			}
 		}
+		// Ajout du log ici
+		error_log('[getInvalidCards] Cartes invalides détectées : ' . implode(', ', array_map(function($c) { return $c->getName(); }, $invalidCards)));
 		return $invalidCards;
 	}
 	
@@ -126,33 +128,44 @@ class DeckValidationHelper
 		$card = $slot->getCard();
 		$indeck = $slot->getQuantity();
 
+		// Log début de validation
+		error_log('[canIncludeCard] Test carte : ' . $card->getName() . ' | Faction: ' . $card->getFaction()->getCode() . ' | Faction2: ' . ($card->getFaction2() ? $card->getFaction2()->getCode() : 'none'));
+
 		// hide heroes
 		if ($card->getType()->getCode() === "hero") {
+			error_log('[canIncludeCard] Refusée (type hero) : ' . $card->getName());
 			return false;
 		}
 
 		$hero = $deck->getCharacter();
 		$restrictions = $card->getRestrictions();
+		// ajout du return ici comme sur la version officielle. A priori, seul le js est utilisé pour les restrictions
+		return true;
 
 		// Vérification des restrictions spécifiques à la carte
 		if ($restrictions){
 			$parsed = $this->parseReqString($restrictions);
 			if ($parsed && isset($parsed['hero']) && !isset($parsed['hero'][$hero->getCode()]) ){
+				error_log('[canIncludeCard] Refusée (restriction hero) : ' . $card->getName());
 				return false;
 			}
 		}
 
 		// vérifier la/les faction(s) du héros vis à vis des cartes à faction multiples
-		$heroFaction = $hero->getFaction() ? $hero->getFaction()->getCode() : null;
+		$heroFactionObj = $deck->getFaction();
+		$heroFaction = $heroFactionObj ? $heroFactionObj->getCode() : null;
+		error_log('[canIncludeCard] Faction du héros : ' . ($heroFaction ? $heroFaction : 'aucune'));
 
 		// Autoriser si la carte a au moins une faction du héros (hors basic/hero)
-		if (
+		
+		/*if (
 			($card->getFaction()->getCode() === $heroFaction) ||
 			($card->getFaction2() && $card->getFaction2()->getCode() === $heroFaction) ||
 			($card->getFaction()->getCode() === 'basic')
 		) {
+			error_log('[canIncludeCard] Autorisée (faction héros ou basic) : ' . $card->getName());
 			return true;
-		}
+		}*/
 		
 		// validate deck. duplicating code from app.deck.js but in php
 		if ($deck_options){
@@ -167,6 +180,7 @@ class DeckValidationHelper
 						}
 					}
 					if (!$faction_valid) {
+						error_log('[canIncludeCard] Refusée (option.faction) : ' . $card->getName());
 						continue;
 					}
 				}
@@ -180,6 +194,7 @@ class DeckValidationHelper
 						}
 					}
 					if (!$type_valid){
+						error_log('[canIncludeCard] Refusée (option.type) : ' . $card->getName());
 						continue;
 					}
 				}
@@ -193,6 +208,7 @@ class DeckValidationHelper
 						}
 					}
 					if (!$trait_valid){
+						error_log('[canIncludeCard] Refusée (option.trait) : ' . $card->getName());
 						continue;
 					}
 				}
@@ -207,6 +223,7 @@ class DeckValidationHelper
 						}
 					}
 					if (!$uses_valid){
+						error_log('[canIncludeCard] Refusée (option.uses) : ' . $card->getName());
 						continue;
 					}
 				}
@@ -220,6 +237,7 @@ class DeckValidationHelper
 						}
 					}
 					if (!$text_valid){
+						error_log('[canIncludeCard] Refusée (option.text) : ' . $card->getName());
 						continue;
 					}
 				}
@@ -233,6 +251,7 @@ class DeckValidationHelper
 						if ($card->getXp() >= $option->level->min && $card->getXp() <= $option->level->max) {
 							$level_valid = true;
 						} else {
+							error_log('[canIncludeCard] Refusée (option.level) : ' . $card->getName());
 							continue;
 						}
 					}
@@ -242,12 +261,14 @@ class DeckValidationHelper
 					// Si cost est un entier, la carte doit avoir un coût inférieur ou égal à cette valeur
 					if (is_int($option->cost)) {
 						if ($card->getCost() > $option->cost) {
+							error_log('[canIncludeCard] Refusée (option.cost int) : ' . $card->getName());
 							continue;
 						}
 					}
 					// Si cost est un tableau avec min et max, la carte doit avoir un coût dans cette plage
 					if (is_array($option->cost) && isset($option->cost['min']) && isset($option->cost['max'])) {
 						if ($card->getCost() < $option->cost['min'] || $card->getCost() > $option->cost['max']) {
+							error_log('[canIncludeCard] Refusée (option.cost array) : ' . $card->getName());
 							continue;
 						}
 					}
@@ -270,11 +291,13 @@ class DeckValidationHelper
 					}
 					$aspectCount = count($aspects);
 					if ($aspectCount > $option->aspect_limit) {
+						error_log('[canIncludeCard] Refusée (option.aspect_limit) : ' . $card->getName());
 						continue;
 					}
 				}
 				
 				if (isset($option->not) && $option->not){
+					error_log('[canIncludeCard] Refusée (option.not) : ' . $card->getName());
 					return false;
 				}else {
 					if (isset($option->limit) && $option->limit){
@@ -292,14 +315,17 @@ class DeckValidationHelper
 					// if we exceed the limit, the deck is invalid 
 					if (isset($option->limit_count) && $option->limit_count && $option->limit) {
 						if ($option->limit_count > $option->limit) {
+							error_log('[canIncludeCard] Refusée (option.limit_count) : ' . $card->getName());
 							return false;
 						}
 					}
+					error_log('[canIncludeCard] Autorisée (option valide) : ' . $card->getName());
 					return true;
 				}
 				
 			}
 		}
+		error_log('[canIncludeCard] Refusée (aucune règle ne valide) : ' . $card->getName());
 		return false;
 	}
 	
@@ -307,6 +333,7 @@ class DeckValidationHelper
 	{
 		if(!empty($this->getInvalidCards($deck))) {
 			return 'invalid_cards';
+			//return '';
 		}
 		
 		return null;

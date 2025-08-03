@@ -561,27 +561,28 @@ deck.display = function display(container, options) {
 
 deck.get_layout_data = function get_layout_data(options) {
 
-	var data = {
-		image1: '',
-		image2: '',
-		meta: '',
-		upgrades: '',
-		events: '',
-		allies: '',
-		permanent: '',
-		player_side_schemes: '',
-		supports: '',
-		resources: '',
-		cards: '',
-		hero_color_1: '',
-		hero_color_2: '',
-		hero_color_3: ''
-	};
+    var data = {
+        image1: '',
+        image2: '',
+        meta: '',
+        upgrades: '',
+        events: '',
+        allies: '',
+        permanent: '',
+        player_side_schemes: '',
+        supports: '',
+        resources: '',
+        cards: '',
+        hero_color_1: '',
+        hero_color_2: '',
+        hero_color_3: ''
+    };
 
-	var problem = deck.get_problem();
-	$("input[name=problem]").val(problem);
+    var problem = deck.get_problem();
+    console.log('DEBUG get_layout_data: problem =', problem); // Ajout du log ici
+    $("input[name=problem]").val(problem);
 
-	var hero = app.data.cards.findById(hero_code);
+    var hero = app.data.cards.findById(hero_code);
 	var minDeckSize = 40;
 
 	if (hero.meta && hero.meta.colors) {
@@ -623,13 +624,14 @@ deck.get_layout_data = function get_layout_data(options) {
 		deck.update_layout_section(data, 'meta', $('<div>'+deck.get_tags().replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();})+'</div>'));
 	}
 
-	if(problem) {
-		if (deck.problem_list && deck.problem_list.length > 0){
-			deck.update_layout_section(data, 'meta', $('<div class="text-danger small"><span class="fa fa-exclamation-triangle"></span> '+deck.problem_list.join(', ')+'</div>'));
-		} else {
-			deck.update_layout_section(data, 'meta', $('<div class="text-danger small"><span class="fa fa-exclamation-triangle"></span> '+problem_labels[problem]+'</div>'));
-		}
-	}
+	if (typeof problem !== 'undefined' && problem) {
+    console.log('DEBUG get_layout_data: problem_labels =', problem_labels, 'problem =', problem, 'label affiché =', problem_labels[problem]);
+    if (deck.problem_list && deck.problem_list.length > 0){
+        deck.update_layout_section(data, 'meta', $('<div class="text-danger small"><span class="fa fa-exclamation-triangle"></span> '+deck.problem_list.join(', ')+'</div>'));
+    } else {
+        deck.update_layout_section(data, 'meta', $('<div class="text-danger small"><span class="fa fa-exclamation-triangle"></span> '+problem_labels[problem]+'</div>'));
+    }
+}
 
 	var layout_template = 2;
 	if (deck.sort_type == "name"){
@@ -683,6 +685,7 @@ deck.get_layout_data = function get_layout_data(options) {
 		layout_template = options.layout;
 	}
 
+	console.log('DEBUG get_layout_data: layouts[layout_template] =', layouts[layout_template]);
 	return layouts[layout_template](data);
 }
 
@@ -968,6 +971,7 @@ deck.get_problem = function get_problem() {
 
 	// Deck contains invalid cards
 	if (deck.get_invalid_cards().length > 0) {
+		console.log('DEBUG get_problem: invalid_cards detected', deck.get_invalid_cards().map(c => c.name));
 		return 'invalid_cards';
 	}
 
