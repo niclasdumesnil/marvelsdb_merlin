@@ -2,17 +2,16 @@
 <a href="{{ card.url }}" class="card-name card-tip{% if card.available == false %} card-preview{% endif %}{% if card.spoiler is defined and not show_spoilers %} spoiler{% endif %}" data-code="{{ card.code }}">
     {{ card.name }}{% include 'AppBundle:Search:card-stage.html.twig' %}
 </a>
-{% if card.quantity|default(1) > 0 and not card.is_unique %}
+{% if card.quantity|default(1) > 0 and not card.is_unique and card.type_code != 'villain' and card.type_code != 'main_scheme' %}
     {% set qty_class = 'qty' %}
     {% if QtyColor is not defined or QtyColor == 'false' %}
-	    {% if card.faction_code in ['determination', 'basic', 'aggression', 'protection', 'pool', 'leadership', 'encounter'] %}
+        {% if card.faction_code in ['determination', 'basic', 'aggression', 'protection', 'pool', 'leadership', 'encounter'] %}
             {% set qty_class = 'qty-white' %}
         {% endif %}
-	{% endif %}
- 	<span class="{{ qty_class }}">
+    {% endif %}
+    <span class="{{ qty_class }}">
         (x{{ card.quantity|default(1) }})
     </span>
-	
 {% endif %}
 {% if card.status == "released" or card.status == "sealed" %}
     <span style="font-size: 12px; color: white; background-color: rgb(0, 48, 27); display: inline-flex;
