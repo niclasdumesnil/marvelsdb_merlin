@@ -186,17 +186,22 @@ class BuilderController extends Controller
 		$content = [];
 		$lines = explode("\n", $text);
 		$identity = null;
+		$first_card = true;
+
+		// Ignore la première ligne (le titre du deck)
+		if (count($lines) > 0) {
+			array_shift($lines);
+		}
+
 		foreach ($lines as $line) {
 			$matches = [];
 			// Nouveau format : "2x Nom de carte [CODE]"
-    		if (preg_match('/^\s*(\d+)x?\s*(.*?)\s*\[([A-Za-z0-9_]+)\]/u', $line, $matches)) {
+			if (preg_match('/^\s*(\d+)x?\s*(.*?)\s*\[([A-Za-z0-9_]+)\]/u', $line, $matches)) {
 				$quantity = intval($matches[1]);
 				$name = trim($matches[2]);
 				$code = trim($matches[3]);
 				$card = $em->getRepository('AppBundle:Card')->findOneBy(['code' => $code]);
-	
-    		}
-			
+			}
 			// Ancien format : "2x Nom de carte"
 			else if (preg_match('/^\s*(\d)x?([\pLl\pLu\pN"\-\.\'\!\: ]+)/u', $line, $matches)) {
 				$quantity = intval($matches[1]);
@@ -218,9 +223,14 @@ class BuilderController extends Controller
 			}
 
 			if ($card) {
-				if ($card->getType()->getCode() == "hero"){
+				// Si c'est la première carte et que c'est un héros, on la met comme identité
+				if ($first_card && $card->getType()->getCode() == "hero") {
 					$identity = $card->getCode();
-				} else {
+					$first_card = false;
+					continue; // Ne pas ajouter le héros dans le contenu
+				}
+				$first_card = false;
+				if ($card->getType()->getCode() != "hero") {
 					$content[$card->getCode()] = $quantity;
 				}
 			}
@@ -433,8 +443,9 @@ class BuilderController extends Controller
 		// check for hero here
 		$hero = false;
 		$hero_code = filter_var($request->get('faction_code'), FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
-		if ($hero_code && $card = $em->getRepository('AppBundle:Card')->findOneBy(["code" => $hero_code])){
-			$hero = $card = $em->getRepository('AppBundle:Card')->findOneBy(["code" => $hero_code]);
+		$hero = null;
+		if ($hero_code) {
+		    $hero = $em->getRepository('AppBundle:Card')->findOneBy(["code" => $hero_code]);
 		}
 
 		$cancel_edits = (boolean) filter_var($request->get('cancel_edits'), FILTER_SANITIZE_NUMBER_INT);

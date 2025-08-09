@@ -15,8 +15,7 @@ From {{ first_pack.pack.name }}{% if first_pack.nb > 1 %} ({{ first_pack.nb }}){
 Upgrade{% if upgrades|length > 1 %}s{% endif %}
 
 {% for slot in upgrades %}
-{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
-{% endfor %}
+{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }}){% if slot.card.faction %} --of{{ slot.card.faction.name }}{% endif %}{{ "\n" }}{% endfor %}
 {% endif %}
 
 {% set events = deck.slots_by_type.event %}
@@ -24,8 +23,7 @@ Upgrade{% if upgrades|length > 1 %}s{% endif %}
 Event{% if events|length > 1 %}s{% endif %}
 
 {% for slot in events %}
-{{ slot.quantity }}x {{ slot.card.name }}{% if slot.card.subname %}:{{slot.card.subname}}{% endif %} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
-{% endfor %}
+{{ slot.quantity }}x {{ slot.card.name }}{% if slot.card.subname %}:{{slot.card.subname}}{% endif %} [{{ slot.card.code }}] ({{ slot.card.pack.name }}){% if slot.card.faction %} --of{{ slot.card.faction.name }}{% endif %}{{ "\n" }}{% endfor %}
 {% endif %}
 
 {% set supports = deck.slots_by_type.support %}
@@ -33,8 +31,7 @@ Event{% if events|length > 1 %}s{% endif %}
 Support{% if supports|length > 1 %}s{% endif %}
 
 {% for slot in supports %}
-{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
-{% endfor %}
+{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }}){% if slot.card.faction %} --of{{ slot.card.faction.name }}{% endif %}{{ "\n" }}{% endfor %}
 {% endif %}
 
 {% set resources = deck.slots_by_type.resource %}
@@ -42,8 +39,7 @@ Support{% if supports|length > 1 %}s{% endif %}
 Resource{% if resources|length > 1 %}s{% endif %}
 
 {% for slot in resources %}
-{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
-{% endfor %}
+{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }}){% if slot.card.faction %} --of{{ slot.card.faction.name }}{% endif %}{{ "\n" }}{% endfor %}
 {% endif %}
 
 {% set allies = deck.slots_by_type.ally %}
@@ -53,8 +49,7 @@ Resource{% if resources|length > 1 %}s{% endif %}
 {% if allies|length > 1 %}Allies{% endif %}
 
 {% for slot in allies %}
-{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
-{% endfor %}
+{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }}){% if slot.card.faction %} --of{{ slot.card.faction.name }}{% endif %}{{ "\n" }}{% endfor %}
 {% endif %}
 
 {% set side_schemes = deck.slots_by_type.player_side_scheme %}
@@ -64,8 +59,7 @@ Resource{% if resources|length > 1 %}s{% endif %}
 {% if side_schemes|length > 1 %}Player Side Schemes{% endif %}
 
 {% for slot in side_schemes %}
-{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }})
-{% endfor %}
+{{ slot.quantity }}x {{ slot.card.name }} [{{ slot.card.code }}] ({{ slot.card.pack.name }}){% if slot.card.faction %} --of{{ slot.card.faction.name }}{% endif %}{{ "\n" }}{% endfor %}
 {% endif %}
 
 {{ footer|default('') }}
