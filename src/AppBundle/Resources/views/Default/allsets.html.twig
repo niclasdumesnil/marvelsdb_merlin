@@ -60,23 +60,47 @@
                 <span style="display:inline-block; background:rgb(9, 58, 2); color:#fff; border-radius:6px; padding:2px 12px; margin:6px 0 6px 0; font-weight:semi;">
                     {{ first_pack.type_name }}
                 </span>
-                {% for pack in data %}
-                    {% if pack.creator != 'FFG' and pack.visibility != "false" and pack.type == type %}
-                        <li style="margin-left:0em;">
-                            <a title="{{ pack.name }}" href="{{ pack.url }}">{{ pack.name }}
-                                {% set color = creator_colors[pack.creator] ?? creator_colors['default'] %}
-                                {% set label = creator_labels[pack.creator] ?? (pack.creator ?? 'Unknown') %}
-                                <span style="font-size: 10px; color: white; background-color: {{ color }}; display: inline-flex;
-                                    align-items: center; border-radius: 8px; padding: 2px 12px;">{{ label }}</span>
-                                {% if pack.status == "beta" or pack.status == "alpha" %}
+                <br>
+                {% set packs_of_type = data
+                    |filter(p => p.creator != 'FFG' and p.visibility != "false" and p.type == type)
+                    |sort((a, b) =>
+                        a.creator|lower < b.creator|lower
+                            ? -1
+                            : (a.creator|lower > b.creator|lower
+                                ? 1
+                                : (a.name < b.name
+                                    ? -1
+                                    : (a.name > b.name ? 1 : 0)
+                                )
+                            )
+                    )
+                %}
+                {% set seen_creators = [] %}
+                {% for pack in packs_of_type %}
+                    {% if pack.creator not in seen_creators %}
+                        {% set seen_creators = seen_creators|merge([pack.creator]) %}
+                        <span style="display:inline-block; background:rgb(18, 120, 216); color:#fff; border-radius:6px; padding:2px 8px; margin:2px 0 2px 1em; font-size: 1em; font-weight:semi;">
+                            {{ creator_labels[pack.creator] ?? pack.creator }}
+                        </span>
+                        <ol style="margin-left:0.2em; margin-bottom: 0.5em; font-size: 1em;">
+                        {% set idx = 1 %}
+                        {% for subpack in packs_of_type if subpack.creator == pack.creator %}
+                            <li style="margin-left:0em; font-size: 1em;">
+                                <a title="{{ subpack.name }}" href="{{ subpack.url }}">{{ subpack.name }}</a>
+                                {% if subpack.status == "beta" or subpack.status == "alpha" %}
                                     <span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
-                                        align-items: center; border-radius: 8px; padding: 2px 12px;">{{ pack.status ?? 'Official' }}</span>
+                                        align-items: center; border-radius: 8px; padding: 2px 12px;">{{ subpack.status ?? 'Official' }}</span>
                                 {% endif %}
-                            </a>
-                        </li>
+                                {% if subpack.pack_type_code is defined and subpack.pack_type_code == 'hero_fanmade' %}
+                                    <span style="font-size: 10px; color: #fff; background-color: #8a246d; display: inline-flex;
+                                        align-items: center; border-radius: 8px; padding: 2px 12px; margin-left: 8px;">Custom Hero Pack</span>
+                                {% endif %}
+                            </li>
+                            {% set idx = idx + 1 %}
+                        {% endfor %}
+                        </ol>
                     {% endif %}
                 {% endfor %}
-                <br>
              {% endfor %}
         </ol>
     </div>
@@ -95,24 +119,48 @@
                 <span style="display:inline-block; background:rgb(9, 58, 2); color:#fff; border-radius:6px; padding:2px 12px; margin:6px 0 6px 0; font-weight:semi;">
                     {{ first_pack.type_name }}
                 </span>
-                {% for pack in data %}
-                    {% if pack.creator != 'FFG' and pack.visibility == "false" and pack.type == type %}
-                        <li style="margin-left:0em;">
-                            <a title="{{ pack.name }}" href="{{ pack.url }}">{{ pack.name }}
-                                {% set color = creator_colors[pack.creator] ?? creator_colors['default'] %}
-                                {% set label = creator_labels[pack.creator] ?? (pack.creator ?? 'Unknown') %}
-                                <span style="font-size: 10px; color: white; background-color: {{ color }}; display: inline-flex;
-                                    align-items: center; border-radius: 8px; padding: 2px 12px;">{{ label }}</span>
-                            {% if pack.status == "beta" or pack.status == "alpha" %}
-                                <span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
-                                    align-items: center; border-radius: 8px; padding: 2px 12px;">{{ pack.status ?? 'Official' }}</span>
-                            {% endif %}
-                            </a>
-                        </li>
+                <br>
+                {% set packs_of_type = data
+                    |filter(p => p.creator != 'FFG' and p.visibility == "false" and p.type == type)
+                    |sort((a, b) =>
+                        a.creator|lower < b.creator|lower
+                            ? -1
+                            : (a.creator|lower > b.creator|lower
+                                ? 1
+                                : (a.name < b.name
+                                    ? -1
+                                    : (a.name > b.name ? 1 : 0)
+                                )
+                            )
+                    )
+                %}
+                {% set seen_creators = [] %}
+                {% for pack in packs_of_type %}
+                    {% if pack.creator not in seen_creators %}
+                        {% set seen_creators = seen_creators|merge([pack.creator]) %}
+                        <span style="display:inline-block; background:rgb(18, 120, 216); color:#fff; border-radius:6px; padding:2px 8px; margin:2px 0 2px 1em; font-size: 1em; font-weight:semi;">
+                            {{ creator_labels[pack.creator] ?? pack.creator }}
+                        </span>
+                        <ol style="margin-left:0.2em; margin-bottom: 0.5em; font-size: 1em;">
+                        {% set idx = 1 %}
+                        {% for subpack in packs_of_type if subpack.creator == pack.creator %}
+                            <li style="margin-left:0em; font-size: 1em;">
+                                <a title="{{ subpack.name }}" href="{{ subpack.url }}">{{ subpack.name }}</a>
+                                {% if subpack.status == "beta" or subpack.status == "alpha" %}
+                                    <span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
+                                        align-items: center; border-radius: 8px; padding: 2px 12px;">{{ subpack.status ?? 'Official' }}</span>
+                                {% endif %}
+                                {% if subpack.pack_type_code is defined and subpack.pack_type_code == 'hero_fanmade' %}
+                                    <span style="font-size: 10px; color: #fff; background-color: #8a246d; display: inline-flex;
+                                        align-items: center; border-radius: 8px; padding: 2px 12px; margin-left: 8px;">Custom Hero Pack</span>
+                                {% endif %}
+                            </li>
+                            {% set idx = idx + 1 %}
+                        {% endfor %}
+                        </ol>
                     {% endif %}
                 {% endfor %}
-                <br>
-            {% endfor %}
+             {% endfor %}
         </ol>
     </div>
     {% endif %}
