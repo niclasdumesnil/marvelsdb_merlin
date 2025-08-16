@@ -1,4 +1,27 @@
 {% macro pack_list(data, types, creator_labels, visibility) %}
+    <style>
+        .creator-box {
+            background: #fcfdfdff;         /* Couleur de fond pastel pour la boîte du créateur */
+            border-radius: 12px;             /* Coins arrondis */
+            padding: 8px 0px 8px 0px;      /* Espacement intérieur : haut, droite, bas, gauche */
+            margin: 1px 0 0px 0;             /* Marge extérieure : haut, droite, bas, gauche (1px en haut, 0 ailleurs) */
+            position: relative;              /* Positionnement relatif pour placer le nom du créateur en absolu à l'intérieur */
+        }
+        .creator-label {
+            position: absolute;              /* Positionnement absolu par rapport à la boîte parente */
+            top: 0px;                       /* Décalage du haut de la boîte */
+            right: 14px;                     /* Décalage de la droite de la boîte */
+            font-size: 0.85em;               /* Taille de police réduite */
+            color: #2266aa;                /* Couleur bleue pour le nom du créateur */
+            font-weight: bold;               /* Texte en gras */
+        }
+        .creator-list {
+            margin-left: 0em;                /* décalage à gauche pour la liste */
+            margin-bottom: -0.2em;           /* Espace sous la liste */
+            font-size: 1em;                  /* Taille de police normale */
+            margin-top: 0.6em;                 /* Espace au-dessus de la liste pour éviter le chevauchement avec le nom du créateur */
+        }
+    </style>
     <ol>
         {% for type in types %}
             {% set first_pack = (data
@@ -33,24 +56,26 @@
             {% for pack in packs_of_type %}
                 {% if pack.creator not in seen_creators %}
                     {% set seen_creators = seen_creators|merge([pack.creator]) %}
-                    <span style="display:inline-block; background:rgb(18, 120, 216); color:#fff; border-radius:6px; padding:2px 8px; margin:2px 0 2px 1em; font-size: 1em; font-weight:semi;">
-                        {{ creator_labels[pack.creator] ?? pack.creator }}
-                    </span>
-                    <ol style="margin-left:0.2em; margin-bottom: 0.5em; font-size: 1em;">
-                    {% for subpack in packs_of_type if subpack.creator == pack.creator %}
-                        <li style="margin-left:0em; font-size: 1em;">
-                            <a title="{{ subpack.name }}" href="{{ subpack.url }}">{{ subpack.name }}</a>
-                            {% if subpack.status == "beta" or subpack.status == "alpha" %}
-                                <span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
-                                    align-items: center; border-radius: 8px; padding: 2px 12px;">{{ subpack.status ?? 'Official' }}</span>
-                            {% endif %}
-                            {% if subpack.pack_type_code is defined and subpack.pack_type_code == 'hero_fanmade' %}
-                                <span style="font-size: 10px; color: #fff; background-color: #8a246d; display: inline-flex;
-                                    align-items: center; border-radius: 8px; padding: 2px 12px; margin-left: 8px;">Custom Hero Pack</span>
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                    </ol>
+                    <div class="creator-box">
+                        <span class="creator-label">
+                            {{ creator_labels[pack.creator] ?? pack.creator }}
+                        </span>
+                        <ol class="creator-list">
+                        {% for subpack in packs_of_type if subpack.creator == pack.creator %}
+                            <li style="margin-left:0em; font-size: 1em;">
+                                <a title="{{ subpack.name }}" href="{{ subpack.url }}">{{ subpack.name }}</a>
+                                {% if subpack.status == "beta" or subpack.status == "alpha" %}
+                                    <span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
+                                        align-items: center; border-radius: 8px; padding: 2px 12px;">{{ subpack.status ?? 'Official' }}</span>
+                                {% endif %}
+                                {% if subpack.pack_type_code is defined and subpack.pack_type_code == 'hero_fanmade' %}
+                                    <span style="font-size: 10px; color: #fff; background-color: #8a246d; display: inline-flex;
+                                        align-items: center; border-radius: 8px; padding: 2px 12px; margin-left: 8px;">Custom Hero Pack</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                        </ol>
+                    </div>
                 {% endif %}
             {% endfor %}
         {% endfor %}
