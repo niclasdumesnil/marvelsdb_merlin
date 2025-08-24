@@ -86,6 +86,23 @@
         font-weight: bold;
         text-shadow: 1px 1px 2px #fff;
     }
+    .status-tag {
+        font-size: 10px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 8px;
+        padding: 2px 12px;
+        margin-left: 8px;
+        font-weight: bold;
+    }
+    .status-tag.alpha, .status-tag.beta {
+        color: #111;
+        background-color: rgb(216, 150, 8);
+    }
+    .status-tag.released, .status-tag.sealed {
+        color: #fff;
+        background-color: rgb(0, 48, 27);
+    }
     </style>
     <div class="box">
         <div style="background-color: rgba(255,255,255,0.97); border-radius: 5px;">
@@ -97,6 +114,7 @@
                     <div class="card-thumbnail-wide card-thumbnail-hero" style="min-height: 55px; {% if data.hero_meta.offset is defined%}background-position: {{data.hero_meta.offset}}; {% endif %}background-image:url(/bundles/cards/{{data.decklist.getCharacter().getCode()}}.jpg)"></div>
                 {% endif %}
             </div>
+            
             {% if compact %}
             <div style="background-color: white; padding: 0.7rem; border-top: solid black 1px;">
             {% else %}
@@ -105,12 +123,16 @@
             <div style="padding: 1rem;">
             {% endif %}
                 {% set character = data.decklist.getCharacter() %}
+                {% set pack = character.getPack() %}
                 <div style="display: flex; justify-content: stretch;">
                     <div style="flex: 0.5;">
-                        <a class="card card-tip fg-{{ character.getFaction().getCode() }}" data-code="{{ character.getCode() }}" data-toggle="modal" data-target="#cardModal" data-remote="false" href="">{{data.decklist.getCharacter().getName()}}</a>
+                        <a class="card card-tip fg-{{ character.getFaction().getCode() }}" data-code="{{ character.getCode() }}" data-toggle="modal" data-target="#cardModal" data-remote="false" href="">{{ character.getName() }}</a>
+                        {# Tag status alpha, beta, released, sealed #}
+                        {% if pack.status is defined and pack.status in ["alpha", "beta", "released", "sealed"] %}
+                            <span class="status-tag {{ pack.status }}">{{ pack.status }}</span>
+                        {% endif %}
                         {# Tag French Only si la langue du pack est "fr" #}
-                        {% set pack = data.decklist.getCharacter().getPack() %}
-                        {% if pack is not null and (pack.language is defined and pack.language == "fr") %}
+                        {% if pack.language is defined and pack.language == "fr" %}
                             <span class="french-only-tag">French only</span>
                         {% endif %}
                         <div>
