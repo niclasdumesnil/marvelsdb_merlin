@@ -8,6 +8,22 @@
 {% set h4_color = isNewUI ? 'rgb(255,255,255)' : 'rgb(32, 29, 29)' %}
 {% set pack_theme_color = isNewUI ? 'rgb(187,187,187)' : 'gray' %}
 
+<style>
+.french-only-tag {
+    background: linear-gradient(90deg, #0055A4 0%, #fff 50%, #EF4135 100%);
+    color: #111; /* Texte en noir */
+    font-size: 10px;
+    border-radius: 8px;
+    padding: 2px 12px;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    border: 1px solid #222;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px #fff;
+}
+</style>
+
 <div style="width: 360px; padding: 2px; padding-top: 10px; border: solid {{ border_color }} 1px; background-color: {{ bg_color }}; color: {{ text_color }}; margin: {{ spacing }};">
     <div style="display: flex;">
         <div>
@@ -25,6 +41,10 @@
               align-items: center; border-radius: 8px; padding: 2px 12px ;">{{hero.pack.status ?? 'Official'}}
             </span>
             {% endif %}
+            {# Tag French Only si la langue du pack est "fr" #}
+            {% if hero.pack.language == "fr" %}
+                <span class="french-only-tag">French only</span>
+            {% endif %}
             </h4>
             <span style="font-size: 10px; color: {{ pack_theme_color }}; padding: 2px 0px 0px">
                 <li><i>Pack: {{hero.pack.name}}</i></li>
@@ -40,9 +60,9 @@
                 {% if hero.code == '44001a'%}<li><b>You should definitely pick me!</b></li>{% endif %}
                 {% if hero.code == '51001a'%}<li>Hey Brother I'm here.</li> {% endif %}
                 {% if hero.code == '50001a'%}<li>Pericles should have an errata.</li> {% endif %}
-				{% if hero.code == '01019a'%}<li>You should try my updated version... It's much more fun</li> {% endif %}
+                {% if hero.code == '01019a'%}<li>You should try my updated version... It's much more fun</li> {% endif %}
                 {% if hero.code == '999901a'%}<li><p style="font-size: 0.8em;">Choose me if your favorite fan made hero is not available!</p></li> {% endif %}
-				
+                
             </ul>
         </div>
     </div>

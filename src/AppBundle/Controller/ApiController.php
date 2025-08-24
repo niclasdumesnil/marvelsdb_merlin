@@ -77,7 +77,8 @@ class ApiController extends Controller
 					"status" => $pack->getStatus() ?? "Official", // valeur par défaut
 					"creator" => $pack->getCreator() ?? "FFG", // valeur par défaut
 					"theme" => $pack->getTheme() ?? "Marvel", // valeur par défaut
-       				"visibility" => $pack->getVisibility() ?? "true" // valeur par défaut
+       				"visibility" => $pack->getVisibility() ?? "true", // valeur par défaut
+					"language" => $pack->getLanguage() ?? "en" // valeur par défaut
 			);
 		}
 

@@ -13,6 +13,8 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
 				'name' => $this->name,
 				'position' => $this->position,
 				'size' => $this->size,
+				'theme' => $this->theme,
+				'language' => $this->language
 		];
 	}
 	
@@ -90,6 +92,10 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
      */
     private $visibility;
 
+    /**
+     * @var string
+     */
+    private $language;
 
     /**
      * @var \Doctrine\Common\Collections\Collection
@@ -485,5 +491,28 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
     public function getPackTypeName()
     {
         return $this->pack_type ? $this->pack_type->getName() : null;
+    }
+
+    /**
+     * Set language
+     *
+     * @param string $language
+     *
+     * @return Pack
+     */
+    public function setLanguage($language)
+    {
+        $this->language = $language;
+        return $this;
+    }
+
+    /**
+     * Get language
+     *
+     * @return string
+     */
+    public function getLanguage()
+    {
+        return $this->language;
     }
 }

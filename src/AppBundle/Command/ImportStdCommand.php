@@ -548,7 +548,8 @@ class ImportStdCommand extends ContainerAwareCommand
 					'creator',
 					'status',
 					'theme',
-					'visibility'
+					'visibility',
+					'language'
 			]);
 			if($pack) {
 				$result[] = $pack;

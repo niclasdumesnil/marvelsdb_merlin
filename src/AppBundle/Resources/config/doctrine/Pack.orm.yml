@@ -72,6 +72,9 @@ AppBundle\Entity\Pack:
         visibility:
             type: text
             nullable: true
+        language:
+            type: text
+            nullable: true
     uniqueConstraints:
         pack_code_idx:
             columns: [code]

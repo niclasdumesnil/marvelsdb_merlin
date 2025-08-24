@@ -103,7 +103,7 @@ class CardsData
 		$list_packs = $this->doctrine->getRepository('AppBundle:Pack')->findBy(array(), array("position" => "ASC", "dateRelease" => "ASC"));
 		$packs = array();
 		foreach($list_packs as $pack) {
-	
+
 			$real = count($pack->getCards());
 			$max = $pack->getSize();
 			$packs[] = array(
@@ -117,6 +117,7 @@ class CardsData
 					"creator" => $pack->getCreator() ?? "FFG",
 					"status" => $pack->getStatus() ?? "Official",
 					"theme" => $pack->getTheme() ?? "Marvel",
+					"language" => $pack->getLanguage() ?? "en", // Ajouté ici
 					"visibility" => $pack->getVisibility() ?? "true",
 					"total" => $max,
 					"url" => $this->router->generate('cards_list', array('pack_code' => $pack->getCode()), UrlGeneratorInterface::ABSOLUTE_URL),
@@ -639,6 +640,7 @@ class CardsData
 		$cardinfo['creator'] = $card->getPack()->getCreator() ?? "FFG";
 		$cardinfo['theme'] = $card->getPack()->getTheme() ?? "Marvel";
 		$cardinfo['visibility'] = $card->getPack()->getVisibility() ?? "true";
+		$cardinfo['language'] = $card->getPack()->getLanguage() ?? "en"; // Ajouté ici
 
 		return $cardinfo;
 	}
