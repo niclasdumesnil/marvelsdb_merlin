@@ -63,7 +63,7 @@
 .creator-box {
     background: #fcfdfdff;
     padding: 8px 0px 8px 0px;
-    margin: 0;
+    margin-left: -2em;
     position: relative;
     border-bottom: 2px solid #4889d3ff;
     border-left: none;
