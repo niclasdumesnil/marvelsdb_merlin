@@ -66,6 +66,7 @@ class DefaultController extends Controller
 		$iterator = $paginator->getIterator();
 		$userCheckHero = [];
 		$decklists_by_hero = [];
+		$hero_deck_ids = [];
 		while($iterator->valid() && count($decklists_by_hero) < 3)
 		{
 			$decklist = $iterator->current();
@@ -78,15 +79,17 @@ class DefaultController extends Controller
 					'meta' => json_decode($decklist->getMeta())
 				];
 				$userCheckHero[$decklist->getUser()->getId()] = true;
+				$hero_deck_ids[] = $decklist->getId();
 			}
 			$iterator->next();
 		}
 
-		// POPULAR : max 3 decks, un seul deck par utilisateur
+		// POPULAR : max 3 decks, un seul deck par utilisateur, exclure ceux de la hero list
 		$paginator = $decklist_manager->findDecklistsByTrending();
 		$iterator = $paginator->getIterator();
 		$userCheckPopular = [];
 		$decklists_by_popular = [];
+		$popular_deck_ids = [];
 		while($iterator->valid() && count($decklists_by_popular) < 3)
 		{
 			$decklist = $iterator->current();
@@ -94,6 +97,7 @@ class DefaultController extends Controller
 				$decklist->getCharacter()->getCode() != $card->getCode()
 				&& $decklist->getCharacter()->getPack()->GetVisibility() != "false"
 				&& !isset($userCheckPopular[$decklist->getUser()->getId()])
+				&& !in_array($decklist->getId(), $hero_deck_ids) // Exclure ceux de la hero list
 			)
 			{
 				$decklists_by_popular[] = [
@@ -103,14 +107,14 @@ class DefaultController extends Controller
 					'meta' => json_decode($decklist->getMeta())
 				];
 				$userCheckPopular[$decklist->getUser()->getId()] = true;
+				$popular_deck_ids[] = $decklist->getId();
 			}
 			$iterator->next();
 		}
 
-		// RECENT : max 3 decks, un seul deck par utilisateur
+		// RECENT : max 3 decks, exclure ceux de la hero et popular list (plus de restriction par utilisateur)
 		$paginator = $decklist_manager->findDecklistsByAge(true);
 		$iterator = $paginator->getIterator();
-		$userCheckRecent = [];
 		$decklists_by_recent = [];
 		while($iterator->valid() && count($decklists_by_recent) < 3)
 		{
@@ -118,7 +122,8 @@ class DefaultController extends Controller
 			if (
 				$decklist->getCharacter()->getCode() != $card->getCode()
 				&& $decklist->getCharacter()->getPack()->GetVisibility() != "false"
-				&& !isset($userCheckRecent[$decklist->getUser()->getId()])
+				&& !in_array($decklist->getId(), $hero_deck_ids)
+				&& !in_array($decklist->getId(), $popular_deck_ids)
 			) {
 				$decklists_by_recent[] = [
 					'hero_meta' => json_decode($decklist->getCharacter()->getMeta()),
@@ -126,7 +131,6 @@ class DefaultController extends Controller
 					'decklist' => $decklist,
 					'meta' => json_decode($decklist->getMeta())
 				];
-				$userCheckRecent[$decklist->getUser()->getId()] = true;
 			}
 			$iterator->next();
 		}
