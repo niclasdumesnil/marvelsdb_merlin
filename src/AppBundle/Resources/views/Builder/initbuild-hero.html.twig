@@ -8,22 +8,6 @@
 {% set h4_color = isNewUI ? 'rgb(255,255,255)' : 'rgb(32, 29, 29)' %}
 {% set pack_theme_color = isNewUI ? 'rgb(187,187,187)' : 'gray' %}
 
-<style>
-.french-only-tag {
-    background: linear-gradient(90deg, #0055A4 0%, #fff 50%, #EF4135 100%);
-    color: #111; /* Texte en noir */
-    font-size: 10px;
-    border-radius: 8px;
-    padding: 2px 12px;
-    display: inline-flex;
-    align-items: center;
-    margin-left: 8px;
-    border: 1px solid #222;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px #fff;
-}
-</style>
-
 <div style="width: 360px; padding: 2px; padding-top: 10px; border: solid {{ border_color }} 1px; background-color: {{ bg_color }}; color: {{ text_color }}; margin: {{ spacing }};">
     <div style="display: flex;">
         <div>
@@ -32,18 +16,13 @@
         <div style="height: 119px; padding-left: 0.2em;">
             <h4 style="padding: 2px; margin: 1px; color: {{ h4_color }};">{{ macros.card_name_no_link(hero) }}
             {% if hero.pack.status == "released" or hero.pack.status == "sealed" %}
-            <span style="font-size: 10px; color: white; background-color: rgb(0, 48, 27); display: inline-flex;
-              align-items: center; border-radius: 8px; padding: 2px 12px ;">{{hero.pack.status ?? 'Official'}}
-            </span>
+                <span class="tag status-{{ hero.pack.status }}">{{ hero.pack.status ?? 'Official' }}</span>
             {% endif %}
             {% if hero.pack.status == "alpha" or hero.pack.status == "beta" %}
-            <span style="font-size: 10px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
-              align-items: center; border-radius: 8px; padding: 2px 12px ;">{{hero.pack.status ?? 'Official'}}
-            </span>
+                <span class="tag status-{{ hero.pack.status }}">{{ hero.pack.status ?? 'Official' }}</span>
             {% endif %}
-            {# Tag French Only si la langue du pack est "fr" #}
             {% if hero.pack.language == "fr" %}
-                <span class="french-only-tag">French only</span>
+                <span class="tag french-only">French only</span>
             {% endif %}
             </h4>
             <span style="font-size: 10px; color: {{ pack_theme_color }}; padding: 2px 0px 0px">
@@ -51,10 +30,12 @@
                 <li><i>Theme: {{hero.pack.theme ?? 'Marvel'}}</i></li>
             </span>
             {% if hero.pack.creator != "" %}
-            <span style="font-size: 10px; color: white; background-color: rgb(18, 120, 216); display: inline-flex;
-              align-items: center; padding: 2px 36px ;">by {{hero.pack.creator ?? 'Unknown'}}
-            </span>
-            <span style="font-size: 12px; color: rgb(216, 69, 11); text-align: right; ">{% if hero.pack.visibility == "false" %} <li><i>Private</i></li> {% endif %} </span>
+                <span class="tag" style="background-color: rgb(18, 120, 216); color: white; padding-left:36px; padding-right:36px;">
+                    by {{hero.pack.creator ?? 'Unknown'}}
+                </span>
+                <span style="font-size: 12px; color: rgb(216, 69, 11); text-align: right;">
+                    {% if hero.pack.visibility == "false" %} <li><i>Private</i></li> {% endif %}
+                </span>
             {% endif %}
             <ul style="margin-left: 25px; margin-top: 5px; padding-left: 0px;">
                 {% if hero.code == '44001a'%}<li><b>You should definitely pick me!</b></li>{% endif %}
@@ -62,7 +43,6 @@
                 {% if hero.code == '50001a'%}<li>Pericles should have an errata.</li> {% endif %}
                 {% if hero.code == '01019a'%}<li>You should try my updated version... It's much more fun</li> {% endif %}
                 {% if hero.code == '999901a'%}<li><p style="font-size: 0.8em;">Choose me if your favorite fan made hero is not available!</p></li> {% endif %}
-                
             </ul>
         </div>
     </div>

@@ -22,7 +22,7 @@
 }
 .tag.status-released, .tag.status-sealed {
     color: #fff;
-    background-color: rgb(70, 153, 117);
+    background-color: rgb(6, 110, 65);
 }
 .tag.french-only {
     background: linear-gradient(90deg, #0055A4 0%, #fff 50%, #EF4135 100%);
