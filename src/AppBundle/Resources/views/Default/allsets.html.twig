@@ -1,30 +1,61 @@
 {% macro pack_list(data, types, creator_labels, visibility) %}
     <style>
-        .creator-box {
-            background: #fcfdfdff;
-            border-radius: 12px;
-            padding: 8px 0px 8px 0px;
-            margin: 1px 0.2em 0px -2.5em;
-            position: relative;
-        }
-        .creator-label {
-            position: absolute;
-            top: 0px;
-            right: 14px;
-            font-size: 0.85em;
-            color: #2266aa;
-            font-weight: bold;
-        }
-        .creator-list {
-            margin-left: 0em;
-            margin-bottom: -0.2em;
-            font-size: 1em;
-            margin-top: 0.9em;
-        }
         .creator-li {
             list-style: none;
             padding-left: 0;
             margin-left: 0;
+            margin-bottom: 1em; /* réduit l'espace entre 2 creator box */
+            display: flex;
+            align-items: stretch;
+        }
+        .creator-box {
+            background: #fcfdfdff;
+            padding: 8px 0px 8px 0px;
+            margin-left: -2em;
+            position: relative;
+            border-bottom: 2px solid rgb(18, 120, 216);;
+            border-left: none;
+            border-right: none;
+            border-top: none;
+            display: flex;
+            width: 100%;
+            min-width: 0;
+        }
+        .creator-label-vertical {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            background: rgb(18, 120, 216);;
+            color: #fff;
+            font-size: 10px;
+            padding: 6px 6px;
+            display: inline-block;
+            font-size: 0.8em;
+            margin-left: 0;
+            margin-right: 8px;
+            margin-top: 0;
+            margin-bottom: 0;
+            text-align: center;
+            align-self: stretch;
+            justify-self: flex-start;
+        }
+        .creator-list {
+            margin-left: 0;
+            margin-bottom: -0.2em;
+            font-size: 1em;
+            margin-top: 0;
+            padding-left: 0;
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        ul.creator-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        ul.creator-list > li {
+            margin-left: 0;
+            font-size: 1em;
         }
         .french-only-tag {
             background: linear-gradient(90deg, #0055A4 0%, #fff 50%, #EF4135 100%);
@@ -37,7 +68,6 @@
             margin-left: 8px;
             border: 1px solid #222;
             font-weight: bold;
-            text-shadow: 1px 1px 2px #fff;
         }
         .status-tag {
             font-size: 10px;
@@ -52,12 +82,8 @@
             color: #111;
             background-color: rgb(216, 150, 8);
         }
-        {# .status-tag.released, .status-tag.sealed {
-            color: #fff;
-            background-color: rgb(0, 48, 27);
-        } #}
     </style>
-    <ol>
+    <ul style="margin-left: 1em;">
         {% for type in types %}
             {% set first_pack = (data
                 |filter(p => p.creator != 'FFG'
@@ -93,13 +119,13 @@
                     {% set seen_creators = seen_creators|merge([pack.creator]) %}
                     <li class="creator-li">
                         <div class="creator-box">
-                            <span class="creator-label">
+                            <span class="creator-label-vertical">
                                 {{ creator_labels[pack.creator] ?? pack.creator }}
                             </span>
-                            <ol class="creator-list">
+                            <ul class="creator-list">
                             {% for subpack in packs_of_type if subpack.creator == pack.creator %}
-                                <li style="margin-left:0em; font-size: 1em;">
-                                    <a title="{{ subpack.name }}" href="{{ subpack.url }}">{{ subpack.name }}</a>
+                                <li>
+                                    &gt; <a title="{{ subpack.name }}" href="{{ subpack.url }}">{{ subpack.name }}</a>
                                     {% if subpack.status in ["alpha", "beta"] %}
                                         <span class="status-tag {{ subpack.status }}">{{ subpack.status ?? 'Official' }}</span>
                                     {% endif %}
@@ -110,19 +136,21 @@
                                         <span style="font-size: 10px; color: #fff; background-color: #8a246d; display: inline-flex;
                                             align-items: center; border-radius: 8px; padding: 2px 12px; margin-left: 8px;">Custom Hero Pack</span>
                                     {% endif %}
-                                    {# Tag French Only si la langue du pack est "fr" #}
                                     {% if subpack.language is defined and subpack.language == "fr" %}
                                         <span class="french-only-tag">French only</span>
                                     {% endif %}
+                                    {% if subpack.creator is not defined or subpack.creator == "FFG" or subpack.creator == "" %}
+                                        <span class="ffg-tag">FFG</span>
+                                    {% endif %}
                                 </li>
                             {% endfor %}
-                            </ol>
+                            </ul>
                         </div>
                     </li>
                 {% endif %}
             {% endfor %}
         {% endfor %}
-    </ol>
+    </ul>
 {% endmacro %}
 
 {% import _self as macros %}
