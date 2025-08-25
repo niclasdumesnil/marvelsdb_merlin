@@ -14,27 +14,14 @@
     </span>
 {% endif %}
 {% if card.status == "released" or card.status == "sealed" %}
-    <span style="font-size: 12px; color: white; background-color: rgb(0, 48, 27); display: inline-flex;
-      align-items: center; border-radius: 12px; padding: 2px 12px 2px;">{{card.status ?? 'Official'}}
-    </span>
-{% endif %} 
-{% if card.status == "beta" or card.status == "alpha" %}
-    <span style="font-size: 12px; color: black; background-color: rgb(216, 150, 8); display: inline-flex;
-    align-items: center; border-radius: 8px; padding: 2px 12px ;">{{card.status ?? 'Official'}}
-    </span>
-{% endif %} 
+    <span class="tag status-{{ card.status }}">{{ card.status ?? 'Official' }}</span>
+{% elseif card.status == "beta" or card.status == "alpha" %}
+    <span class="tag status-{{ card.status }}">{{ card.status ?? 'Official' }}</span>
+{% elseif card.creator is not defined or card.creator == "FFG" or card.creator == "" %}
+    <span class="tag ffg">Official</span>
+{% else %}
+    <span class="tag">{{ card.creator }}</span>
+{% endif %}
 {% if card.subname %}
     <div class="card-subname small{% if card.spoiler is defined and not show_spoilers %} spoiler{% endif %}">{{ card.subname }}</div>
 {% endif %}
-<style>
-.qty {
-    font-weight: normal;
-    color: #111;
-    font-size: 0.95em;
-}
-.qty-white {
-    font-weight: normal;
-    color: #fff;
-    font-size: 0.95em;
-}
-</style>

@@ -1,0 +1,127 @@
+/* merlinsdb.css */
+
+/* ===========================
+   TAGS (status, FFG, custom, etc.)
+   =========================== */
+.tag {
+    font-size: 10px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 8px;
+    padding: 2px 12px;
+    margin-left: 8px;
+    font-weight: bold;
+}
+.tag.ffg {
+    background: #000205ff;
+    color: #fff;
+}
+.tag.status-alpha, .tag.status-beta {
+    color: #111;
+    background-color: rgb(216, 150, 8);
+}
+.tag.status-released, .tag.status-sealed {
+    color: #fff;
+    background-color: rgb(70, 153, 117);
+}
+.tag.french-only {
+    background: linear-gradient(90deg, #0055A4 0%, #fff 50%, #EF4135 100%);
+    color: #111;
+    border: 1px solid #222;
+    text-shadow: 1px 1px 2px #fff;
+}
+.tag.custom-hero {
+    background-color: #8a246d;
+    color: #fff;
+}
+
+/* ===========================
+   QUANTITÉ (qty)
+   =========================== */
+.qty, .qty-white {
+    font-weight: normal;
+    font-size: 0.95em;
+}
+.qty {
+    color: #111;
+}
+.qty-white {
+    color: #fff;
+}
+
+/* ===========================
+   CREATOR BOX & LISTES
+   =========================== */
+.creator-li {
+    list-style: none;
+    padding-left: 0;
+    margin-left: 0;
+    margin-bottom: 1em;
+    display: flex;
+    align-items: stretch;
+}
+.creator-box {
+    background: #fcfdfdff;
+    padding: 8px 0px 8px 0px;
+    margin: 0;
+    position: relative;
+    border-bottom: 2px solid #4889d3ff;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+}
+.creator-label-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    background: #4889d3ff;
+    color: #fff;
+    font-size: 10px;
+    padding: 6px 6px;
+    display: inline-block;
+    font-size: 0.8em;
+    margin-left: 0;
+    margin-right: 8px;
+    margin-top: 0;
+    margin-bottom: 0;
+    text-align: center;
+    align-self: stretch;
+    justify-self: flex-start;
+}
+.creator-list {
+    margin-left: 0;
+    margin-bottom: -0.2em;
+    font-size: 1em;
+    margin-top: 0;
+    padding-left: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+ul.creator-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+ul.creator-list > li {
+    margin-left: 0;
+    font-size: 1em;
+}
+
+/* ===========================
+   PACK LIST & TYPE LABEL
+   =========================== */
+.pack-list {
+    margin-left: 1em;
+}
+.pack-type-label {
+    display: inline-block;
+    background: rgb(9, 58, 2);
+    color: #fff;
+    border-radius: 6px;
+    padding: 2px 12px;
+    margin: 6px 0 6px 0;
+    font-weight: 600;
+}
