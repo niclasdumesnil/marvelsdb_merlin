@@ -34,6 +34,10 @@
     background-color: #8a246d;
     color: #fff;
 }
+.tag.creator {
+    background: #4889d3ff;
+    color: #fff;
+}
 
 /* ===========================
    QUANTITÉ (qty)
@@ -73,23 +77,6 @@
     width: 100%;
     min-width: 0;
 }
-.creator-label-vertical {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    background: #4889d3ff;
-    color: #fff;
-    font-size: 10px;
-    padding: 6px 6px;
-    display: inline-block;
-    font-size: 0.8em;
-    margin-left: 0;
-    margin-right: 8px;
-    margin-top: 0;
-    margin-bottom: 0;
-    text-align: center;
-    align-self: stretch;
-    justify-self: flex-start;
-}
 .creator-list {
     margin-left: 0;
     margin-bottom: -0.2em;
@@ -108,6 +95,30 @@ ul.creator-list {
 ul.creator-list > li {
     margin-left: 0;
     font-size: 1em;
+}
+
+/* ===========================
+   LABELS VERTICAUX (creator & pack-type)
+   =========================== */
+.label-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    color: #fff;
+    font-size: 0.8em;
+    padding: 6px 6px;
+    display: inline-block;
+    margin-left: 0;
+    margin-right: 8px;
+    margin-top: 0;
+    margin-bottom: 0;
+    text-align: center;
+    align-self: stretch;
+}
+.label-vertical-creator {
+    background: #4889d3ff;
+}
+.label-vertical-pack-type {
+    background: rgb(9, 58, 2); /* même couleur que .pack-type-label */
 }
 
 /* ===========================

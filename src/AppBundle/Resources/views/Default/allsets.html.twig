@@ -35,9 +35,6 @@
                     {% set seen_creators = seen_creators|merge([pack.creator]) %}
                     <li class="creator-li">
                         <div class="creator-box">
-                            <span class="creator-label-vertical">
-                                {{ creator_labels[pack.creator] ?? pack.creator }}
-                            </span>
                             <ul class="creator-list">
                             {% for subpack in packs_of_type if subpack.creator == pack.creator %}
                                 <li>
@@ -60,6 +57,11 @@
                                 </li>
                             {% endfor %}
                             </ul>
+                            <div>
+                                <span class="tag creator" style="margin-top: 0.5em; display: inline-block;">
+                                    {{ creator_labels[pack.creator] ?? pack.creator }}
+                                </span>
+                            </div>
                         </div>
                     </li>
                 {% endif %}
