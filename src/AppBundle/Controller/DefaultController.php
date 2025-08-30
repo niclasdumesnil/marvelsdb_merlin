@@ -225,6 +225,12 @@ class DefaultController extends Controller
 			});
 		}
 
+		// Filtrer les packs dont le creator est vide ou "FFG"
+		$packs = array_filter($packs, function($pack) {
+			$creator = $pack->getCreator();
+			return !empty($creator) && strtoupper(trim($creator)) !== 'FFG';
+		});
+
 		if ($sort === 'creator') {
 			usort($packs, function($a, $b) {
 				return strcasecmp($a->getCreator(), $b->getCreator());
@@ -250,7 +256,7 @@ class DefaultController extends Controller
 			'card_of_the_day' => $card_of_the_day_info,
 			'card_of_the_day_decklists' => $card_of_the_day_decklists,
 			'decklists_by_hero' => $decklists_by_hero,
-			'packs' => array_slice($packs, 0, 60), // Limit to 30 packs for performance
+			'packs' => array_slice($packs, 0, 36), // Limit to 36 packs for performance
 			'user_count' => $user_count // <-- Ajouté ici
 		], $response);
 	}
