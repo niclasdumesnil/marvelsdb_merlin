@@ -10,7 +10,7 @@ use AppBundle\Entity\Decklist;
 class DefaultController extends Controller
 {
 
-	public function indexAction()
+	public function indexAction(\Symfony\Component\HttpFoundation\Request $request)
 	{
 		$response = new Response();
 		$response->setPublic();
@@ -211,7 +211,29 @@ class DefaultController extends Controller
 		$game_name = $this->container->getParameter('game_name');
 		$publisher_name = $this->container->getParameter('publisher_name');
 
+		$sort = $request->query->get('fanpacks_sort', 'date');
 		$packs = $this->getDoctrine()->getRepository('AppBundle:Pack')->findBy([], ['dateRelease' => 'DESC']);
+
+		// Filtrer les packs privés si l'utilisateur n'est pas connecté ou pas donateur
+		$user = $this->getUser();
+		$isDonator = $user && method_exists($user, 'isDonator') && $user->isDonator();
+
+		if (!$user || !$isDonator) {
+			$packs = array_filter($packs, function($pack) {
+				// On considère que getVisibility() retourne "false" pour les packs privés
+				return $pack->getVisibility() !== "false";
+			});
+		}
+
+		if ($sort === 'creator') {
+			usort($packs, function($a, $b) {
+				return strcasecmp($a->getCreator(), $b->getCreator());
+			});
+		} elseif ($sort === 'alpha') {
+			usort($packs, function($a, $b) {
+				return strcasecmp($a->getName(), $b->getName());
+			});
+		}
 
 		// Ajout du nombre d'utilisateurs
 		$user_count = $this->getDoctrine()->getRepository('AppBundle:User')->count([]);
@@ -228,7 +250,7 @@ class DefaultController extends Controller
 			'card_of_the_day' => $card_of_the_day_info,
 			'card_of_the_day_decklists' => $card_of_the_day_decklists,
 			'decklists_by_hero' => $decklists_by_hero,
-			'packs' => array_slice($packs, 0, 30), // Limit to 30 packs for performance
+			'packs' => array_slice($packs, 0, 60), // Limit to 30 packs for performance
 			'user_count' => $user_count // <-- Ajouté ici
 		], $response);
 	}

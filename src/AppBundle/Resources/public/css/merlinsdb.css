@@ -136,3 +136,254 @@ ul.creator-list > li {
     margin: 6px 0 6px 0;
     font-weight: 600;
 }
+
+/* ===========================
+   PACK PLANE PANEL
+   =========================== */
+.pack-plane {
+    background: #fff;
+    border: 1px solid #bbb;
+    border-radius: 4px;         /* réduit l'arrondi */
+    box-shadow: none;           /* flat design : pas d'ombre */
+    padding: 1.2em 1.2em 0.8em 1.2em;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2em;
+    overflow: hidden;
+}
+
+.pack-plane-image-container {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 16/9;
+    position: relative;
+    margin-bottom: 1em;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.pack-plane-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    /* Dégradé fondu sur les bords avec un pseudo-élément */
+    mask-image: linear-gradient(
+        to right, 
+        transparent 0%, 
+        black 10%, 
+        black 90%, 
+        transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+        to right, 
+        transparent 0%, 
+        black 10%, 
+        black 90%, 
+        transparent 100%
+    );
+}
+
+.pack-plane-title {
+    font-size: 22px;
+    color: #111;
+    text-align: center;
+    margin-top: 0.1em;
+    margin-bottom: 0.3em; /* réduit l'espace sous le titre */
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    position: relative;
+    top: -0.4em; /* remonte légèrement le titre */
+}
+
+.pack-plane-footer {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* <-- centrer verticalement tous les éléments */
+    margin-top: -0.5em;
+    padding: 0 0.2em;
+    min-height: 1.5em;
+}
+
+.pack-plane-date {
+    font-size: 10px;
+    color: #666;
+    text-align: left;
+}
+
+.pack-plane-size {
+    font-size: 10px;
+    color: #666;
+    text-align: right;
+}
+
+.pack-plane .tag.creator {
+    position: absolute;
+    top: 0.7em;
+    right: 1.2em;
+    z-index: 2;
+    margin: 0;
+    font-size: 0.95em;
+    padding: 4px 14px;
+}
+
+.pack-plane .tag.status-alpha,
+.pack-plane .tag.status-beta,
+.pack-plane .tag.status-released,
+.pack-plane .tag.status-sealed {
+    position: absolute;
+    top: 0.7em;
+    left: 1.2em;
+    z-index: 2;
+    margin: 0;
+    font-size: 0.95em;
+    padding: 4px 14px;
+}
+
+.pack-plane-type {
+    font-size: 10px;
+    color: #666;
+    font-weight: 600;
+    text-align: center;
+    flex: 0 1 auto;      /* <-- ne pas étirer, juste occuper la place du texte */
+    margin: 0 0.5em;     /* <-- petit espace à gauche/droite */
+    align-self: center;  /* <-- centré verticalement */
+    white-space: nowrap; /* <-- éviter le retour à la ligne */
+}
+
+/* ===========================
+   PACK PLANE PANEL VARIANTS
+   =========================== */
+.pack-plane-theme {
+    background: linear-gradient(to bottom, #fff 0%, #d4d0bb 75%, #d4d0bb 100%);
+}
+
+.pack-plane-campaign {
+    background: linear-gradient(to bottom, #fff 0%, #fff3e0 75%, #fff3e0 100%);
+}
+
+.pack-plane-scenario {
+    background: linear-gradient(to bottom, #fff 0%, #f3e6ff 75%, #f3e6ff 100%);
+}
+
+.pack-plane-hero {
+    background: linear-gradient(to bottom, #fff 0%, #fff 100%);
+}
+
+/* ===========================
+   PACK TYPE NAME LABELS
+   =========================== */
+.pack-type-name,
+.pack-type-name-hero,
+.pack-type-name-theme,
+.pack-type-name-scenario,
+.pack-type-name-campaign {
+    color: #fff !important;
+    padding: 2px 10px !important;
+    font-weight: bold;
+    font-size: 11px;
+    border: none;
+    display: inline-block;
+}
+
+.pack-type-name-hero {
+    background: #c62828;
+}
+.pack-type-name-theme {
+    background: #388e3c;
+}
+.pack-type-name-scenario {
+    background: #a05b16;
+}
+.pack-type-name-campaign {
+    background: #7b1fa2;
+}
+
+/* ===========================
+   BOUTONS DE FILTRE POUR LES TYPES DE PACKS
+   =========================== */
+.fanpacks-type-btn {
+    background: #eee;
+    color: #444;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    padding: 4px 18px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    outline: none;
+    margin: 0;
+}
+
+.fanpacks-type-btn:not(.active):hover {
+    background: #ddd;
+}
+
+/* Couleurs actives selon le type de pack */
+.fanpacks-type-btn.active[data-type="hero_fanmade"] {
+    background: #c62828;
+    color: #fff;
+    border-color: #c62828;
+}
+.fanpacks-type-btn.active[data-type="fm_theme"] {
+    background: #388e3c;
+    color: #fff;
+    border-color: #388e3c;
+}
+.fanpacks-type-btn.active[data-type="scenar_fanmade"] {
+    background: #a05b16;
+    color: #fff;
+    border-color: #a05b16;
+}
+.fanpacks-type-btn.active[data-type="fm_story"] {
+    background: #7b1fa2;
+    color: #fff;
+    border-color: #7b1fa2;
+}
+
+/* ===========================
+   BOUTONS DE FILTRE POUR LES STATUTS DE FAN PACKS
+   =========================== */
+.fanpacks-status-btn {
+    background: #eee;
+    color: #444;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    padding: 4px 18px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    outline: none;
+    margin: 0;
+}
+
+.fanpacks-status-btn:not(.active):hover {
+    background: #ddd;
+}
+
+/* Couleurs actives selon le statut du fan pack */
+.fanpacks-status-btn.active[data-status="alpha"] {
+    background: rgb(216, 150, 8);
+    color: #111;
+    border-color: rgb(216, 150, 8);
+}
+.fanpacks-status-btn.active[data-status="beta"] {
+    background: rgb(216, 150, 8);
+    color: #111;
+    border-color: rgb(216, 150, 8);
+}
+.fanpacks-status-btn.active[data-status="released"] {
+    background: rgb(6, 110, 65);
+    color: #fff;
+    border-color: rgb(6, 110, 65);
+}
+.fanpacks-status-btn.active[data-status="sealed"] {
+    background: rgb(6, 110, 65);
+    color: #fff;
+    border-color: rgb(6, 110, 65);
+}
