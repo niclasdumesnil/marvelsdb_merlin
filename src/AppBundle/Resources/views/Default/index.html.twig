@@ -131,7 +131,7 @@
 <div class="main container">
     <h3 style="margin-bottom: 0;">Last Fan made Packs</h3>
     <br>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin: 1em 0;">
+    <div class="fanpacks-filters-row" style="display: flex; justify-content: space-between; align-items: center; margin: 1em 0; flex-wrap: wrap; gap: 1em;">
         <div style="display: flex; align-items: center;">
             <label for="fanpacks-sort" style="font-weight: bold; margin-right: 0.5em;">Sort:</label>
             <select id="fanpacks-sort" style="min-width: 220px;">
@@ -216,7 +216,7 @@
             </div>
         {% endfor %}
     </div>
-  
+	<nav id="fanpacks-pagination" class="pagination" style="margin:2em 0; text-align:center;"></nav>
 </div>
 
 <style>
@@ -400,5 +400,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-<nav id="fanpacks-pagination" class="pagination" style="margin:2em 0; text-align:center;"></nav>
 {% endblock %}

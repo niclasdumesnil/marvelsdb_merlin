@@ -387,3 +387,24 @@ ul.creator-list > li {
     color: #fff;
     border-color: rgb(6, 110, 65);
 }
+
+/* ===========================
+   FILTRES DES FANPACKS (responsive)
+   =========================== */
+@media (max-width: 900px) {
+    .fanpacks-filters-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.5em !important;
+    }
+    .fanpacks-filters-row > div,
+    .fanpacks-filters-row > span {
+        margin-bottom: 0.5em;
+        margin-right: 0 !important;
+    }
+    #fanpacks-status-filters,
+    #fanpacks-type-filters {
+        justify-content: flex-start !important;
+        flex-wrap: wrap;
+    }
+}
