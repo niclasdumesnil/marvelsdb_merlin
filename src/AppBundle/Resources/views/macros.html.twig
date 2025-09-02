@@ -234,11 +234,12 @@
         data-creator="{{ pack.creator|lower }}"
         data-alpha="{{ pack.name|lower }}"
         data-type="{{ pack.packType.code }}"
-        data-status="{{ pack.status is defined ? pack.status|lower : '' }}">
+        data-status="{{ pack.status is defined ? pack.status|lower : '' }}"
+        data-custom="{% if pack.creator == '' or pack.creator|upper == 'FFG' %}official{% elseif pack.visibility is defined and pack.visibility == 'false' %}private{% else %}fanmade{% endif %}">
         <span class="tag creator">{{ pack.creator }}</span>
         {% if pack.status is defined and pack.status %}
             <span class="tag status-{{ pack.status }}">
-                {{ pack.status|capitalize }}
+                {{ pack.status|capitalize }} 
             </span>
         {% endif %}
         <div class="pack-plane-image-container">

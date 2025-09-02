@@ -8,14 +8,21 @@
     <nav id="fanpacks-pagination-top" class="pagination" style="margin:2em 0; text-align:center;"></nav>
     <div class="pack-plane-grid-3" id="fanpacks-grid">
         {% set max_height = 0 %}
-        {% for pack in fanmade_public_packs %}
-            {{ macros.pack_plane(pack, max_height) }}
+        {% if app.user and app.user.donation == "1" %}
+            {% for pack in all_fanmade_packs %}
+                {{ macros.pack_plane(pack, max_height) }}
+            {% else %}
+                <p>No fanmade packs found.</p>
+            {% endfor %}
         {% else %}
-            <p>No public fanmade packs.</p>
-        {% endfor %}
+            {% for pack in fanmade_public_packs %}
+                {{ macros.pack_plane(pack, max_height) }}
+            {% else %}
+                <p>No public fanmade packs.</p>
+            {% endfor %}
+        {% endif %}
     </div>
     <nav id="fanpacks-pagination" class="pagination" style="margin:2em 0; text-align:center;"></nav>
-    
 </div>
 {% endblock %}
 
