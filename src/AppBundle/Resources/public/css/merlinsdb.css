@@ -408,3 +408,50 @@ ul.creator-list > li {
         flex-wrap: wrap;
     }
 }
+
+/* Drapeau français dans le titre du pack */
+.pack-plane-fr-flag {
+    height: 12px;
+    width: 16px;
+    margin-left: 0.2em;
+    vertical-align: middle;
+    position: relative;
+    top: -10px;
+}
+
+.pack-plane-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+.pack-plane-grid-5 {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2rem;
+}
+.pack-plane {
+    width: 100%;
+    min-width: 0;
+    max-width: 340px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+@media (max-width: 1200px) {
+    .pack-plane-grid-5 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 900px) {
+    .pack-plane-grid-3,
+    .pack-plane-grid-5 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 600px) {
+    .pack-plane-grid-3,
+    .pack-plane-grid-5 {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,27 @@
+{# _fanpacks_filters.html.twig #}
+<div class="fanpacks-filters-row" style="display: flex; justify-content: space-between; align-items: center; margin: 1em 0; flex-wrap: wrap; gap: 1em;">
+    <div style="display: flex; align-items: center;">
+        <label for="fanpacks-sort" style="font-weight: bold; margin-right: 0.5em;">Sort:</label>
+        <select id="fanpacks-sort" style="min-width: 220px;">
+            <option value="date">Sort by release date</option>
+            <option value="creator">Sort by creator</option>
+            <option value="alpha">Sort alphabetically</option>
+        </select>
+    </div>
+    <span style="display:inline-block; width:2em;"></span>
+    <div style="display: flex; gap: 1em;">
+        <div id="fanpacks-status-filters" style="display: flex; gap: 0.5em;">
+            <button type="button" class="fanpacks-status-btn active" data-status="alpha">Alpha</button>
+            <button type="button" class="fanpacks-status-btn active" data-status="beta">Beta</button>
+            <button type="button" class="fanpacks-status-btn active" data-status="released">Released</button>
+            <button type="button" class="fanpacks-status-btn active" data-status="sealed">Sealed</button>
+        </div>
+        <span style="display:inline-block; width:2em;"></span>
+        <div id="fanpacks-type-filters" style="display: flex; gap: 0.5em;">
+            <button type="button" class="fanpacks-type-btn active" data-type="hero_fanmade">Hero</button>
+            <button type="button" class="fanpacks-type-btn active" data-type="fm_theme">Theme</button>
+            <button type="button" class="fanpacks-type-btn active" data-type="scenar_fanmade">Scenario</button>
+            <button type="button" class="fanpacks-type-btn active" data-type="fm_story">Campaign</button>
+        </div>
+    </div>
+</div>

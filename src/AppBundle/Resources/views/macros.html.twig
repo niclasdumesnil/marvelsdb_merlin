@@ -227,3 +227,59 @@
 	</div>
 	{% endif %}
 {% endmacro %}
+
+{% macro pack_plane(pack, max_height) %}
+    <div class="pack-plane"
+        data-release="{{ pack.dateRelease ? pack.dateRelease|date('Y-m-d') : '' }}"
+        data-creator="{{ pack.creator|lower }}"
+        data-alpha="{{ pack.name|lower }}"
+        data-type="{{ pack.packType.code }}"
+        data-status="{{ pack.status is defined ? pack.status|lower : '' }}">
+        <span class="tag creator">{{ pack.creator }}</span>
+        {% if pack.status is defined and pack.status %}
+            <span class="tag status-{{ pack.status }}">
+                {{ pack.status|capitalize }}
+            </span>
+        {% endif %}
+        <div class="pack-plane-image-container">
+            <a href="/set/{{ pack.code }}/spoiler">
+                <img class="pack-plane-image" src="{{ asset('bundles/packs/' ~ pack.code ~ '.jpg') }}" alt="{{ pack.name }}" crossorigin="anonymous">
+            </a>
+        </div>
+        <div class="pack-plane-title" style="min-height: {{ max_height * 32 }}px;">
+            {{ pack.name|length > 24 ? pack.name|slice(0,24) ~ '<br>' ~ pack.name|slice(24) : pack.name|e('html') }}
+            {% if pack.language is defined and pack.language == 'fr' %}
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/62/Flag_of_France.png"
+                     alt="FR" title="French only"
+                     class="pack-plane-fr-flag">
+            {% endif %}
+        </div>
+        <div class="pack-plane-footer">
+            {% set display_date = '' %}
+            {% if pack.dateRelease is defined and pack.dateRelease %}
+                {% set display_date = pack.dateRelease|date('Y-m-d') %}
+            {% endif %}
+            <span class="pack-plane-date">
+                {{ display_date }}
+            </span>
+            <span class="
+                {% if pack.packType.code == 'hero_fanmade' %}
+                    pack-type-name-hero
+                {% elseif pack.packType.code == 'fm_theme' %}
+                    pack-type-name-theme
+                {% elseif pack.packType.code == 'scenar_fanmade' %}
+                    pack-type-name-scenario
+                {% elseif pack.packType.code == 'fm_story' %}
+                    pack-type-name-campaign
+                {% else %}
+                    pack-plane-type
+                {% endif %}
+            ">
+                {{ pack.packType.name }}
+            </span>
+            <span class="pack-plane-size">
+                {% if pack.size is defined and pack.size %}Pack Size: {{ pack.size }}{% endif %}
+            </span>
+        </div>
+    </div>
+{% endmacro %}
