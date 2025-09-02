@@ -765,4 +765,55 @@ class SearchController extends Controller
 		));
 	}
 
+	public function displayPacksAction(Request $request)
+	{
+	    $response = new Response();
+	    $response->setPublic();
+	    $response->setMaxAge($this->container->getParameter('cache_expiration'));
+
+	    // Récupère tous les packs (tu peux ajouter des filtres si besoin)
+	    $packs = $this->getDoctrine()->getRepository('AppBundle:Pack')->findAll();
+
+	    $official_packs = [];
+	    $fanmade_public_packs = [];
+	    $fanmade_private_packs = [];
+
+	    foreach ($packs as $pack) {
+	        $creator = trim($pack->getCreator());
+	        $visibility = $pack->getVisibility();
+	        $isPublic = (
+    $visibility === true ||
+    $visibility === 1 ||
+    $visibility === "1" ||
+    $visibility === "true" ||
+    $visibility === null // Ajouté : null = public
+);
+
+	        // Officiels : creator vide ou FFG
+	        if ($creator === "" || strtoupper($creator) === 'FFG') {
+	            $official_packs[] = $pack;
+	        }
+	        // Fanmade public : creator non vide, différent de FFG, visibilité publique ou non définie
+	        elseif ($creator !== "" && strtoupper($creator) !== 'FFG' && $isPublic) {
+	            $fanmade_public_packs[] = $pack;
+	        }
+	        // Fanmade privé : creator non vide, différent de FFG, visibilité privée
+	        elseif ($creator !== "" && strtoupper($creator) !== 'FFG' && !$isPublic) {
+	            $fanmade_private_packs[] = $pack;
+	        }
+	    }
+
+	    // Ajout de la variable avec tous les packs
+    $all_packs = array_merge($official_packs, $fanmade_public_packs, $fanmade_private_packs);
+
+	    return $this->render('AppBundle:Search:display-packs.html.twig', [
+	        "official_packs" => $official_packs,
+	        "fanmade_public_packs" => $fanmade_public_packs,
+	        "fanmade_private_packs" => $fanmade_private_packs,
+	        "all_packs" => $all_packs,
+	        "pagetitle" => "Packs",
+	        "pagedescription" => "All available packs."
+	    ], $response);
+	}
+
 }

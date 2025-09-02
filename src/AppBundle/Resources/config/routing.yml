@@ -98,6 +98,12 @@ Stories:
     defaults:
         _controller: AppBundle:Search:story
 
+Packs:
+    path: /packs
+    methods: [GET]
+    defaults:
+        _controller: AppBundle:Search:displayPacks
+
 about:
     path: /about
     defaults:

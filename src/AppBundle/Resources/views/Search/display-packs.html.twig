@@ -1,0 +1,25 @@
+{% extends 'AppBundle::layout.html.twig' %}
+{% import "AppBundle::macros.html.twig" as macros %}
+
+{% block body %}
+<div class="main container">
+    <h1>Fanmade Packs</h1>
+    {% include 'AppBundle:Default:packs.fanmade.filters.html.twig' %}
+    <nav id="fanpacks-pagination-top" class="pagination" style="margin:2em 0; text-align:center;"></nav>
+    <div class="pack-plane-grid-3" id="fanpacks-grid">
+        {% set max_height = 0 %}
+        {% for pack in fanmade_public_packs %}
+            {{ macros.pack_plane(pack, max_height) }}
+        {% else %}
+            <p>No public fanmade packs.</p>
+        {% endfor %}
+    </div>
+    <nav id="fanpacks-pagination" class="pagination" style="margin:2em 0; text-align:center;"></nav>
+    
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('bundles/app/js/ui.packs.js') }}"></script>
+{% endblock %}

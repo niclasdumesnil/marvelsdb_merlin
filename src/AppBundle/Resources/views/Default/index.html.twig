@@ -131,15 +131,15 @@
 <div class="main container">
     <h3 style="margin-bottom: 0;">Last Fan made Packs</h3>
     <br>
-    {% include 'AppBundle:Default:packs.fanmade.filters.html.twig' %}
-    <nav id="fanpacks-pagination-top" class="pagination" style="margin:2em 0; text-align:center;"></nav>
+    {# {% include 'AppBundle:Default:packs.fanmade.filters.html.twig' %} #}
+	{# <nav id="fanpacks-pagination-top" class="pagination" style="margin:2em 0; text-align:center;"></nav> #}	
     <div class="pack-plane-grid-3">
         {% set max_height = 0 %}
         {% for pack in packs %}
             {{ macros.pack_plane(pack, max_height) }}
         {% endfor %}
     </div>
-	<nav id="fanpacks-pagination" class="pagination" style="margin:2em 0; text-align:center;"></nav>
+	{# <nav id="fanpacks-pagination-top" class="pagination" style="margin:2em 0; text-align:center;"></nav> #}	
 </div>
 
 <div class="main container">
