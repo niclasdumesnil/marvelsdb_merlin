@@ -35,14 +35,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function getSearchTerm() {
+        const searchInput = document.getElementById('fanpacks-search');
+        return searchInput ? searchInput.value.trim().toLowerCase() : '';
+    }
+
     function getFilteredAndSorted() {
         const activeTypes = getActiveTypes();
         const activeStatuses = getActiveStatuses();
         const activeCustoms = getActiveCustoms();
+        const searchTerm = getSearchTerm();
         const filtered = packs.filter(p =>
             activeTypes.includes(p.dataset.type) &&
             activeStatuses.includes(p.dataset.status) &&
-            (p.dataset.custom ? activeCustoms.includes(p.dataset.custom) : true)
+            (p.dataset.custom ? activeCustoms.includes(p.dataset.custom) : true) &&
+            (
+                !searchTerm ||
+                (p.dataset.alpha && p.dataset.alpha.toLowerCase().includes(searchTerm)) ||
+                (p.dataset.creator && p.dataset.creator.toLowerCase().includes(searchTerm))
+            )
         );
         sortPacks(select.value, filtered);
         filtered.forEach(p => grid.appendChild(p));
@@ -117,7 +128,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateDisplay(true); // reset page on filter
             });
         });
-        // Gestion des boutons custom
         document.querySelectorAll('.fanpacks-custom-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 this.classList.toggle('active');
@@ -128,6 +138,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateDisplay(true);
             });
         });
+        // Ajout du filtre sur la recherche
+        const searchInput = document.getElementById('fanpacks-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                updateDisplay(true);
+            });
+        }
         // Tri initial par date et tous types cochés
         updateDisplay(true);
     }

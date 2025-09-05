@@ -1,7 +1,6 @@
 {% if app.user and app.user.donation == "1" %}
 <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5em;">
     <div id="fanpacks-custom-filters" style="display: flex; gap: 0.5em;">
-        {#<button type="button" class="fanpacks-custom-btn active" data-custom="official">Official</button>#}
         <button type="button" class="fanpacks-custom-btn active" data-custom="fanmade">Fanmade</button>
         <button
             type="button"
@@ -13,24 +12,28 @@
 </div>
 {% endif %}
 
-<div class="fanpacks-filters-row">
-    <div class="fanpacks-filters-group">
-        <label for="fanpacks-sort">Sort:</label>
-        <select id="fanpacks-sort">
-            <option value="date">Sort by release date</option>
-            <option value="creator">Sort by creator</option>
-            <option value="alpha">Sort alphabetically</option>
-        </select>
+<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.7em; margin-bottom: 1em;">
+    <div class="fanpacks-search-sort-row" style="display: flex; align-items: center; gap: 1em; margin-bottom: 0.7em;">
+        <div class="fanpacks-search-row">
+            <label for="fanpacks-search">Search:</label>
+            <input type="text" id="fanpacks-search" placeholder="Pack name or creator...">
+        </div>
+        <div class="fanpacks-filters-group">
+            <label for="fanpacks-sort">Sort:</label>
+            <select id="fanpacks-sort">
+                <option value="date">Sort by release date</option>
+                <option value="creator">Sort by creator</option>
+                <option value="alpha">Sort alphabetically</option>
+            </select>
+        </div>
     </div>
-    <div class="fanpacks-filters-group">
+    <div class="fanpacks-filters-row" style="margin-top: 0;">
         <div id="fanpacks-status-filters">
             <button type="button" class="fanpacks-status-btn active" data-status="alpha">Alpha</button>
             <button type="button" class="fanpacks-status-btn active" data-status="beta">Beta</button>
             <button type="button" class="fanpacks-status-btn active" data-status="released">Released</button>
             <button type="button" class="fanpacks-status-btn active" data-status="sealed">Sealed</button>
         </div>
-    </div>
-    <div class="fanpacks-filters-group">
         <div id="fanpacks-type-filters">
             <button type="button" class="fanpacks-type-btn active" data-type="hero_fanmade">Hero</button>
             <button type="button" class="fanpacks-type-btn active" data-type="fm_theme">Theme</button>

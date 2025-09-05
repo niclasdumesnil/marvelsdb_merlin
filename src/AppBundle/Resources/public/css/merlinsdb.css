@@ -437,6 +437,44 @@ ul.creator-list > li {
     }
 }
 
+@media (max-width: 600px) {
+    .fanpacks-filters-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.5em !important;
+    }
+    .fanpacks-search-sort-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.5em !important;
+    }
+    .fanpacks-search-row,
+    .fanpacks-filters-group {
+        width: 100% !important;
+        margin-bottom: 0 !important;
+    }
+    #fanpacks-status-filters,
+    #fanpacks-type-filters {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 0.3em !important;
+        width: 100%;
+        justify-content: flex-start !important;
+        margin-bottom: 0.5em;
+    }
+    #fanpacks-status-filters button,
+    #fanpacks-type-filters button {
+        min-width: 90px !important;
+        width: auto !important;
+        flex: 1 1 45% !important;
+        padding: 6px 0 !important;
+        font-size: 0.95em !important;
+        margin-bottom: 0.5em !important;
+        white-space: normal !important;
+    }
+}
+
 /* Drapeau français dans le titre du pack */
 .pack-plane-fr-flag {
     height: 12px;
@@ -671,4 +709,65 @@ ul.creator-list > li {
         min-width: 120px;
         margin-bottom: 6px;
     }
+}
+
+@media (max-width: 600px) {
+    .fanpacks-filters-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.5em !important;
+    }
+    .fanpacks-search-sort-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.5em !important;
+    }
+    .fanpacks-search-row,
+    .fanpacks-filters-group {
+        width: 100% !important;
+        margin-bottom: 0 !important;
+    }
+    #fanpacks-status-filters,
+    #fanpacks-type-filters {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 0.3em !important;
+        width: 100%;
+        justify-content: flex-start !important;
+        margin-bottom: 0.5em;
+    }
+    #fanpacks-status-filters button,
+    #fanpacks-type-filters button {
+        min-width: 90px !important;
+        width: auto !important;
+        flex: 1 1 45% !important;
+        padding: 6px 0 !important;
+        font-size: 0.95em !important;
+        margin-bottom: 0.5em !important;
+        white-space: normal !important;
+    }
+}
+
+/* Applique le style du select sort au champ de recherche */
+#fanpacks-search {
+    min-width: 220px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #bbb;
+    background: #fff;
+    font-size: 1em;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+}
+
+#fanpacks-search:focus {
+    border-color: #20159f;
+    background: #fff;
+}
+
+.fanpacks-search-row label[for="fanpacks-search"] {
+    font-weight: bold;
+    margin-right: 0.8em;
 }
