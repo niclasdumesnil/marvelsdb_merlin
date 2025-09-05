@@ -61,11 +61,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const pagNav = document.getElementById(navId);
             if (pagNav) {
                 pagNav.innerHTML = '';
-                for (let p=1; p<=totalPages; ++p) {
-                    if (p === page) {
-                        pagNav.innerHTML += `<span style="font-weight:bold; color:#1976d2; margin:0 0.5em;">${p}</span>`;
+                if (totalPages > 1) {
+                    // Bouton Prev
+                    if (page > 1) {
+                        pagNav.innerHTML += `<a href="#" class="fanpacks-page-link" data-page="${page-1}">&laquo; Prev</a>`;
                     } else {
-                        pagNav.innerHTML += `<a href="#" class="fanpacks-page-link" data-page="${p}" style="margin:0 0.5em;">${p}</a>`;
+                        pagNav.innerHTML += `<span class="pagination-btn disabled">&laquo; Prev</span>`;
+                    }
+                    // Pages
+                    for (let p = 1; p <= totalPages; ++p) {
+                        if (p === page) {
+                            pagNav.innerHTML += `<span class="active-page">${p}</span>`;
+                        } else {
+                            pagNav.innerHTML += `<a href="#" class="fanpacks-page-link" data-page="${p}">${p}</a>`;
+                        }
+                    }
+                    // Bouton Next
+                    if (page < totalPages) {
+                        pagNav.innerHTML += `<a href="#" class="fanpacks-page-link" data-page="${page+1}">Next &raquo;</a>`;
+                    } else {
+                        pagNav.innerHTML += `<span class="pagination-btn disabled">Next &raquo;</span>`;
                     }
                 }
                 Array.from(pagNav.querySelectorAll('.fanpacks-page-link')).forEach(link => {

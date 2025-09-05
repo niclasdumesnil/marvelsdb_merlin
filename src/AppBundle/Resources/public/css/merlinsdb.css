@@ -327,22 +327,18 @@ ul.creator-list > li {
 .fanpacks-type-btn.active[data-type="hero_fanmade"] {
     background: #c62828;
     color: #fff;
-    border-color: #c62828;
 }
 .fanpacks-type-btn.active[data-type="fm_theme"] {
     background: #388e3c;
     color: #fff;
-    border-color: #388e3c;
 }
 .fanpacks-type-btn.active[data-type="scenar_fanmade"] {
     background: #a05b16;
     color: #fff;
-    border-color: #a05b16;
 }
 .fanpacks-type-btn.active[data-type="fm_story"] {
     background: #7b1fa2;
     color: #fff;
-    border-color: #7b1fa2;
 }
 
 /* ===========================
@@ -351,7 +347,6 @@ ul.creator-list > li {
 .fanpacks-status-btn {
     background: #eee;
     color: #444;
-    border: 1px solid #bbb;
     border-radius: 4px;
     padding: 4px 18px;
     font-size: 14px;
@@ -370,22 +365,19 @@ ul.creator-list > li {
 .fanpacks-status-btn.active[data-status="alpha"] {
     background: rgb(216, 150, 8);
     color: #111;
-    border-color: rgb(216, 150, 8);
 }
 .fanpacks-status-btn.active[data-status="beta"] {
     background: rgb(216, 150, 8);
     color: #111;
-    border-color: rgb(216, 150, 8);
 }
 .fanpacks-status-btn.active[data-status="released"] {
     background: rgb(6, 110, 65);
     color: #fff;
-    border-color: rgb(6, 110, 65);
 }
 .fanpacks-status-btn.active[data-status="sealed"] {
     background: rgb(6, 110, 65);
     color: #fff;
-    border-color: rgb(6, 110, 65);
+
 }
 
 /* ===========================
@@ -413,6 +405,15 @@ ul.creator-list > li {
     background: #111;
     color: #fff;
     border-color: #111;
+}
+
+/* Uniformise la taille des boutons custom avec les autres */
+#fanpacks-custom-filters button {
+    min-width: 90px;
+    padding: 7px 0;
+    font-size: 1em;
+    border-radius: 6px;
+    font-weight: bold;
 }
 
 /* ===========================
@@ -480,5 +481,194 @@ ul.creator-list > li {
     .pack-plane-grid-3,
     .pack-plane-grid-5 {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Pagination améliorée */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5em;
+    margin: 2em 0;
+    font-size: 1.1em;
+}
+
+.pagination a,
+.pagination span {
+    padding: 6px 14px;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+    background: #f5f5f5;
+    color: #444;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.pagination a:hover {
+    background: #20159f;
+    color: #fff;
+    border-color: #20159f;
+}
+
+.pagination .active-page {
+    background: #20159f;
+    color: #fff;
+    border-color: #20159f;
+    font-weight: bold;
+}
+
+.pagination-btn.disabled {
+    background: #eee;
+    color: #bbb;
+    border: 1px solid #ddd;
+    cursor: not-allowed;
+    border-radius: 4px;
+    font-weight: normal;
+    pointer-events: none;
+    padding: 6px 14px; /* identique aux autres boutons */
+    font-size: inherit; /* hérite de la pagination */
+}
+
+@media (max-width: 600px) {
+    .pagination {
+        font-size: 1em;
+        gap: 0.2em;
+    }
+    .pagination a, .pagination span {
+        padding: 4px 8px;
+    }
+}
+
+/* ===========================
+   FILTRES DES FANPACKS (nouveau style)
+   =========================== */
+.fanpacks-filters-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5em;
+    align-items: center;
+    background: #f8f8f8;
+    border-radius: 10px;
+    padding: 1.2em 1em;
+    margin-bottom: 1em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.fanpacks-filters-group {
+    display: flex;
+    align-items: center;
+    gap: 0.7em;
+}
+
+.fanpacks-filters-group label {
+    font-weight: bold;
+    margin-right: 0.5em;
+    font-size: 1.1em;
+}
+
+#fanpacks-sort {
+    min-width: 180px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #bbb;
+    background: #fff;
+    font-size: 1em;
+}
+
+#fanpacks-status-filters button,
+#fanpacks-type-filters button {
+    min-width: 90px;
+    padding: 7px 0;
+    margin: 0 3px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    color: #fff;
+    font-size: 1em;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    transition: transform 0.1s, box-shadow 0.1s, outline 0.1s;
+    opacity: 0.85;
+    outline: 2px solid transparent;
+}
+
+/* Couleurs des boutons de filtre status identiques aux tags status */
+#fanpacks-status-filters .fanpacks-status-btn[data-status="alpha"],
+.tag.status-alpha {
+    background: rgb(216, 150, 8);
+    color: #fff;
+}
+#fanpacks-status-filters .fanpacks-status-btn[data-status="beta"],
+.tag.status-beta {
+    background: rgb(216, 150, 8);
+    color: #fff;
+}
+#fanpacks-status-filters .fanpacks-status-btn[data-status="released"],
+.tag.status-released {
+    background: rgb(6, 110, 65);
+    color: #fff;
+}
+#fanpacks-status-filters .fanpacks-status-btn[data-status="sealed"],
+.tag.status-sealed {
+    background: rgb(6, 110, 65);
+    color: #fff;
+}
+
+/* Désactivé : status et type (alpha, beta, released, sealed, hero, theme, scenario, campaign) sans bordure */
+#fanpacks-status-filters button:not(.active),
+#fanpacks-type-filters button:not(.active) {
+    background: #eee !important;
+    color: #776d6d !important;
+    border: 1px solid #ddd !important;
+    opacity: 0.9;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+/* Désactivé : custom (fanmade, official, private) AVEC bordure */
+#fanpacks-custom-filters button:not(.active) {
+    background: #eee !important;
+    color: #776d6d !important;
+    border: 1px solid #ddd !important;
+    opacity: 0.9;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+/* Style actif (sélectionné) pour tous */
+#fanpacks-status-filters button.active,
+#fanpacks-type-filters button.active,
+#fanpacks-custom-filters button.active {
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 1;
+    border: none;
+}
+
+/* Effet au survol */
+#fanpacks-status-filters button:hover,
+#fanpacks-type-filters button:hover,
+#fanpacks-custom-filters button:hover {
+    transform: scale(1.07);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    opacity: 1;
+    border: none;
+}
+
+@media (max-width: 900px) {
+    .fanpacks-filters-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.7em;
+    }
+    .fanpacks-filters-group {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+    #fanpacks-status-filters button,
+    #fanpacks-type-filters button {
+        min-width: 120px;
+        margin-bottom: 6px;
     }
 }
