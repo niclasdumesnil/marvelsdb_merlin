@@ -614,6 +614,18 @@ ul.creator-list > li {
     font-size: 1em;
 }
 
+#fanpacks-search,
+#fanpacks-sort {
+    min-width: 220px;
+    max-width: 220px;
+    width: 220px;
+    height: 35px;
+    box-sizing: border-box;
+    font-size: 1em;
+    border-radius: 6px;
+    padding: 6px 12px;
+}
+
 #fanpacks-status-filters button,
 #fanpacks-type-filters button {
     min-width: 90px;
