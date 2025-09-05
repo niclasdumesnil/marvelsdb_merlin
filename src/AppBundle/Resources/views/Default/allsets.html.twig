@@ -6,10 +6,14 @@
                     and (visibility is null or p.visibility == visibility)
                     and p.type == type
                 )|first) %}
-            <span class="pack-type-label">
-                {% if first_pack is defined and first_pack %}
-                    {{ first_pack.type_name }}
+            <span class="pack-type-label
+                {% if first_pack.type == 'hero_fanmade' %} pack-type-name-hero
+                {% elseif first_pack.type == 'fm_theme' %} pack-type-name-theme
+                {% elseif first_pack.type == 'scenar_fanmade' %} pack-type-name-scenario
+                {% elseif first_pack.type == 'fm_story' %} pack-type-name-campaign
                 {% endif %}
+            ">
+                {{ first_pack.type_name }}
             </span>
             <br>
             {% set packs_of_type = data

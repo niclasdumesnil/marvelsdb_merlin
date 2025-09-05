@@ -442,8 +442,8 @@ ul.creator-list > li {
     width: 16px;
     margin-left: 0.2em;
     vertical-align: middle;
-    position: relative;
-    top: -10px;
+    position: right;
+    top: 0px;
 }
 
 .pack-plane-grid-3 {
