@@ -14,9 +14,19 @@
 
 <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.7em; margin-bottom: 1em;">
     <div class="fanpacks-search-sort-row" style="display: flex; align-items: center; gap: 1em; margin-bottom: 0.7em;">
-        <div class="fanpacks-search-row">
-            <label for="fanpacks-search">Search:</label>
-            <input type="text" id="fanpacks-search" placeholder="Pack name or creator...">
+        <div class="fanpacks-search-row" style="position: relative; display: inline-block;">
+            <label for="fanpacks-search" style="font-weight: bold; margin-right: 1em;">Search:</label>
+            <input type="text" id="fanpacks-search" placeholder="Pack name or creator..." style="min-width:220px;">
+            <span id="clear-search" style="
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+                font-size: 1.2em;
+                color: #bbb;
+                display: none;
+            ">&times;</span>
         </div>
         <div class="fanpacks-filters-group">
             <label for="fanpacks-sort">Sort:</label>

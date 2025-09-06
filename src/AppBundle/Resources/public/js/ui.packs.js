@@ -140,11 +140,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         // Ajout du filtre sur la recherche
         const searchInput = document.getElementById('fanpacks-search');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                updateDisplay(true);
-            });
-        }
+        const clearBtn = document.getElementById('clear-search');
+
+        searchInput.addEventListener('input', function() {
+            clearBtn.style.display = this.value ? 'inline' : 'none';
+        });
+        clearBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            searchInput.dispatchEvent(new Event('input')); // Pour déclencher le filtre
+        });
         // Tri initial par date et tous types cochés
         updateDisplay(true);
     }
