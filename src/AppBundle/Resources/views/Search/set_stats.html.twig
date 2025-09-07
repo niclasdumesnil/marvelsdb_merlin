@@ -1,58 +1,189 @@
-{# 
-    Paramètres attendus :
-    - stats : dict avec nbDiff, nbTotal, totalBoost, totalBoostStar, avgBoost
-    - color : couleur principale (ex: #1976d2, #a080c6, #111)
-    - label : titre à afficher (ex: "Statistiques combinées", "Statistiques du set modular", ...)
-    - type_counts : dict [type => count] (ex: {'Minion': 3, ...})
-    - boost_counts : dict [boost => count] (ex: {'0': 2, '1': 4, ...})
+{# Paramètres attendus :
+   - stats : dict avec differentCards, totalCards, totalBoost, totalBoostStar, averageBoost
+   - color : couleur principale (ex: #5e758bff, #423d47ff, #111)
+   - label : titre à afficher
+   - type_counts : dict [type => count]
+   - boost_counts : dict [boost => count]
 #}
-<div style="margin-bottom: 18px; font-size: 1.08em; background: {{ color }}; color: #fff; border-radius: 8px; padding: 14px 22px; font-weight: bold;">
-    <span>{{ label }}</span>
-    <span style="margin-left: 18px;">
-        <strong>Cartes différentes :</strong> {{ stats.nbDiff|default(0) }} &nbsp;|&nbsp;
-        <strong>Nombre total de cartes :</strong> {{ stats.nbTotal|default(0) }} &nbsp;|&nbsp;
-        <strong>Total boost :</strong> {{ stats.totalBoost|default(0) }} &nbsp;|&nbsp;
-        <strong>Total boost étoile :</strong> {{ stats.totalBoostStar|default(0) }} &nbsp;|&nbsp;
-        <strong>Moyenne boost :</strong> {{ stats.avgBoost|default('0.00') }}
-    </span>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+@media (max-width: 600px) {
+    .stats-flex-main {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        padding: 10px 4px !important;
+        width: 100% !important;
+        border-radius: 12px !important;
+    }
+    .stats-flex-main > div {
+        width: 100% !important;
+        margin-bottom: 8px !important;
+    }
+    .stats-flex-main span,
+    .stats-flex-main i {
+        font-size: 1em !important;
+        margin-left: 0 !important;
+        margin-right: 6px !important;
+    }
+    .stats-flex-main .stats-values {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .stats-flex-row {
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+    .stats-type, .stats-boost {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+    .stats-label, .stats-bar {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .stats-flex-main {
+        flex-direction: column !important;
+        padding: 10px 8px !important;
+    }
+    .stats-flex-row {
+        flex-direction: column !important;
+        gap: 18px !important;
+    }
+    .stats-type, .stats-boost {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .stats-bar {
+        margin: 0 4px !important;
+    }
+    .stats-label {
+        width: auto !important;
+        min-width: 0 !important;
+    }
+}
+</style>
+
+{% set max_type = 0 %}
+{% for count in type_counts|default({}) %}
+    {% if count > max_type %}
+        {% set max_type = count %}
+    {% endif %}
+{% endfor %}
+
+{% set max_boost = 0 %}
+{% for count in boost_counts|default({}) %}
+    {% if count > max_boost %}
+        {% set max_boost = count %}
+    {% endif %}
+{% endfor %}
+
+<div class="stats-flex-main" style="margin-bottom: 18px; font-size: 1.08em; background: {{ color }}; color: #fff; border-radius: 8px; padding: 14px 22px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+    <div>
+        <i class="fas fa-chart-bar" style="margin-right: 8px;"></i>
+        <span>Statistics</span>
+        <span style="margin-left: 18px; font-weight: normal;">
+            <i class="fas fa-box" style="margin-right: 6px;"></i>
+            {{ set_name }}
+        </span>
+        {% if traits is defined and traits|length > 0 %}
+            <span style="margin-left: 18px; font-weight: normal;">
+                <i class="fas fa-tags" style="margin-right: 6px;"></i>
+                {{ traits|join(', ') }}
+            </span>
+        {% endif %}
+    </div>
+    <div class="stats-values" style="margin-top: 8px; display: flex; gap: 18px;">
+        <span>
+            <i class="fas fa-layer-group" style="margin-right: 4px;"></i>
+            {{ stats.totalCards|default(0) }}
+        </span>
+        <span>
+            <i class="fas fa-clone" style="margin-right: 4px;"></i>
+            {{ stats.differentCards|default(0) }}
+        </span>
+        <span>
+            <i class="icon icon-boost " style="margin-right: 4px;"></i>
+            {{ stats.totalBoost|default(0) }}
+        </span>
+        <span>
+            <i class="fas fa-star" style="margin-right: 4px;"></i>
+            {{ stats.totalBoostStar|default(0) }}
+        </span>
+        <span>
+            <i class="fas fa-calculator" style="margin-right: 4px;"></i>
+            {{ stats.averageBoost|default('0.00') }}
+        </span>
+    </div>
 </div>
 
-<div style="display: flex; gap: 32px; margin-bottom: 18px;">
-    <div style="flex:1;">
-        <div style="font-weight:bold; margin-bottom:8px;">Répartition par type</div>
-        {% set max_type = 1 %}
-        {% if type_counts is defined and type_counts|length > 0 %}
-            {% set sorted_types = type_counts|sort %}
-            {% set max_type = sorted_types|last %}
-        {% endif %}
+<div class="stats-flex-row" style="display: flex; gap: 32px; margin-bottom: 18px; flex-wrap: wrap;">
+    <!-- Répartition par type -->
+    <div class="stats-type" style="flex: 1; min-width: 260px;">
+        <div style="font-weight: bold; margin-bottom: 8px; display: flex; align-items: center;">
+            <i class="fas fa-tags" style="margin-right: 6px;"></i>
+            Type
+        </div>
         {% for type, count in type_counts|default({}) %}
-            {% if type != 'Ally' and type != 'Support' and type != 'Upgrade' and type != 'Event' and type != 'Main Scheme' %}
-            <div style="display:flex; align-items:center; margin-bottom:6px;">
-                <span style="width:90px; display:inline-block;">{{ type }}</span>
-                <div style="background:#fff; border-radius:4px; height:18px; flex:1; margin:0 8px; border:1px solid #ccc; position:relative;">
-                    <div style="background:{{ color }}; height:100%; width:{% if max_type > 0 %}{{ (count / max_type * 100)|round(0, 'floor') }}{% else %}0{% endif %}%; border-radius:4px;"></div>
-                    <span style="position:absolute; left:8px; top:0; color:#fff; font-size:0.95em; line-height:18px;">{{ count }}</span>
+            {% if type not in ['Ally', 'Support', 'Upgrade', 'Event', 'Main Scheme'] %}
+                <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                    <span class="stats-label" style="width: 120px; min-width: 80px; display: inline-block;">
+                        {% if type == 'Minion' %}
+                            <i class="fas fa-dragon" style="margin-right: 6px;"></i> {{ type }}
+                        {% elseif type == 'Treachery' %}
+                            <i class="fas fa-skull-crossbones" style="margin-right: 6px;"></i> {{ type }}
+                        {% elseif type == 'Attachment' %}
+                            <i class="fas fa-paperclip" style="margin-right: 6px;"></i> {{ type }}
+                        {% elseif type == 'Environment' %}
+                            <i class="fas fa-tree" style="margin-right: 6px;"></i> {{ type }}
+                        {% elseif type == 'Side Scheme' %}
+                            <i class="fas fa-project-diagram" style="margin-right: 6px;"></i> {{ type }}
+                        {% else %}
+                            {{ type }}
+                        {% endif %}
+                    </span>
+                    <div class="stats-bar" style="background: #fff; border-radius: 4px; height: 18px; flex: 1; margin: 0 8px; border: 1px solid #ccc; position: relative;">
+                        <div style="background: {{ color }}; height: 100%; width: {% if stats.totalCards > 0 %}{{ (count / stats.totalCards * 100)|round(0, 'floor') }}{% else %}0{% endif %}%; border-radius: 4px;"></div>
+                        <span style="position: absolute; left: 8px; top: 0; color: #fff; font-size: 1em; line-height: 18px;">{{ count }}</span>
+                    </div>
+                    <span style="width: 32px; text-align: right;">{{ count }}/{{ stats.totalCards|default(0) }}</span>
                 </div>
-                <span style="width:32px; text-align:right;">/{{ stats.nbTotal|default(0) }}</span>
-            </div>
             {% endif %}
         {% endfor %}
     </div>
-    <div style="flex:1;">
-        <div style="font-weight:bold; margin-bottom:8px;">Répartition par boost</div>
-        {% set max_boost = 1 %}
-        {% if boost_counts is defined and boost_counts|length > 0 %}
-            {% set sorted_boosts = boost_counts|sort %}
-            {% set max_boost = sorted_boosts|last %}
-        {% endif %}
+
+    <!-- Répartition par boost -->
+    <div class="stats-boost" style="flex: 1; min-width: 180px;">
+        <div style="font-weight: bold; margin-bottom: 8px; display: flex; align-items: center;">
+            <i class="fas fa-rocket" style="margin-right: 6px;"></i>
+            Boost
+        </div>
         {% for boost, count in boost_counts|default({}) %}
-            <div style="display:flex; align-items:center; margin-bottom:6px;">
-                <span style="width:40px; display:inline-block;">{{ boost }}</span>
-                <div style="background:#fff; border-radius:4px; height:18px; flex:1; margin:0 8px; border:1px solid #ccc; position:relative;">
-                    <div style="background:{{ color }}; height:100%; width:{% if max_boost > 0 %}{{ (count / max_boost * 100)|round(0, 'floor') }}{% else %}0{% endif %}%; border-radius:4px;"></div>
-                    <span style="position:absolute; left:8px; top:0; color:#fff; font-size:0.95em; line-height:18px;">{{ count }}</span>
+            <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                <span style="width: 60px; display: inline-block;">
+                    {% if boost == '0' %}
+                        {# Aucun icône #}
+                    {% elseif boost == '1' %}
+                        <i class="icon icon-boost" style="margin-right: 0px;"></i>
+                    {% elseif boost == '2' %}
+                        <i class="icon icon-boost" style="margin-right: -3px;"></i>
+                        <i class="icon icon-boost" style="margin-right: 0px;"></i>
+                    {% elseif boost starts with '3' %}
+                        <i class="icon icon-boost" style="margin-right: -3px;"></i>
+                        <i class="icon icon-boost" style="margin-right: -3px;"></i>
+                        <i class="icon icon-boost" style="margin-right: -3px;"></i>  +
+                    {% endif %}
+                </span>
+                <div class="stats-bar" style="background: #fff; border-radius: 4px; height: 18px; flex: 1; margin: 0 8px; border: 1px solid #ccc; position: relative;">
+                    <div style="background: {{ color }}; height: 100%; width: {% if stats.totalCards > 0 %}{{ (count / stats.totalCards * 100)|round(0, 'floor') }}{% else %}0{% endif %}%; border-radius: 4px;"></div>
+                    <span style="position: absolute; left: 8px; top: 0; color: #fff; font-size: 1em; line-height: 18px;">{{ count }}</span>
                 </div>
-                <span style="width:32px; text-align:right;">/{{ stats.nbTotal|default(0) }}</span>
+                <span style="width: 32px; text-align: right;">{{ count }}/{{ stats.totalCards|default(0) }}</span>
             </div>
         {% endfor %}
     </div>

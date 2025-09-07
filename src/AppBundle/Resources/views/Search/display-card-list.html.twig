@@ -1,0 +1,42 @@
+{# Tableau simplifié : colonne Traits placée entre Name et Type, mise en forme identique à Type #}
+<table class="table table-striped table-condensed" style="width:100%; font-size:0.98em;">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Traits</th>
+            <th>Type</th>
+            <th>Boost</th>
+            <th>Pack</th>
+            <th>Set</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for card in cards %}
+        <tr>
+            <td>
+                {% include 'AppBundle:Search:card-name-with-link.html.twig' with { QtyColor: false } %}
+            </td>
+            <td>
+                {{ card.traits }}
+            </td>
+            <td>
+                {{ card.type_name|default('') }}
+            </td>
+            <td>
+                {% if card.boost_star %}
+                    <span class="icon icon-star color-boost"></span>
+                {% endif %}
+                {% if card.boost %}
+                    {% for i in 1..card.boost %}
+                        <span class="icon icon-boost color-boost"></span>
+                    {% endfor %}
+                {% endif %}
+            </td>
+            <td>{{ card.pack_name|default('') }}</td>
+            <td>
+                {{ set.name }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
