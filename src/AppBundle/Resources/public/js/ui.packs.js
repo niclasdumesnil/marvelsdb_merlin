@@ -142,14 +142,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('fanpacks-search');
         const clearBtn = document.getElementById('clear-search');
 
-        searchInput.addEventListener('input', function() {
-            clearBtn.style.display = this.value ? 'inline' : 'none';
-        });
-        clearBtn.addEventListener('click', function() {
-            searchInput.value = '';
-            clearBtn.style.display = 'none';
-            searchInput.dispatchEvent(new Event('input')); // Pour déclencher le filtre
-        });
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearBtn.style.display = this.value ? 'inline' : 'none';
+                updateDisplay(true); // Met à jour l'affichage à chaque saisie
+            });
+        }
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                clearBtn.style.display = 'none';
+                updateDisplay(true); // Met à jour l'affichage après suppression
+            });
+        }
         // Tri initial par date et tous types cochés
         updateDisplay(true);
     }
