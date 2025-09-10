@@ -244,7 +244,8 @@ class DefaultController extends Controller
 		// Ajout du nombre d'utilisateurs
 		$user_count = $this->getDoctrine()->getRepository('AppBundle:User')->count([]);
 
-		// 1640210361
+		// Comptage des decks publics (publiés)
+		$public_deck_count = $this->getDoctrine()->getRepository('AppBundle:Decklist')->count([]);
 
 		return $this->render('AppBundle:Default:index.html.twig', [
 			'pagetitle' =>  "$game_name Deckbuilder",
@@ -257,7 +258,9 @@ class DefaultController extends Controller
 			'card_of_the_day_decklists' => $card_of_the_day_decklists,
 			'decklists_by_hero' => $decklists_by_hero,
 			'packs' => array_slice($packs, 0, 3), // Limit 
-			'user_count' => $user_count // <-- Ajouté ici
+			'user_count' => $user_count,
+			'public_deck_count' => $public_deck_count,
+		
 		], $response);
 	}
 

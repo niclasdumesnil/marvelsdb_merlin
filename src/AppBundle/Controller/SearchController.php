@@ -827,12 +827,12 @@ class SearchController extends Controller
 	        $creator = trim($pack->getCreator());
 	        $visibility = $pack->getVisibility();
 	        $isPublic = (
-    $visibility === true ||
-    $visibility === 1 ||
-    $visibility === "1" ||
-    $visibility === "true" ||
-    $visibility === null // Ajouté : null = public
-);
+				$visibility === true ||
+				$visibility === 1 ||
+				$visibility === "1" ||
+				$visibility === "true" ||
+				$visibility === null // Ajouté : null = public
+			);
 
 	        // Officiels : creator vide ou FFG
 	        if ($creator === "" || strtoupper($creator) === 'FFG') {
@@ -849,10 +849,10 @@ class SearchController extends Controller
 	    }
 
 	    // Ajout de la variable avec tous les packs
-    $all_packs = array_merge($official_packs, $fanmade_public_packs, $fanmade_private_packs);
+   		$all_packs = array_merge($official_packs, $fanmade_public_packs, $fanmade_private_packs);
 
-    // Ajout de la variable avec tous les packs fanmade (publics + privés)
-    $all_fanmade_packs = array_merge($fanmade_public_packs, $fanmade_private_packs);
+   		// Ajout de la variable avec tous les packs fanmade (publics + privés)
+    	$all_fanmade_packs = array_merge($fanmade_public_packs, $fanmade_private_packs);
 
 	    return $this->render('AppBundle:Search:display-packs.html.twig', [
 	        "official_packs" => $official_packs,
