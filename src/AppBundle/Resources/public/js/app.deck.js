@@ -1131,6 +1131,15 @@ deck.can_include_card = function can_include_card(card, limit_count, hard_count)
         return true;
     }
 
+    // Exception : autoriser certains noms pour le héros singularity_by_phenexian
+    if (
+        hero &&
+        hero.card_set_code === 'singularity_by_phenexian' &&
+        ["Captain Marvel", "Dazzler", "Medusa", "She-Hulk"].includes(card.name)
+    ) {
+        return true;
+    }
+
     // hide heroes
     if (card.type_code === "hero") {
 		return false;
