@@ -90,18 +90,36 @@ class ListAllDecksCommand extends ContainerAwareCommand
                 $maxCards = count($cards);
             }
         }
-        // Génère l'en-tête dynamique avec la colonne card_count après user_name
-        $header = ["deck_id", "deck_name", "user_name", "card_count", "hero_name"];
+        // Génère l'en-tête dynamique avec la colonne creator après user_name
+        $header = ["deck_id", "deck_name", "user_name", "creator", "card_count", "hero_name"];
         for ($i = 1; $i <= $maxCards; $i++) {
             $header[] = "card_$i";
         }
         fwrite($file, implode("\t", $header) . "\n");
+
+        // Prépare une requête pour récupérer le creator du pack à partir du code du pack
+        $sqlPackCreator = "SELECT creator FROM pack WHERE code = ?";
+
         // Écrit chaque ligne deck + cartes
         foreach ($decks as $deck) {
             $hero = $deck['hero_name'] ?? '';
             $hero_code = $deck['hero_code'] ?? '';
+            $pack_creator = '';
             if ($hero && $hero_code) {
                 $hero .= ' [' . $hero_code . ']';
+                // On récupère le code du pack du héros
+                $sqlHeroPack = "SELECT p.code FROM card c JOIN pack p ON c.pack_id = p.id WHERE c.code = ?";
+                $heroPackRow = $dbh->executeQuery($sqlHeroPack, [$hero_code])->fetch();
+                if ($heroPackRow && isset($heroPackRow['code'])) {
+                    $pack_code = $heroPackRow['code'];
+                    $packCreatorRow = $dbh->executeQuery($sqlPackCreator, [$pack_code])->fetch();
+                    if ($packCreatorRow && isset($packCreatorRow['creator']) && $packCreatorRow['creator']) {
+                        $pack_creator = $packCreatorRow['creator'];
+                    }
+                }
+            }
+            if (!$pack_creator) {
+                $pack_creator = 'FFG';
             }
             $cards = $allCards[$deck[$deckIdKey]];
             // Calcul du nombre de cartes hors héros et cartes permanentes (permanent = colonne booléenne)
@@ -113,7 +131,7 @@ class ListAllDecksCommand extends ContainerAwareCommand
                     $card_count += (int)$card['qty'];
                 }
             }
-            $row = [$deck['deck_id'], $deck['deck_name'], $deck['user_name'], $card_count, $hero];
+            $row = [$deck['deck_id'], $deck['deck_name'], $deck['user_name'], $pack_creator, $card_count, $hero];
             foreach ($cards as $card) {
                 $qty = $card['qty'];
                 $name = $card['card_name'];
@@ -126,7 +144,7 @@ class ListAllDecksCommand extends ContainerAwareCommand
                 $row[] = $qty . 'x ' . $name . ' [' . $card_code . '] (' . $pack_name . ')' . $ofhero . ' --pc' . $pack_code . ' --ct' . $type_name;
             }
             // Remplit les colonnes manquantes
-            while (count($row) < 5 + $maxCards) {
+            while (count($row) < 6 + $maxCards) {
                 $row[] = '';
             }
             fwrite($file, implode("\t", $row) . "\n");
