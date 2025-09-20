@@ -31,41 +31,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	printBtn.addEventListener('click', function(e) {
 		e.preventDefault();
-		var loadedImages = [];
-		var checkedPrint = 0;
 		files.forEach(function(file) {
-			loadImage(file, function(img, file) {
-				loadedImages.push({file: file, img: img});
-				checkDonePrint();
-			}, function() {
-				checkDonePrint();
-			});
+			// Crée un lien de téléchargement pour chaque image
+			var link = document.createElement('a');
+			link.href = '/bundles/public_decks/' + file;
+			link.download = file;
+			// Pour forcer le téléchargement dans le dossier 'download'
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
 		});
-		function checkDonePrint() {
-			checkedPrint++;
-			if (checkedPrint === files.length) {
-				var win = window.open('', '_blank');
-				if (win) {
-					var html = '<html><head><title>Deck Images</title>' +
-						'<style>body{margin:0;padding:0;background:#222;} .img-row{display:flex;justify-content:center;align-items:flex-start;gap:2vw;margin:2vw 0;} .img-row img{width:50vw;max-width:50vw;height:auto;box-shadow:0 0 12px #000;background:#fff;border-radius:8px;} .error-msg{color:#fff;text-align:center;font-size:1.5em;margin:4vw 0;}</style>' +
-						'</head><body>';
-					if (loadedImages.length > 0) {
-						html += '<div class="img-row">';
-						loadedImages.forEach(function(obj) {
-							html += '<img src="/bundles/public_decks/' + obj.file + '">';
-						});
-						html += '</div>';
-					} else {
-						html += '<div class="error-msg">Aucune image à imprimer n’a été trouvée pour ce deck.</div>';
-					}
-					html += '</body></html>';
-					win.document.write(html);
-					win.document.close();
-				} else {
-					alert('Popup blocked! Please allow popups for this site.');
-				}
-			}
-		}
 	});
 });
 </script>
