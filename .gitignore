@@ -22,3 +22,5 @@ tags
 .DS_Store
 /web/*.json
 /var
+web/private_decks_list.tsv
+web/public_decks_list.tsv
