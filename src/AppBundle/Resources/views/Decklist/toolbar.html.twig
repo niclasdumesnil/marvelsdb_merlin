@@ -1,3 +1,74 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	var printBtn = document.getElementById('btn-print');
+	if (!printBtn) return;
+
+	var deckId = '{{ decklist.id }}';
+	var files = [deckId + '-type.jpg', deckId + '-faction.jpg'];
+
+	// Fonction utilitaire pour charger une image et appeler les callbacks
+	function loadImage(file, onLoad, onError) {
+		var img = new window.Image();
+		img.onload = function() { onLoad && onLoad(img, file); };
+		img.onerror = function() { onError && onError(file); };
+		img.src = '/bundles/public_decks/' + file;
+	}
+
+	// Vérifie l'existence d'au moins une image pour activer le bouton print
+	loadImage(files[0], function() {
+		printBtn.disabled = false;
+		printBtn.classList.remove('disabled');
+		printBtn.style.opacity = '';
+		printBtn.style.pointerEvents = '';
+		printBtn.title = '';
+	}, function() {
+		printBtn.disabled = true;
+		printBtn.classList.add('disabled');
+		printBtn.style.opacity = '0.5';
+		printBtn.style.pointerEvents = 'none';
+		printBtn.title = "Aucune image à imprimer n'a été trouvée pour ce deck.";
+	});
+
+	printBtn.addEventListener('click', function(e) {
+		e.preventDefault();
+		var loadedImages = [];
+		var checkedPrint = 0;
+		files.forEach(function(file) {
+			loadImage(file, function(img, file) {
+				loadedImages.push({file: file, img: img});
+				checkDonePrint();
+			}, function() {
+				checkDonePrint();
+			});
+		});
+		function checkDonePrint() {
+			checkedPrint++;
+			if (checkedPrint === files.length) {
+				var win = window.open('', '_blank');
+				if (win) {
+					var html = '<html><head><title>Deck Images</title>' +
+						'<style>body{margin:0;padding:0;background:#222;} .img-row{display:flex;justify-content:center;align-items:flex-start;gap:2vw;margin:2vw 0;} .img-row img{width:50vw;max-width:50vw;height:auto;box-shadow:0 0 12px #000;background:#fff;border-radius:8px;} .error-msg{color:#fff;text-align:center;font-size:1.5em;margin:4vw 0;}</style>' +
+						'</head><body>';
+					if (loadedImages.length > 0) {
+						html += '<div class="img-row">';
+						loadedImages.forEach(function(obj) {
+							html += '<img src="/bundles/public_decks/' + obj.file + '">';
+						});
+						html += '</div>';
+					} else {
+						html += '<div class="error-msg">Aucune image à imprimer n’a été trouvée pour ce deck.</div>';
+					}
+					html += '</body></html>';
+					win.document.write(html);
+					win.document.close();
+				} else {
+					alert('Popup blocked! Please allow popups for this site.');
+				}
+			}
+		}
+	});
+});
+</script>
 <a href="{{ path('decklist_edit', {decklist_id:decklist.id}) }}" title="Edit decklist name / description" id="decklist-edit" class="btn btn-sm btn-default" style="display:none">
 	<span class="fa fa-pencil text-primary"></span> Edit
 </a>
@@ -16,6 +87,9 @@
 		<li><a {% if not octgnable %} onclick="window.alert('Warning: Some cards from this deck are missing OCTGN IDs (most likely the latest cards or the special random basic weakness card)')" {% endif %}href="#" id="btn-download-octgn">Octgn file</a></li>
 	</ul>
 </div>
+<a href="#" title="Print decklist" id="btn-print" class="btn btn-sm btn-default">
+	<span class="fa fa-print"></span> <span class="hidden-xs">Print</span>
+</a>
 {#
 <div class="btn-group">
 	<button type="button" class="btn btn-sm btn-default dropdown-toggle " data-toggle="dropdown">
