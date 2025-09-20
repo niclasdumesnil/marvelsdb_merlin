@@ -476,22 +476,30 @@ class SocialController extends Controller
 
 		$unique_heroes = [];
 		$heroes = [];
+		$user = $this->getUser();
 		foreach($all_heroes as $hero) {
 			$unique_key = $hero->getCardSet()->getCode();
-
-			// Exclure les héros dont le pack n'est pas visible
-			if ($hero->getPack()->GetVisibility()) {
-				continue;
-			}
-
 			if (!$hero->getMeta()) {
 				continue;
 			}
 			if (isset($unique_heroes[$unique_key])) {
 				continue;
 			}
-			$unique_heroes[$unique_key] = true;
-			$heroes[] = $hero;
+			$pack = $hero->getPack();
+			$is_visible = !$pack->getVisibility();
+			$is_donator = 0;
+			if ($user && method_exists($user, 'getDonation')) {
+				$is_donator = $user->getDonation();
+			}
+
+			// Ajoute le héros si le pack est visible (true), ou si invisible (false) mais donateur
+			if ($is_visible) {
+				$unique_heroes[$unique_key] = true;
+				$heroes[] = $hero;
+			} else if ($is_donator == 1) {
+				$unique_heroes[$unique_key] = true;
+				$heroes[] = $hero;
+			}
 		}
 		$searchForm = $this->renderView('AppBundle:Search:form-quick.html.twig',
 			array(
