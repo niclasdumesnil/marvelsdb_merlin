@@ -773,14 +773,14 @@ class BuilderController extends Controller
 				continue;
 			}
 			$pack = $hero->getPack();
-			$is_visible = !$pack->getVisibility();
-			$is_donator = !$user->getDonation();
+			$is_visible = $pack->getVisibility();
+			$is_donator = $user->getDonation();
 
 			// Ajoute le héros si le pack est visible (true), ou si invisible (false) mais donateur
-			if ($is_visible) {
+			if ($is_visible !== "false") {
 				$unique_heroes[$unique_key] = true;
 				$heroes[] = $hero;
-			} else if (!$is_donator) {
+			} else if ($is_donator == 1) {
 				$unique_heroes[$unique_key] = true;
 				$heroes[] = $hero;
 			}

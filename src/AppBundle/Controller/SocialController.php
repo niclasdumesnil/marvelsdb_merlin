@@ -486,17 +486,10 @@ class SocialController extends Controller
 				continue;
 			}
 			$pack = $hero->getPack();
-			$is_visible = !$pack->getVisibility();
-			$is_donator = 0;
-			if ($user && method_exists($user, 'getDonation')) {
-				$is_donator = $user->getDonation();
-			}
+			$is_visible = $pack->getVisibility();
 
-			// Ajoute le héros si le pack est visible (true), ou si invisible (false) mais donateur
-			if ($is_visible) {
-				$unique_heroes[$unique_key] = true;
-				$heroes[] = $hero;
-			} else if ($is_donator == 1) {
+			// N'ajoute pas le héros si visibility == false
+			if ($is_visible !== "false") {
 				$unique_heroes[$unique_key] = true;
 				$heroes[] = $hero;
 			}
