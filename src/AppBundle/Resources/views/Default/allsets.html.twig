@@ -1,5 +1,5 @@
 {% macro pack_list(data, types, creator_labels, visibility) %}
-    <ul class="pack-list">
+    <ul class="pack-list" style="margin:0;padding:0;border:none;">
         {% for type in types %}
             {% set first_pack = (data
                 |filter(p => p.creator != 'FFG'
@@ -21,54 +21,45 @@
                     and (visibility is null or p.visibility == visibility)
                     and p.type == type
                 )
-                |sort((a, b) =>
-                    a.creator|lower < b.creator|lower
-                        ? -1
-                        : (a.creator|lower > b.creator|lower
-                            ? 1
-                            : (a.name < b.name
-                                ? -1
-                                : (a.name > b.name ? 1 : 0)
-                            )
-                        )
-                )
+                |sort((a, b) => a.name|lower < b.name|lower ? -1 : (a.name|lower > b.name|lower ? 1 : 0))
             %}
-            {% set seen_creators = [] %}
             {% for pack in packs_of_type %}
-                {% if pack.creator not in seen_creators %}
-                    {% set seen_creators = seen_creators|merge([pack.creator]) %}
-                    <li class="creator-li">
-                        <div class="creator-box">
-                            <ul class="creator-list">
-                            {% for subpack in packs_of_type if subpack.creator == pack.creator %}
-                                <li>
-                                    &gt; <a title="{{ subpack.name }}" href="{{ subpack.url }}">{{ subpack.name }}</a>
-                                    {% if subpack.status in ["alpha", "beta"] %}
-                                        <span class="tag status-{{ subpack.status }}">{{ subpack.status ?? 'Official' }}</span>
+                <li class="creator-li" style="margin:0;padding:0;border:none;">
+                    <div class="creator-box" style="margin:0;padding:0;border:none;">
+                        <ul class="creator-list" style="margin:0;padding:0;border:none;">
+                            <li style="margin:0;padding:0;border:none;">
+                                {% if pack.status in ["alpha","beta","released","sealed"] %}
+                                    <span class="status-dot status-dot-{{ pack.status }}" title="{{ pack.status|capitalize }}">
+                                        {% if pack.status == 'alpha' %}α{% elseif pack.status == 'beta' %}β{% elseif pack.status == 'released' %}R{% elseif pack.status == 'sealed' %}S{% endif %}
+                                    </span>
+                                {% endif %}
+                                <span class="set-name-hover" style="position:relative; display:inline-flex; align-items:center; gap:6px;">
+                                    <a title="{{ pack.name }}" href="{{ pack.url }}">{{ pack.name }}</a>
+                                    {% if pack.language is defined and pack.language == "fr" %}
+                                        <span class="fr-flag" title="French only">🇫🇷</span>
                                     {% endif %}
-                                    {# {% if subpack.status in ["released", "sealed"] %}
-                                        <span class="tag status-{{ subpack.status }}">{{ subpack.status ?? 'Official' }}</span>
-                                    {% endif %} #}
-                                    {% if subpack.pack_type_code is defined and subpack.pack_type_code == 'hero_fanmade' %}
-                                        <span class="tag custom-hero">Custom Hero Pack</span>
+                                    {#
+                                    {% if pack.status in ["alpha","beta","released","sealed"] %}
+                                        <span class="tag status status-{{ pack.status }}">
+                                            {% if pack.status == 'alpha' %}alpha{% elseif pack.status == 'beta' %}beta{% elseif pack.status == 'released' %}released{% elseif pack.status == 'sealed' %}sealed{% endif %}
+                                        </span>
                                     {% endif %}
-                                    {% if subpack.language is defined and subpack.language == "fr" %}
-                                        <span class="tag french-only">French only</span>
-                                    {% endif %}
-                                    {% if subpack.creator is not defined or subpack.creator == "FFG" or subpack.creator == "" %}
-                                        <span class="tag ffg">FFG</span>
-                                    {% endif %}
-                                </li>
-                            {% endfor %}
-                            </ul>
-                            <div>
-                                <span class="tag creator" style="margin-top: 0.5em; display: inline-block;">
-                                    {{ creator_labels[pack.creator] ?? pack.creator }}
+                                    #}
+                                    <span class="creator-hover-box" style="display:inline;">
+                                        <span class="tag creator">{{ creator_labels[pack.creator] ?? pack.creator }}</span>
+                                    </span>
                                 </span>
-                            </div>
-                        </div>
-                    </li>
-                {% endif %}
+                                {% if pack.pack_type_code is defined and pack.pack_type_code == 'hero_fanmade' %}
+                                    <span class="tag custom-hero">Custom Hero Pack</span>
+                                {% endif %}
+                                {% if pack.creator is not defined or pack.creator == "FFG" or pack.creator == "" %}
+                                    <span class="tag ffg">FFG</span>
+                                {% endif %}
+                            </li>
+                        </ul>
+                        {# Suppression de l'affichage séparé du créateur #}
+                    </div>
+                </li>
             {% endfor %}
         {% endfor %}
     </ul>
