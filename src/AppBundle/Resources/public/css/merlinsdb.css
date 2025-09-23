@@ -9,6 +9,7 @@
     pointer-events: auto;
 }
 
+/* Affichage des status */
 
 .status-dot {
     position: relative;
