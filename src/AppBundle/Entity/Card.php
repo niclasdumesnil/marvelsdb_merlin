@@ -74,6 +74,7 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 				$mandatoryFields[] = 'cost';
 				$mandatoryFields[] = 'base_threat';
 				$optionalFields[] = 'base_threat_fixed';
+				$optionalFields[] = 'base_threat_per_group';
 				$optionalFields[] = 'resource_energy';
 				$optionalFields[] = 'resource_physical';
 				$optionalFields[] = 'resource_mental';
@@ -131,10 +132,12 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 				$optionalFields[] = 'scheme';
 				$optionalFields[] = 'scheme_star';
 				break;
+			case "leader":
 			case "villain":
 				$optionalFields[] = 'attack';
 				$optionalFields[] = 'attack_star';
 				$optionalFields[] = 'health';
+				$optionalFields[] = 'health_per_group';
 				$optionalFields[] = 'health_per_hero';
 				$optionalFields[] = 'health_star';
 				$optionalFields[] = 'scheme';
@@ -147,6 +150,7 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 				$optionalFields[] = 'boost';
 				$optionalFields[] = 'boost_star';
 				$optionalFields[] = 'health';
+				$optionalFields[] = 'health_per_group';
 				$optionalFields[] = 'health_per_hero';
 				$optionalFields[] = 'health_star';
 				$optionalFields[] = 'scheme';
@@ -155,6 +159,7 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 				$externalFields[] = 'subtype';
 				$optionalFields[] = 'base_threat';
 				$optionalFields[] = 'base_threat_fixed';
+				$optionalFields[] = 'base_threat_per_group';
 				$optionalFields[] = 'boost';
 				$optionalFields[] = 'boost_star';
 				$optionalFields[] = 'escalation_threat';
@@ -169,12 +174,14 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 				$externalFields[] = 'subtype';
 				$optionalFields[] = 'base_threat';
 				$optionalFields[] = 'base_threat_fixed';
+				$optionalFields[] = 'base_threat_per_group';
 				$optionalFields[] = 'escalation_threat';
 				$optionalFields[] = 'escalation_threat_fixed';
 				$optionalFields[] = 'escalation_threat_star';
 				$optionalFields[] = 'stage';
 				$optionalFields[] = 'threat';
 				$optionalFields[] = 'threat_fixed';
+				$optionalFields[] = 'threat_per_group';
 				$optionalFields[] = 'threat_star';
 				break;
 		}
@@ -325,6 +332,16 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 	/**
 	 * @var boolean
 	 */
+	private $healthPerGroup;
+
+    /**
+     * @var boolean
+     */
+    private $healthPerHero;
+
+	/**
+	 * @var boolean
+	 */
 	private $healthStar;
 
 	/**
@@ -408,7 +425,7 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 	private $restrictions;
 
 	/**
-	 * @var integer
+	 * @var string
 	 */
 	private $stage;
 
@@ -1234,7 +1251,7 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 	/**
 	 * Set stage
 	 *
-	 * @param integer $stage
+	 * @param string $stage
 	 *
 	 * @return Card
 	 */
@@ -1248,7 +1265,7 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 	/**
 	 * Get stage
 	 *
-	 * @return integer
+	 * @return string
 	 */
 	public function getStage()
 	{
@@ -1742,11 +1759,6 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 	}
 
     /**
-     * @var boolean
-     */
-    private $healthPerHero;
-
-    /**
      * @var integer
      */
     private $defenseCost;
@@ -1851,6 +1863,30 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
     public function getResourceWild()
     {
         return $this->resourceWild;
+    }
+
+    /**
+     * Set healthPerGroup
+     *
+     * @param boolean $healthPerGroup
+     *
+     * @return Card
+     */
+    public function setHealthPerGroup($healthPerGroup)
+    {
+        $this->healthPerGroup = $healthPerGroup;
+
+        return $this;
+    }
+
+    /**
+     * Get healthPerGroup
+     *
+     * @return boolean
+     */
+    public function getHealthPerGroup()
+    {
+        return $this->healthPerGroup;
     }
 
     /**
@@ -2368,6 +2404,11 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
     private $baseThreatFixed;
 
     /**
+     * @var boolean
+     */
+    private $baseThreatPerGroup;
+
+    /**
      * @var integer
      */
     private $escalationThreat;
@@ -2391,6 +2432,11 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
      * @var boolean
      */
     private $threatFixed;
+
+    /**
+     * @var boolean
+     */
+    private $threatPerGroup;
 
     /**
      * @var boolean
@@ -2444,6 +2490,30 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
     public function getBaseThreatFixed()
     {
         return $this->baseThreatFixed;
+    }
+
+    /**
+     * Set baseThreatPerGroup
+     *
+     * @param boolean $baseThreatPerGroup
+     *
+     * @return Card
+     */
+    public function setBaseThreatPerGroup($baseThreatPerGroup)
+    {
+        $this->baseThreatPerGroup = $baseThreatPerGroup;
+
+        return $this;
+    }
+
+    /**
+     * Get baseThreatPerGroup
+     *
+     * @return boolean
+     */
+    public function getBaseThreatPerGroup()
+    {
+        return $this->baseThreatPerGroup;
     }
 
     /**
@@ -2563,6 +2633,30 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
     public function getThreatFixed()
     {
         return $this->threatFixed;
+    }
+
+    /**
+     * Set threatPerGroup
+     *
+     * @param boolean $threatPerGroup
+     *
+     * @return Card
+     */
+    public function setThreatPerGroup($threatPerGroup)
+    {
+        $this->threatPerGroup = $threatPerGroup;
+
+        return $this;
+    }
+
+    /**
+     * Get threatPerGroup
+     *
+     * @return boolean
+     */
+    public function getThreatPerGroup()
+    {
+        return $this->threatPerGroup;
     }
 
     /**

@@ -738,11 +738,6 @@ class ImportStdCommand extends ContainerAwareCommand
 			}
 		}
 
-		if ($key == "health_per_hero" || $key == "is_unique"){
-			if ($value){
-				//echo $key." ".$value."\n";
-			}
-		}
 		if(!key_exists($key, $metadata->fieldNames)) {
 			throw new \Exception("Missing column [$key] in entity ".$entityName);
 		}
@@ -868,6 +863,8 @@ class ImportStdCommand extends ContainerAwareCommand
 	protected function importUpgradeData(Card $card, $data)
 	{
 		$optionalKeys = [
+			'scheme_acceleration',
+			'scheme_amplify',
 			'scheme_crisis',
 			'scheme_hazard',
 		];
@@ -971,10 +968,12 @@ class ImportStdCommand extends ContainerAwareCommand
 			'boost',
 			'boost_star',
 			'health',
+			'health_per_group',
 			'health_per_hero',
 			'health_star',
 			'scheme',
 			'scheme_acceleration',
+			'scheme_amplify',
 			'scheme_hazard',
 			'scheme_star',
 		];
@@ -1017,6 +1016,7 @@ class ImportStdCommand extends ContainerAwareCommand
 		$optionalKeys = [
 			'base_threat',
 			'base_threat_fixed',
+			'base_threat_per_group',
 			'boost',
 			'boost_star',
 			'escalation_threat',
@@ -1037,6 +1037,7 @@ class ImportStdCommand extends ContainerAwareCommand
 		$optionalKeys = [
 			'base_threat',
 			'base_threat_fixed',
+			'base_threat_per_group',
 			'escalation_threat',
 			'escalation_threat_fixed',
 			'escalation_threat_star',
@@ -1047,6 +1048,7 @@ class ImportStdCommand extends ContainerAwareCommand
 			'stage',
 			'threat',
 			'threat_fixed',
+			'threat_per_group',
 			'threat_star',
 		];
 		foreach($optionalKeys as $key) {
@@ -1065,6 +1067,7 @@ class ImportStdCommand extends ContainerAwareCommand
 
 		$optionalKeys = [
 			'base_threat_fixed',
+			'base_threat_per_group',
 			'scheme_acceleration',
 			'scheme_amplify',
 			'scheme_crisis',
@@ -1091,6 +1094,30 @@ class ImportStdCommand extends ContainerAwareCommand
 	}
 
 	protected function importVillainData(Card $card, $data)
+	{
+		$mandatoryKeys = [
+			'health',
+		];
+		foreach($mandatoryKeys as $key) {
+			$this->copyKeyToEntity($card, 'AppBundle\Entity\Card', $data, $key, TRUE);
+		}
+
+		$optionalKeys = [
+			'attack',
+			'attack_star',
+			'health_per_group',
+			'health_per_hero',
+			'health_star',
+			'scheme',
+			'scheme_star',
+			'stage',
+		];
+		foreach($optionalKeys as $key) {
+			$this->copyKeyToEntity($card, 'AppBundle\Entity\Card', $data, $key, FALSE);
+		}
+	}
+
+	protected function importLeaderData(Card $card, $data)
 	{
 		$mandatoryKeys = [
 			'health',
