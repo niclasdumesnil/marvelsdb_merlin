@@ -105,6 +105,21 @@ class ImportStdCommand extends ContainerAwareCommand
 		$this->loadCollection('Type');
 		$output->writeln("Done.");
 
+		// fanmade types
+
+		$output->writeln("Importing Fan made Types...");
+		$typesFileInfo = $this->getFileInfo($path, 'types_fanmade.json');
+		$imported = $this->importTypesJsonFile($typesFileInfo);
+		if(count($imported)) {
+			$question = new ConfirmationQuestion("Do you confirm? (Y/n) ", true);
+			if(!$helper->ask($input, $output, $question)) {
+				die();
+			}
+		}
+		$this->em->flush();
+		$this->loadCollection('Type');
+		$output->writeln("Done.");
+
 		// subtypes
 
 		$output->writeln("Importing SubTypes...");
@@ -151,9 +166,21 @@ class ImportStdCommand extends ContainerAwareCommand
 		$this->loadCollection('Packtype');
 		$output->writeln("Done.");
 		
-
 		$output->writeln("Importing CardsetTypes...");
 		$cardsettypesFileInfo = $this->getFileInfo($path, 'settypes.json');
+		$imported = $this->importCardsettypesJsonFile($cardsettypesFileInfo);
+		if(count($imported)) {
+			$question = new ConfirmationQuestion("Do you confirm? (Y/n) ", true);
+			if(!$helper->ask($input, $output, $question)) {
+				die();
+			}
+		}
+		$this->em->flush();
+		$this->loadCollection('Cardsettype');
+		$output->writeln("Done.");
+
+		$output->writeln("Importing CardsetTypes fanmade...");
+		$cardsettypesFileInfo = $this->getFileInfo($path, 'settypes_fanmade.json');
 		$imported = $this->importCardsettypesJsonFile($cardsettypesFileInfo);
 		if(count($imported)) {
 			$question = new ConfirmationQuestion("Do you confirm? (Y/n) ", true);
@@ -846,9 +873,21 @@ class ImportStdCommand extends ContainerAwareCommand
 			}
 			if ($cleanName == "Evidence - Opportunity") {
 				$cleanName = "EvidenceOpportunity";
+			}            
+			// Normalize the cleaned name: remove non-alphanumeric characters and CamelCase each part
+			$parts = preg_split('/[^A-Za-z0-9]+/', $cleanName);
+			$cleanName = '';
+			foreach ($parts as $p) {
+				if ($p !== '') $cleanName .= ucfirst($p);
 			}
+
 			$functionName = 'import' . $cleanName . 'Data';
-			$this->$functionName($entity, $data);
+			// Only call the method if it exists to avoid fatal errors for unexpected types
+			if (method_exists($this, $functionName)) {
+				$this->$functionName($entity, $data);
+			} else {
+				$this->output->writeln("<comment>No importer found for type '".$entity->getType()->getName()."' (tried $functionName). Skipping specialized import.</comment>");
+			}
 		}
 
 		if($entity->serialize() !== $orig || (isset($data['back_link']) && (!$entity->getLinkedTo() || $entity->getLinkedTo()->getCode() != $data['back_link']) )) return $entity;
@@ -1050,6 +1089,40 @@ class ImportStdCommand extends ContainerAwareCommand
 			'threat_fixed',
 			'threat_per_group',
 			'threat_star',
+		];
+		foreach($optionalKeys as $key) {
+			$this->copyKeyToEntity($card, 'AppBundle\Entity\Card', $data, $key, FALSE);
+		}
+	}
+
+	/**
+	 * Fanmade "Challenge" type maps to main scheme-like fields.
+	 * Provide a small wrapper so the dynamic caller importChallengeData() exists.
+	 */
+	protected function importChallengeData(Card $card, $data)
+	{
+		$optionalKeys = [
+			'expansions_needed'
+		];
+		foreach($optionalKeys as $key) {
+			$this->copyKeyToEntity($card, 'AppBundle\Entity\Card', $data, $key, FALSE);
+		}
+	}
+
+	/**
+	 * Handle fanmade "Modular Sets" type which may be named with a space in JSON.
+	 * Map it to the modular-related optional keys (similar to main scheme / side scheme fields)
+	 */
+	protected function importModularSetsData(Card $card, $data)
+	{
+		// Many modular sets behave like regular sets; copy commonly used modular keys if present.
+		$optionalKeys = [
+			'boost',
+			'boost_star',
+			'scheme_acceleration',
+			'scheme_amplify',
+			'scheme_crisis',
+			'scheme_hazard',
 		];
 		foreach($optionalKeys as $key) {
 			$this->copyKeyToEntity($card, 'AppBundle\Entity\Card', $data, $key, FALSE);

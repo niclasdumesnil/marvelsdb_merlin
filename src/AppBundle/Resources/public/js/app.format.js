@@ -135,6 +135,9 @@ format.info = function info(card) {
 				text += ' Health: ' + format.fancy_int(card.health, card.health_star, card.health_per_hero, card.health_per_group);
 				text += '.</div>';
 			break;
+		case 'challenge':
+			text += '<div><b>Expansions needed</b>: ' + '<i>'+ card.expansions_needed + '</i>' + '</div>';
+			break;
 		case 'treachery':
 		case 'obligation':
 			break;

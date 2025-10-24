@@ -339,6 +339,10 @@ AppBundle\Entity\Card:
         errata:
             type: text
             nullable: true
+        expansionsNeeded:
+            type: text
+            nullable: true
+            column: expansions_needed
     uniqueConstraints:
         card_code_idx:
             columns: [ code ]

@@ -132,6 +132,9 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 				$optionalFields[] = 'scheme';
 				$optionalFields[] = 'scheme_star';
 				break;
+			case "challenge":
+				$optionalFields[] = 'expansions_needed';
+				break;
 			case "leader":
 			case "villain":
 				$optionalFields[] = 'attack';
@@ -443,6 +446,13 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 	 * @var string
 	 */
 	private $illustrator;
+
+	/**
+	 * @var string
+	 */
+	private $expansionsNeeded;
+
+
 
 	/**
 	 * @var boolean
@@ -1345,6 +1355,30 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 	public function getIllustrator()
 	{
 		return $this->illustrator;
+	}
+
+	/**
+	 * Set expansionsNeeded
+	 *
+	 * @param string $expansionsNeeded
+	 *
+	 * @return Card
+	 */
+	public function setExpansionsNeeded($expansionsNeeded)
+	{
+		$this->expansionsNeeded = $expansionsNeeded;
+
+		return $this;
+	}
+
+	/**
+	 * Get expansionsNeeded
+	 *
+	 * @return string
+	 */
+	public function getExpansionsNeeded()
+	{
+		return $this->expansionsNeeded;
 	}
 
 	/**

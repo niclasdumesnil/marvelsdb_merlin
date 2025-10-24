@@ -54,6 +54,10 @@
                         {% else %}
                             {% include 'AppBundle:Search:card-text.html.twig' %}
                             {% include 'AppBundle:Search:card-flavor.html.twig' %}
+                            {# Display expansions_needed for fanmade Challenge cards (informs which expansions are required) #}
+                            {% if card.type_code == 'challenge' and card.expansions_needed %}
+                                <div style="margin-top: .8rem;"><b>Expansions needed for this challenge</b>: <i>{{ card.expansions_needed }}</i></div>
+                            {% endif %}
                         {% endif %}
                         {% include 'AppBundle:Search:card-illustrator.html.twig' %}
                         {% include 'AppBundle:Search:card-pack.html.twig' %}
@@ -64,6 +68,7 @@
                 </div>
                 {# Ajout ici sous le panel #}
                 {% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': card } %}
+                
                 {% if card.linked_card is defined %}
                     <div style="height: 32px;"></div>
                 {% endif %}
@@ -129,6 +134,10 @@
                 </div>
                 {# Ajout ici sous le panel du verso #}
                 {% include 'AppBundle:Search:card-front-promo.html.twig' with { 'card': back } %}
+                {# Display expansions_needed for fanmade Challenge cards on the back panel as well #}
+                {% if back.type_code == 'challenge' and back.expansions_needed %}
+                    <div style="margin-top: .8rem;"><b>Expansions needed for this challenge</b>: <i>{{ back.expansions_needed }}</i></div>
+                {% endif %}
             </div>
             <div class="col-sm-5" style="margin-bottom:0em; text-align:center;">
                 <img id="card-image-{{ card.linked_card.id }}"
