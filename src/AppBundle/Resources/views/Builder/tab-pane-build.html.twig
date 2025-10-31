@@ -120,13 +120,13 @@
 		<table class="table table-condensed table-hover" style="margin-bottom:10px">
 			<thead>
 				<tr>
-					<th style="min-width:85px"><a href="#" data-sort="indeck">Quantity</a></th>
-					<th><a href="#" data-sort="name">Name</a></th>
+					<th style="min-width:90px"><a href="#" data-sort="indeck">Quantity</a></th>
+					<th style="min-width:180px"><a href="#" data-sort="name">Name</a></th>
 					<th class="resources"><a href="#" data-sort="resources" title="Resources">Icons</a></th>
 					<th class="cost"><a href="#" data-sort="cost" title="Cost">Cost</a></th>
 					<th class="type"><a href="#" data-sort="type_code" title="Type">Type</a></th>
 					<th class="faction"><a href="#" data-sort="faction_code" title="Faction">Aspect</a></th>
-					<th class="fm_code"><a href="#" title="fm">Tag</a></th>
+					<th class="fm_code"><a href="#" data-sort="traits|pack_name" title="fm">Tag</a></th>
 				</tr>
 			</thead>
 			<tbody id="collection-table" class="collection"></tbody>
@@ -138,14 +138,8 @@
 
 <style>
 .fm_code_yes {
-    background: #2196f3;
-    color: #fff;
-    border-radius: 6px;
-    padding: 1px 8px;
-    font-size: 0.85em;
-    margin-left: 6px;
-    font-weight: bold;
-    display: inline-block;
+	    display: none !important;
+	    /* Fully hide the FM tag visually (keeps element in DOM so :has() still works) */
 }
 .custom_tag {
     background: rgb(161, 169, 175);
@@ -167,5 +161,38 @@
     font-weight: bold;
     display: inline-block;
 }
+
+/* Left trim (liseré) on every row: black by default, blue for fanmade rows */
+table.table td:first-child {
+	border-left: 4px solid #000; /* black by default */
+	padding-left: 8px; /* small spacing so content doesn't sit on the border */
+	transition: border-color 180ms ease;
+}
+
+/* Fanmade rows: override left border color to blue */
+table.table tr:has(.fm_code_yes) td:first-child {
+	border-left-color: #1e88e5; /* blue accent for fanmade */
+}
+
+/* Show a small two-line "Fan\nMade" SVG AFTER the Name cell for fanmade cards */
+table.table tr:has(.fm_code_yes) td:nth-child(2)::after {
+	content: '';
+	display: inline-block;
+	width: 56px; /* larger badge */
+	height: 28px;
+	margin-left: 4px; /* reduced gap between name and badge */
+	vertical-align: middle;
+	/* Larger SVG with tighter vertical spacing between 'Fan' and 'Made' */
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 36'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%234a90ff'/><stop offset='100%25' stop-color='%231e88e5'/></linearGradient></defs><text x='6' y='12' font-family='Helvetica,Arial,sans-serif' font-size='14' font-weight='700' fill='url(%23g)'>Fan</text><text x='6' y='26' font-family='Helvetica,Arial,sans-serif' font-size='14' font-weight='700' fill='url(%23g)'>Made</text></svg>");
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+/* Hide the Aspect (faction) column entirely */
+table.table th.faction,
+table.table td.faction {
+	display: none !important;
+}
+
 </style>
 
