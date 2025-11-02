@@ -617,6 +617,67 @@ ui.on_quantity_change = function on_quantity_change(card_code, quantity) {
 		}
 	}
 	var update_all = app.deck.set_card_copies(card_code, quantity);
+
+	// Si la carte sélectionnée appartient à un groupe de duplicatas/parent
+	// et que ce groupe contient une carte listée dans DuplicateExceptions,
+	// alors mettre à 0 la quantité des autres cartes du groupe pour éviter
+	// d'avoir plusieurs variantes simultanément dans le deck.
+	if (quantity > 0) {
+		try {
+			var selectedCard = app.data.cards.findById(card_code);
+			if (selectedCard) {
+				var group = [];
+				// si la carte a un parent, utiliser le parent comme pivot du groupe
+				if (selectedCard.duplicate_of_code) {
+					var parent = app.data.cards.findById(selectedCard.duplicate_of_code);
+					if (parent) {
+						group.push(parent.code);
+						if (Array.isArray(parent.duplicated_by)) group = group.concat(parent.duplicated_by);
+					}
+				} else {
+					// sinon la carte est possiblement le parent ; inclure ses duplicated_by
+					group.push(selectedCard.code);
+					if (Array.isArray(selectedCard.duplicated_by)) group = group.concat(selectedCard.duplicated_by);
+				}
+				// dédupliquer et convertir en string
+				group = group.map(function(c){ return String(c); }).filter(function(v, i, a){ return a.indexOf(v) === i; });
+				// si le groupe contient une exception, on met les autres à 0
+				var hasException = group.some(function(c){ return DuplicateExceptions.indexOf(String(c)) !== -1; });
+				if (hasException && group.length > 1) {
+					// compute group maximum allowed copies (use the highest maxqty across group)
+					var groupMax = 0;
+					group.forEach(function(codeInGroup){
+						var c = app.data.cards.findById(codeInGroup);
+						if (c && c.maxqty && parseInt(c.maxqty, 10) > groupMax) {
+							groupMax = parseInt(c.maxqty, 10);
+						}
+					});
+					if (!groupMax) groupMax = (selectedCard && selectedCard.maxqty) ? parseInt(selectedCard.maxqty, 10) : 3;
+					// remaining copies allowed for other cards in the group
+					var remaining = groupMax - parseInt(quantity, 10);
+					if (remaining < 0) remaining = 0;
+					// iterate other cards and reduce their quantities so total <= groupMax
+					group.forEach(function(codeInGroup){
+						if (String(codeInGroup) !== String(card_code)) {
+							var otherCard = app.data.cards.findById(codeInGroup);
+							if (otherCard && otherCard.indeck && otherCard.indeck > 0) {
+								var keep = Math.min(otherCard.indeck, remaining);
+								if (otherCard.indeck !== keep) {
+									app.deck.set_card_copies(codeInGroup, keep);
+								}
+								remaining = Math.max(0, remaining - keep);
+							}
+						}
+					});
+					// force a full refresh so the UI reflects adjusted quantities
+					update_all = true;
+				}
+			}
+		} catch (e) {
+			console.warn('Erreur lors du traitement des duplicatas/exceptions', e);
+		}
+	}
+
 	ui.refresh_deck();
 	app.suggestions.compute();
 	if(update_all) {
