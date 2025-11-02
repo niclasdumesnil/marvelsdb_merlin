@@ -895,6 +895,12 @@ if (showFanmadeAffinity && !showFanmadeAffinity.checked && fanmade === "Yes") {
 // isAltArt flag based on exceptions list
 var isAltArt = (DuplicateExceptions.indexOf(card.code) !== -1);
 
+// if alt-art filter is present and not checked, hide alt-art cards
+var showAltArtElem = document.getElementById('show-alt-art');
+if (showAltArtElem && !showAltArtElem.checked && isAltArt) {
+	return $('');
+}
+
     var html = DisplayColumnsTpl({
         radios: radios,
         resources: $span.html(),
@@ -1124,7 +1130,15 @@ if (cb) {
         app.ui.refresh_lists();
     });
 }
-// (show-alt-art checkbox removed) no-op
+// show-alt-art: toggle display of alt-art cards
+var cbAlt = document.getElementById('show-alt-art');
+if (cbAlt) {
+	cbAlt.addEventListener('change', function() {
+		// force rebuild of rows so alt-art visibility is re-evaluated
+		CardDivs = [[],[],[]];
+		app.ui.refresh_lists();
+	});
+}
 var cbTraits = document.getElementById('show-traits-tags');
 window.showTraitsTags = cbTraits ? cbTraits.checked : true;
 if (cbTraits) {

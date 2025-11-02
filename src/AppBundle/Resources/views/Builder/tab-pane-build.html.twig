@@ -78,13 +78,53 @@
 <div class="row" id="build_filters">
 
 	<div class="col-sm-12" style="margin-bottom:10px">
-			<input type="checkbox" id="show-fanmade-affinity" checked>
-			Display FanMade Affinity &amp; Basic cards
+			<!-- Hidden inputs kept for backward compatibility with existing JS that listens to change on these IDs -->
+			<input type="checkbox" id="show-fanmade-affinity" checked style="display:none;">
+			<strong style="font-weight:700; margin-right:8px;">Additional Filters</strong>
+			<button type="button" id="btn-show-fanmade" class="btn btn-xs active" style="margin-right:6px;">Fanmade</button>
 
-			&nbsp;&nbsp; <!-- Ajoute un espace ici -->
+			<!-- Alt Art toggle -->
+			<input type="checkbox" id="show-alt-art" checked style="display:none;">
+			<button type="button" id="btn-show-altart" class="btn btn-xs active" style="margin-left:6px; margin-right:6px;">Alt Art</button>
 
-			<input type="checkbox" id="show-traits-tags" checked style="accent-color: #111;">
-			<span style="margin-left:4px;">Display Traits</span>
+			<input type="checkbox" id="show-traits-tags" checked style="display:none;">
+			<button type="button" id="btn-show-traits" class="btn btn-xs active" style="margin-left:6px;">Traits</button>
+
+			<script>
+			(function(){
+				var btnF = document.getElementById('btn-show-fanmade');
+				var cbF = document.getElementById('show-fanmade-affinity');
+				if (btnF && cbF) {
+					// set initial visual state
+					if (cbF.checked) btnF.classList.add('active'); else btnF.classList.remove('active');
+					btnF.addEventListener('click', function(){
+						cbF.checked = !cbF.checked;
+						try { cbF.dispatchEvent(new Event('change')); } catch(e) { /* old browsers */ }
+						btnF.classList.toggle('active');
+					});
+				}
+				var btnT = document.getElementById('btn-show-traits');
+				var cbT = document.getElementById('show-traits-tags');
+				if (btnT && cbT) {
+					if (cbT.checked) btnT.classList.add('active'); else btnT.classList.remove('active');
+					btnT.addEventListener('click', function(){
+						cbT.checked = !cbT.checked;
+						try { cbT.dispatchEvent(new Event('change')); } catch(e) { /* old browsers */ }
+						btnT.classList.toggle('active');
+					});
+				}
+				var btnA = document.getElementById('btn-show-altart');
+				var cbA = document.getElementById('show-alt-art');
+				if (btnA && cbA) {
+					if (cbA.checked) btnA.classList.add('active'); else btnA.classList.remove('active');
+					btnA.addEventListener('click', function(){
+						cbA.checked = !cbA.checked;
+						try { cbA.dispatchEvent(new Event('change')); } catch(e) { /* old browsers */ }
+						btnA.classList.toggle('active');
+					});
+				}
+			})();
+			</script>
 	</div>
 
 	<!-- Search Bar -->
@@ -126,7 +166,7 @@
 					<th class="cost"><a href="#" data-sort="cost" title="Cost">Cost</a></th>
 					<th class="type"><a href="#" data-sort="type_code" title="Type">Type</a></th>
 					<th class="faction"><a href="#" data-sort="faction_code" title="Faction">Aspect</a></th>
-					<th class="fm_code"><a href="#" data-sort="traits|pack_name" title="fm">Tag</a></th>
+					<th class="fm_code"><a href="#" data-sort="traits|pack_name" title="fm">Traits</a></th>
 				</tr>
 			</thead>
 			<tbody id="collection-table" class="collection"></tbody>
@@ -217,6 +257,39 @@ table.table th.faction,
 table.table td.faction {
 	display: none !important;
 }
+
+/* Toggle buttons for fanmade / trait: fixed size and colors */
+/* Shared button sizing (slightly larger) */
+#btn-show-fanmade, #btn-show-traits, #btn-show-altart {
+	display: inline-flex !important;
+	justify-content: center;
+	align-items: center;
+	width: 70px !important; /* slightly narrower */
+	height: 28px !important; /* slightly shorter */
+	padding: 0 6px !important;
+	font-size: 12px !important; /* smaller font */
+	line-height: 1 !important;
+	border-radius: 4px !important;
+	border: none !important;
+	box-shadow: none !important;
+	vertical-align: middle !important;
+}
+
+/* Fanmade button: active = blue (matches left border), inactive = grey */
+/* Disabled color shared for both buttons */
+:root { --btn-disabled: #9e9e9e; }
+#btn-show-fanmade { background-color: var(--btn-disabled) !important; color: #fff !important; }
+#btn-show-fanmade.active { background-color: #1e88e5 !important; color: #fff !important; }
+
+/* Trait button: active = black with white text, inactive = grey */
+#btn-show-traits { background-color: var(--btn-disabled) !important; color: #fff !important; }
+#btn-show-traits.active { background-color: #111 !important; color: #fff !important; }
+
+/* Alt Art button: active = green, inactive = grey */
+#btn-show-altart { background-color: var(--btn-disabled) !important; color: #fff !important; }
+#btn-show-altart.active { background-color: #43a047 !important; color: #fff !important; }
+
+/* Note: do not override global .btn-xs spacing to avoid changing quantity button sizes */
 
 </style>
 
