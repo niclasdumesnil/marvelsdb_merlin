@@ -7,7 +7,35 @@ var DisplayColumnsTpl = '',
 	Config = null;
 
 // List of card codes that are exceptions for duplicate-hiding logic
+// Default value — will be overridden if a JSON file is present and successfully loaded
 var DuplicateExceptions = ["56020","56021","56022","49023"];
+
+/**
+ * Load duplicate exception codes from a JSON file (overrides the default array)
+ * @memberOf ui
+ * @param {String} url - optional URL to the JSON file (defaults to bundles/app/data/...)
+ * @returns {jqXHR}
+ */
+ui.loadDuplicateExceptions = function loadDuplicateExceptions(url) {
+	url = url || '/bundles/app/data/duplicate_exceptions.json';
+	return $.getJSON(url).done(function(data) {
+		try {
+			if (Array.isArray(data)) {
+				DuplicateExceptions = data.map(function(v) { return String(v); });
+				// force rebuild of rows so the new exceptions take effect
+				CardDivs = [[],[],[]];
+				ui.refresh_lists();
+				console.info('DuplicateExceptions loaded from', url);
+			} else {
+				console.warn('duplicate_exceptions.json did not contain an array:', data);
+			}
+		} catch (e) {
+			console.warn('Error processing duplicate exceptions JSON', e);
+		}
+	}).fail(function() {
+		console.info('No duplicate exceptions JSON found at', url, '; using defaults.');
+	});
+};
 
 /**
  * reads ui configuration from localStorage
@@ -1129,7 +1157,9 @@ ui.on_all_loaded = function on_all_loaded() {
 	// for now this needs to be done here
 	ui.set_max_qty();
 	ui.refresh_deck(); // now updates the deck changes and history too
-	ui.refresh_lists(); // update the card selection lists
+		// Try to load duplicate exceptions from JSON; when loaded it will refresh lists again.
+		ui.loadDuplicateExceptions();
+		ui.refresh_lists(); // update the card selection lists (will be refreshed again if JSON loaded)
 	ui.setup_typeahead();
 	ui.setup_dataupdate();
 
