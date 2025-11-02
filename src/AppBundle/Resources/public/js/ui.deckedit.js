@@ -6,6 +6,9 @@ var DisplayColumnsTpl = '',
 	CardDivs = [[],[],[]],
 	Config = null;
 
+// List of card codes that are exceptions for duplicate-hiding logic
+var DuplicateExceptions = ["56020","56021","56022","49023"];
+
 /**
  * reads ui configuration from localStorage
  * @memberOf ui
@@ -451,7 +454,7 @@ ui.chaos = function() {
 						var duped = [];
 						dupe.duplicated_by.forEach(function (another_id) {
 							var another_dupe = app.data.cards.findById(another_id);
-							if (another_dupe && ui.in_selected_packs(another_duge, filters)) {
+							if (another_dupe && ui.in_selected_packs(another_dupe, filters)) {
 								duped.push(another_dupe);
 							}
 						});
@@ -861,6 +864,9 @@ if (showFanmadeAffinity && !showFanmadeAffinity.checked && fanmade === "Yes") {
     return $('');
 }
 
+// isAltArt flag based on exceptions list
+var isAltArt = (DuplicateExceptions.indexOf(card.code) !== -1);
+
     var html = DisplayColumnsTpl({
         radios: radios,
         resources: $span.html(),
@@ -868,7 +874,27 @@ if (showFanmadeAffinity && !showFanmadeAffinity.checked && fanmade === "Yes") {
         card: card,
         fanmade: fanmade // Ajouté
     });
-    return $(html);
+	var $row = $(html);
+	// If this card is in the exceptions list, add a hidden alt-art marker
+	if (isAltArt) {
+		var marker = '<span class="alt_art_yes"></span>';
+		var $link = $row.find('a.card').first();
+		if ($link.length) {
+			$link.after(marker);
+		} else {
+			$row.append(marker);
+		}
+		// remove any grey custom_tag that might contain the text 'alt-art' (data-driven)
+		$row.find('.custom_tag').each(function() {
+			try {
+				var txt = $(this).text().toLowerCase().trim();
+				if (txt === 'alt-art' || txt === 'alt art' || txt === 'altart') {
+					$(this).remove();
+				}
+			} catch (e) {}
+		});
+	}
+	return $row;
 }
 
 ui.reset_list = function reset_list() {
@@ -914,7 +940,7 @@ ui.refresh_list = _.debounce(function refresh_list() {
 		if (card.duplicate_of_code) {
 			// if the parent card is included, use that over any other
 			var dupe = app.data.cards.findById(card.duplicate_of_code);
-			if (dupe && ui.in_selected_packs(dupe, filters)) {
+			if (dupe && ui.in_selected_packs(dupe, filters) && DuplicateExceptions.indexOf(card.code) === -1) {
 				return;
 			}
 
@@ -923,13 +949,13 @@ ui.refresh_list = _.debounce(function refresh_list() {
 				var duped = [];
 				dupe.duplicated_by.forEach(function (another_id) {
 					var another_dupe = app.data.cards.findById(another_id);
-					if (another_dupe && ui.in_selected_packs(another_duge, filters)) {
+					if (another_dupe && ui.in_selected_packs(another_dupe, filters)) {
 						duped.push(another_dupe);
 					}
 				});
 				if (duped && duped.length > 0) {
-					if (duped[0] && duped[0].code != card.code) {
-						return
+					if (duped[0] && duped[0].code != card.code && DuplicateExceptions.indexOf(card.code) === -1) {
+						return;
 					}
 				}
 			}
@@ -1070,6 +1096,7 @@ if (cb) {
         app.ui.refresh_lists();
     });
 }
+// (show-alt-art checkbox removed) no-op
 var cbTraits = document.getElementById('show-traits-tags');
 window.showTraitsTags = cbTraits ? cbTraits.checked : true;
 if (cbTraits) {

@@ -78,13 +78,13 @@
 <div class="row" id="build_filters">
 
 	<div class="col-sm-12" style="margin-bottom:10px">
-            <input type="checkbox" id="show-fanmade-affinity" checked>
-            Display FanMade Affinity &amp; Basic cards
+			<input type="checkbox" id="show-fanmade-affinity" checked>
+			Display FanMade Affinity &amp; Basic cards
 
-            &nbsp;&nbsp; <!-- Ajoute un espace ici -->
+			&nbsp;&nbsp; <!-- Ajoute un espace ici -->
 
-            <input type="checkbox" id="show-traits-tags" checked style="accent-color: #111;">
-            <span style="margin-left:4px;">Display Traits</span>
+			<input type="checkbox" id="show-traits-tags" checked style="accent-color: #111;">
+			<span style="margin-left:4px;">Display Traits</span>
 	</div>
 
 	<!-- Search Bar -->
@@ -186,6 +186,30 @@ table.table tr:has(.fm_code_yes) td:nth-child(2)::after {
 	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 36'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%234a90ff'/><stop offset='100%25' stop-color='%231e88e5'/></linearGradient></defs><text x='6' y='12' font-family='Helvetica,Arial,sans-serif' font-size='14' font-weight='700' fill='url(%23g)'>Fan</text><text x='6' y='26' font-family='Helvetica,Arial,sans-serif' font-size='14' font-weight='700' fill='url(%23g)'>Made</text></svg>");
 	background-size: contain;
 	background-repeat: no-repeat;
+}
+
+/* Alt-art rows: override left border color to green */
+table.table tr:has(.alt_art_yes) td:first-child {
+	border-left-color: #43a047; /* green accent for alt-art */
+}
+
+/* Show a small two-line "Alt\nArt" SVG AFTER the Name cell for alt-art cards */
+table.table tr:has(.alt_art_yes) td:nth-child(2)::after {
+	content: '';
+	display: inline-block;
+	width: 56px;
+	height: 28px;
+	margin-left: 4px;
+	vertical-align: middle;
+	/* Two-line 'Alt' 'Art' SVG in green gradient matching FanMade size/font */
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 36'><defs><linearGradient id='g2' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%2341c77a'/><stop offset='100%25' stop-color='%2343a047'/></linearGradient></defs><text x='6' y='12' font-family='Helvetica,Arial,sans-serif' font-size='14' font-weight='700' fill='url(%23g2)'>Alt</text><text x='6' y='26' font-family='Helvetica,Arial,sans-serif' font-size='14' font-weight='700' fill='url(%23g2)'>Art</text></svg>");
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+/* Hidden marker element for alt-art detection (kept in DOM but visually hidden) */
+.alt_art_yes {
+	display: none !important;
 }
 
 /* Hide the Aspect (faction) column entirely */
