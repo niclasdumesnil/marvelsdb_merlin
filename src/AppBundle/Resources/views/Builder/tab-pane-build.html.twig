@@ -209,6 +209,19 @@ table.table td:first-child {
 	transition: border-color 180ms ease;
 }
 
+/* Hover colors: pale green for alt-art rows, pale blue for fanmade rows */
+table.table tr:has(.alt_art_yes):hover td {
+	background-color: rgba(67,160,71,0.06) !important; /* pale green */
+}
+table.table tr:has(.fm_code_yes):hover td {
+	background-color: rgba(30,136,229,0.06) !important; /* pale blue */
+}
+/* If a row has both fanmade and alt-art, use a subtle left-to-right gradient of blue->green on hover */
+table.table tr:has(.fm_code_yes):has(.alt_art_yes):hover td {
+	background-image: linear-gradient(90deg, rgba(30,136,229,0.06), rgba(67,160,71,0.06));
+	background-repeat: no-repeat;
+}
+
 /* Fanmade rows: override left border color to blue */
 table.table tr:has(.fm_code_yes) td:first-child {
 	border-left-color: #1e88e5; /* blue accent for fanmade */
