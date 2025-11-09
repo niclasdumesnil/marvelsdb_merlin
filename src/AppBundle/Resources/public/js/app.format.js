@@ -129,6 +129,7 @@ format.info = function info(card) {
 			break;
 		case 'leader':
 		case 'villain':
+		case 'player_minion':
 		case 'minion':
 				text += '<div>Attack: ' + format.fancy_int(card.attack, card.attack_star);
 				text += ' Scheme: ' + format.fancy_int(card.scheme, card.scheme_star);

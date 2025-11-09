@@ -146,6 +146,7 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 				$optionalFields[] = 'scheme';
 				$optionalFields[] = 'scheme_star';
 				$optionalFields[] = 'stage';
+			case "player_minion":
 			case "minion":
 				$externalFields[] = 'subtype';
 				$optionalFields[] = 'attack';

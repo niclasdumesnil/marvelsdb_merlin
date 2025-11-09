@@ -856,6 +856,14 @@ class ImportStdCommand extends ContainerAwareCommand
 			if ($cleanName == "Alter-Ego") {
 				$cleanName = "AlterEgo";
 			}
+			// Support for player minion type name
+			if ($cleanName == "Player Minion") {
+				$cleanName = "PlayerMinion";
+			}
+			// Support for Modular Sets type name with a space
+			if ($cleanName == "Modular Sets") {
+				$cleanName = "ModularSets";
+			}
 			if ($cleanName == "Side Scheme") {
 				$cleanName = "SideScheme";
 			}
@@ -873,14 +881,13 @@ class ImportStdCommand extends ContainerAwareCommand
 			}
 			if ($cleanName == "Evidence - Opportunity") {
 				$cleanName = "EvidenceOpportunity";
-			}            
+			}
 			// Normalize the cleaned name: remove non-alphanumeric characters and CamelCase each part
 			$parts = preg_split('/[^A-Za-z0-9]+/', $cleanName);
 			$cleanName = '';
 			foreach ($parts as $p) {
 				if ($p !== '') $cleanName .= ucfirst($p);
-			}
-
+			}            
 			$functionName = 'import' . $cleanName . 'Data';
 			// Only call the method if it exists to avoid fatal errors for unexpected types
 			if (method_exists($this, $functionName)) {
@@ -1021,6 +1028,15 @@ class ImportStdCommand extends ContainerAwareCommand
 		}
 	}
 
+	/**
+	 * Player Minion uses the same fields as Minion; wrapper to reuse the same logic
+	 */
+	protected function importPlayerMinionData(Card $card, $data)
+	{
+		// Delegate to the same handler as Minion
+		$this->importMinionData($card, $data);
+	}
+
 	protected function importEnvironmentData(Card $card, $data)
 	{
 		$optionalKeys = [
@@ -1048,6 +1064,30 @@ class ImportStdCommand extends ContainerAwareCommand
 	protected function importEvidenceOpportunityData(Card $card, $data)
 	{
 
+	}
+
+	/**
+	 * Challenge cards don't need extra fields beyond the common ones.
+	 * Provide a no-op importer to avoid undefined method errors when a
+	 * card type named "Challenge" is encountered.
+	 */
+	protected function importChallengeData(Card $card, $data)
+	{
+		$optionalKeys = [
+			'expansions_needed'
+		];
+		foreach($optionalKeys as $key) {
+			$this->copyKeyToEntity($card, 'AppBundle\Entity\Card', $data, $key, FALSE);
+		}
+	}
+
+	/**
+	 * Modular Sets don't have special fields beyond common ones; provide a stub
+	 * to avoid undefined method errors when the type name contains a space.
+	 */
+	protected function importModularSetsData(Card $card, $data)
+	{
+		// no-op
 	}
 
 	protected function importSideSchemeData(Card $card, $data)
@@ -1089,40 +1129,6 @@ class ImportStdCommand extends ContainerAwareCommand
 			'threat_fixed',
 			'threat_per_group',
 			'threat_star',
-		];
-		foreach($optionalKeys as $key) {
-			$this->copyKeyToEntity($card, 'AppBundle\Entity\Card', $data, $key, FALSE);
-		}
-	}
-
-	/**
-	 * Fanmade "Challenge" type maps to main scheme-like fields.
-	 * Provide a small wrapper so the dynamic caller importChallengeData() exists.
-	 */
-	protected function importChallengeData(Card $card, $data)
-	{
-		$optionalKeys = [
-			'expansions_needed'
-		];
-		foreach($optionalKeys as $key) {
-			$this->copyKeyToEntity($card, 'AppBundle\Entity\Card', $data, $key, FALSE);
-		}
-	}
-
-	/**
-	 * Handle fanmade "Modular Sets" type which may be named with a space in JSON.
-	 * Map it to the modular-related optional keys (similar to main scheme / side scheme fields)
-	 */
-	protected function importModularSetsData(Card $card, $data)
-	{
-		// Many modular sets behave like regular sets; copy commonly used modular keys if present.
-		$optionalKeys = [
-			'boost',
-			'boost_star',
-			'scheme_acceleration',
-			'scheme_amplify',
-			'scheme_crisis',
-			'scheme_hazard',
 		];
 		foreach($optionalKeys as $key) {
 			$this->copyKeyToEntity($card, 'AppBundle\Entity\Card', $data, $key, FALSE);
