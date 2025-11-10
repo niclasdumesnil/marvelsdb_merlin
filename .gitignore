@@ -24,3 +24,8 @@ tags
 /var
 web/private_decks_list.tsv
 web/public_decks_list.tsv
+tools/marvelcdb_1_3.tsv
+tools/marvelcdb_1_12.tsv
+tools/marvelcdb_1_300.tsv
+tools/marvelcdb_1_32000 .csv
+tools/marvelcdb_50000_51000.csv
