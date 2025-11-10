@@ -71,13 +71,13 @@
 	</div>
 	<div>
 		{% include 'AppBundle:Default:pagination.html.twig' %}
-
+		<br>
 		<div class="decklists">
 			{% for decklist in decklists %}
 				{{ macros.decklist_block(decklist) }}
 			{% endfor %}
 		</div>
-
+		<br>
 		{% include 'AppBundle:Default:pagination.html.twig' %}
 
 	</div>
