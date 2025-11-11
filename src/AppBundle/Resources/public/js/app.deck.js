@@ -584,6 +584,10 @@ deck.get_layout_data = function get_layout_data(options) {
 
     var hero = app.data.cards.findById(hero_code);
 	var minDeckSize = 40;
+	// Special-case: some heroes require larger draw decks
+	if (hero && hero.code === '202901a') {
+		minDeckSize = 46;
+	}
 
 	if (hero.meta && hero.meta.colors) {
 		data['hero_color_1'] = hero.meta.colors[0];
@@ -975,8 +979,13 @@ deck.get_problem = function get_problem() {
 		return 'invalid_cards';
 	}
 
-	// Deck has less than the required 40 cards
-	if (deck.get_draw_deck_size() < 40) {
+	// Deck has less than the required cards (default 40, some heroes require more)
+	var requiredSize = 40;
+	// Special case: hero with code '202901a' requires at least 46 cards
+	if (hero && hero.code === '202901a') {
+		requiredSize = 46;
+	}
+	if (deck.get_draw_deck_size() < requiredSize) {
 		return 'too_few_cards';
 	}
 
