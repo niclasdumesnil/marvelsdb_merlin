@@ -1,0 +1,9 @@
+AppBundle\Entity\Team:
+    properties:
+        name:
+            - NotBlank: ~
+            - Length: { max: 255 }
+        owner:
+            - NotNull: ~
+        decks:
+            - Count: { min: 2, max: 4, minMessage: "A team must contain at least {{ limit }} decks.", maxMessage: "A team must contain at most {{ limit }} decks." }

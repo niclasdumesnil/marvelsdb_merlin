@@ -1,0 +1,50 @@
+{% extends 'AppBundle::layout.html.twig' %}
+{% import "AppBundle::macros.html.twig" as macros %}
+
+{% block body %}
+<div class="container main">
+    <h1>Your teams</h1>
+    <p><a class="btn btn-primary" href="{{ path('team_new') }}">Create a new team</a></p>
+
+    {% if teams is empty %}
+        <p>No teams yet.</p>
+    {% else %}
+        <div class="teams-list">
+            {% for team in teams %}
+                <div class="team-card box" style="position: relative;">
+                    {% set grad = team_gradient_map[team.id]|default(null) %}
+                    <div class="team-header" style="display:flex; align-items:left; {% if grad and grad.bg %}{% if grad.bg|slice(0,15) == 'linear-gradient' %}background-image: {{ grad.bg }};{% else %}background-color: {{ grad.bg }};{% endif %} color: {{ grad.text|default('#fff') }};{% endif %}">
+                        <div>
+                            <h2 style="margin:0; font-size:1.25rem;">{{ team.name }}</h2>
+                            <small>Owner: {{ team.owner.username }} &middot; {{ team.decks|length }} decks &middot; {{ team.visibility|capitalize }}</small>
+                        </div>
+                    </div>
+                    <div class="team-header-actions" style="position: absolute; top: 0.6rem; right: 0.6rem; display:flex; flex-direction:row; flex-wrap:nowrap; gap:0.4rem; align-items:center; white-space:nowrap;">
+                        <a class="btn btn-sm btn-default" style="display:inline-flex; width:auto;" href="{{ path('team_view', {'team_id': team.id, 'slug': team.slug}) }}">View</a>
+                        {% if app.user and app.user.id == team.owner.id %}
+                            <a class="btn btn-sm btn-default" style="display:inline-flex; width:auto;" href="{{ path('team_edit', {'team_id': team.id}) }}">Edit</a>
+                        {% endif %}
+                    </div>
+
+                    <div class="team-decks">
+                        {% for deck in team.decks %}
+                            {% set faction = deck.getCharacter().getFaction().getCode() %}
+                            <div class="team-deck-item">
+                                {# Use decklist_block to show the full deck info and let the macro compute colors from aspect #}
+                                {% set dm = deck_meta_map[deck.id]|default(null) %}
+                                {{ macros.decklist_block({
+                                            'decklist': deck,
+                                            'meta': dm.meta|default({'aspect': faction}),
+                                            'hero_meta': dm.hero_meta|default({'colors': ['#ffffff', '#e6e6e6', '#cccccc', '#000000']})
+                                        }, false) }}
+                            </div>
+                        {% else %}
+                            <div class="text-muted">No decks in this team.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

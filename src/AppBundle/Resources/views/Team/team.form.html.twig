@@ -1,0 +1,307 @@
+{% extends 'AppBundle::layout.html.twig' %}
+{% import 'AppBundle::macros.html.twig' as macros %}
+
+{% block body %}
+<div class="container main">
+    <h1>{% if team is defined %}Edit Team{% else %}Create Team{% endif %}</h1>
+
+    {% if team is defined %}
+        {{ form_start(form, {'action': path('team_update', {'team_id': team.id}) }) }}
+    {% else %}
+        {{ form_start(form, {'action': path('team_create') }) }}
+    {% endif %}
+        {{ form_errors(form) }}
+        <div class="form-group">
+            {{ form_label(form.name) }}
+            {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.name) }}
+        </div>
+
+        <!-- selected decks preview: counter above, previews below -->
+        <div id="selected-decks-wrapper">
+            <div id="selected-counter" class="selected-counter">0 / 4</div>
+            <div id="selected-decks"></div>
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.decks) }}
+            {# keep the actual select for form submission but hide it; we'll drive it from the visual grid below #}
+            {{ form_widget(form.decks, {'attr': {'style': 'display:none;'}}) }}
+            <div class="team-decks-errors">
+                {{ form_errors(form.decks) }}
+            </div>
+
+            
+
+            <div id="deck-visual-grid" style="display:flex; flex-wrap:wrap; gap:1rem; margin-top:0.75rem;">
+                {% if deck_choices is defined and deck_choices is iterable %}
+                    {% for d in deck_choices %}
+                        {# include hero code on the tile so client JS can detect duplicates #}
+                        <div class="deck-visual-item" data-deck-id="{{ d.decklist.id }}" data-hero-code="{{ d.decklist.getCharacter() is defined ? d.decklist.getCharacter().getCode() : '' }}" style="flex: 0 0 calc(50% - 0.5rem); cursor:pointer;">
+                            {{ macros.decklist_block(d, true) }}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-muted">No decks available.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            {{ form_widget(form.visibility) }}
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save</button>
+    {{ form_end(form) }}
+
+    <style>
+    .deck-visual-item { position: relative; }
+    .deck-visual-item.selected { outline: 3px solid rgba(51,122,183,0.9); border-radius:4px; }
+    .deck-visual-item.disabled { opacity:0.45; pointer-events:none; }
+    /* visual flag for duplicate hero conflict */
+    .deck-visual-item.hero-conflict::after {
+        content: '\26A0'; /* warning triangle */
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        background: #c9302c;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        line-height: 1;
+        box-shadow: 0 0 4px rgba(0,0,0,0.25);
+    }
+    /* style the decks-count validation message (server-side validator)
+       make it red and prepend a stop icon so it doesn't depend on icon fonts */
+    .team-decks-errors { color: #c9302c; margin-top: 0.5rem; font-weight: 600; }
+    .team-decks-errors ul { list-style: none; padding-left: 0; margin: 0; }
+    .team-decks-errors li { position: relative; padding-left: 1.6em; }
+    .team-decks-errors li::before {
+        content: "⛔"; /* heavy no entry sign (Unicode) */
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-size: 1.1em;
+        line-height: 1;
+        display: inline-block;
+    }
+    /* selected decks preview styling (restored original inline styles) */
+    #selected-decks-wrapper { width: 100%; }
+    .selected-counter { width: 100%; text-align: right; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.35rem; }
+    #selected-decks { min-height: 2.2rem; display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem; margin-top:0rem; margin-bottom:0.5rem; }
+    .selected-deck-item { background: #fff; border: 0px solid #e3e3e3; padding: 0.4rem; border-radius: 0px; overflow: hidden; }
+    .selected-deck-item .deck-title { font-size: 0.95rem; }
+    .selected-deck-item { cursor: pointer; }
+    .selected-deck-item a.deck-title { color: inherit; }
+    /* compact preview thumbnail */
+    .selected-deck-item img { display: inline-block; vertical-align: middle; }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var visEl = document.getElementById('{{ form.visibility.vars.id }}');
+        var visName = '{{ form.visibility.vars.full_name }}';
+        var decks = document.getElementById('{{ form.decks.vars.id }}');
+        if (!decks) return;
+
+        // map deck id -> option element
+        var optionById = {};
+        for (var i = 0; i < decks.options.length; i++) {
+            var o = decks.options[i];
+            optionById[o.value] = o;
+        }
+
+        // tiles
+        var tiles = Array.prototype.slice.call(document.querySelectorAll('#deck-visual-grid .deck-visual-item'));
+        tiles.forEach(function (tile) {
+            var id = tile.getAttribute('data-deck-id');
+            // mark initial selection state if the option is pre-selected
+            var opt = optionById[id];
+            if (opt && opt.selected) tile.classList.add('selected');
+
+            tile.addEventListener('click', function (ev) {
+                if (!opt || opt.disabled) return;
+                if (decks.multiple) {
+                    opt.selected = !opt.selected;
+                    tile.classList.toggle('selected', opt.selected);
+                } else {
+                    // single-select: select this and deselect others
+                    for (var j = 0; j < decks.options.length; j++) decks.options[j].selected = false;
+                    opt.selected = true;
+                    tiles.forEach(function (t) { t.classList.toggle('selected', t.getAttribute('data-deck-id') === id); });
+                }
+                // update any hero conflicts after selection change
+                checkHeroConflicts();
+                refreshSelectedDisplay();
+            });
+        });
+
+        // detect selected tiles that share the same hero and mark them
+        function checkHeroConflicts() {
+            var heroMap = {}; // heroCode -> [deckId,...]
+            tiles.forEach(function (tile) {
+                var did = tile.getAttribute('data-deck-id');
+                var hero = tile.getAttribute('data-hero-code') || '';
+                var opt = optionById[did];
+                if (opt && opt.selected) {
+                    if (!heroMap[hero]) heroMap[hero] = [];
+                    heroMap[hero].push(did);
+                }
+            });
+            // find duplicates (hero code present in >1 selected deck and non-empty)
+            var duplicates = {};
+            for (var h in heroMap) {
+                if (h && heroMap[h].length > 1) duplicates[h] = true;
+            }
+            // apply classes
+            tiles.forEach(function (tile) {
+                var hero = tile.getAttribute('data-hero-code') || '';
+                var did = tile.getAttribute('data-deck-id');
+                var opt = optionById[did];
+                var isSelected = opt && opt.selected;
+                if (isSelected && duplicates[hero]) {
+                    tile.classList.add('hero-conflict');
+                } else {
+                    tile.classList.remove('hero-conflict');
+                }
+            });
+        }
+
+        // helper to read current visibility value (supports select or radio inputs)
+        function getVisibilityValue() {
+            if (visEl) return visEl.value;
+            var radios = document.getElementsByName(visName);
+            for (var i = 0; i < radios.length; i++) {
+                if (radios[i].checked) return radios[i].value;
+            }
+            return '';
+        }
+
+        function applyFilter() {
+            var v = getVisibilityValue();
+            var opts = decks.options;
+            for (var i = 0; i < opts.length; i++) {
+                var o = opts[i];
+                var published = o.getAttribute('data-published') === '1';
+                if (v === 'public') {
+                    if (!published) { o.hidden = true; o.disabled = true; o.selected = false; }
+                    else { o.hidden = false; o.disabled = false; }
+                } else if (v === 'private') {
+                    if (published) { o.hidden = true; o.disabled = true; o.selected = false; }
+                    else { o.hidden = false; o.disabled = false; }
+                } else {
+                    // unknown/empty visibility -> show all
+                    o.hidden = false; o.disabled = false;
+                }
+            }
+
+            // sync visual tiles with option visibility/disabled state
+            tiles.forEach(function (tile) {
+                var id = tile.getAttribute('data-deck-id');
+                var opt = optionById[id];
+                if (!opt) return;
+                tile.style.display = opt.hidden ? 'none' : '';
+                tile.classList.toggle('disabled', !!opt.disabled);
+                // if option became unselected due to filter, remove visual selection
+                if (!opt.selected) tile.classList.remove('selected');
+            });
+            // refresh selected preview when filter changes selection/visibility
+            refreshSelectedDisplay();
+        }
+
+        // attach listeners
+        if (visEl) {
+            visEl.addEventListener('change', applyFilter);
+        } else {
+            var radios = document.getElementsByName(visName);
+            for (var i = 0; i < radios.length; i++) radios[i].addEventListener('change', applyFilter);
+        }
+
+        // apply initial filter
+        applyFilter();
+        // evaluate hero conflicts based on any initial selection
+        checkHeroConflicts();
+        // build initial selected preview
+        refreshSelectedDisplay();
+
+        // show selected decks in the preview area and allow deselect by clicking the preview item
+        function refreshSelectedDisplay() {
+            var container = document.getElementById('selected-decks');
+            if (!container) return;
+            // clear
+            while (container.firstChild) container.removeChild(container.firstChild);
+
+            var count = 0;
+            for (var i = 0; i < decks.options.length; i++) {
+                var o = decks.options[i];
+                if (o.selected) {
+                    count++;
+                    var id = o.value;
+                    var tile = document.querySelector('#deck-visual-grid .deck-visual-item[data-deck-id="' + id + '"]');
+                    if (tile) {
+                        // find the deck title/link inside the tile (macro output)
+                        var titleLink = tile.querySelector('h4 a');
+                        var titleText = titleLink ? titleLink.textContent.trim() : ('Deck ' + id);
+                        var titleHref = titleLink ? titleLink.getAttribute('href') : '#';
+
+                        var wrap = document.createElement('div');
+                        wrap.className = 'selected-deck-item';
+                        wrap.setAttribute('data-deck-id', id);
+
+                        // Clone the full deck visual item so preview matches selectable list
+                        var clone = tile.cloneNode(true);
+                        // remove interactive/selection/conflict classes and inline cursor
+                        clone.classList.remove('selected');
+                        clone.classList.remove('hero-conflict');
+                        clone.classList.remove('disabled');
+                        clone.style.cursor = 'default';
+                        // ensure clone fits the grid cell
+                        clone.style.width = '100%';
+                        clone.style.boxSizing = 'border-box';
+
+                        wrap.appendChild(clone);
+
+                        wrap.addEventListener('click', function (ev) {
+                            // ignore clicks on links inside the clone
+                            if (ev.target.closest && ev.target.closest('a')) return;
+                            var did = this.getAttribute('data-deck-id');
+                            var opt = optionById[did];
+                            if (opt) {
+                                opt.selected = false;
+                                // update tile visual state in the lower grid
+                                var t = document.querySelector('#deck-visual-grid .deck-visual-item[data-deck-id="' + did + '"]');
+                                if (t) t.classList.remove('selected');
+                                // update conflicts and preview
+                                checkHeroConflicts();
+                                refreshSelectedDisplay();
+                            }
+                        });
+
+                        container.appendChild(wrap);
+                    }
+                }
+            }
+            if (count === 0) {
+                var placeholder = document.createElement('div');
+                placeholder.className = 'text-muted selected-placeholder';
+                placeholder.textContent = 'No decks selected.';
+                container.appendChild(placeholder);
+            }
+
+            // update the existing counter (placed above the preview)
+            var counterEl = document.getElementById('selected-counter');
+            if (counterEl) counterEl.textContent = count + ' / 4';
+        }
+    });
+    </script>
+
+    {% if team is defined %}
+    <p><a href="{{ path('team_view', {'team_id': team.id, 'slug': team.slug}) }}">Back to team</a></p>
+    {% endif %}
+</div>
+{% endblock %}

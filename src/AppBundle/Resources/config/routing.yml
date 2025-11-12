@@ -15,6 +15,19 @@ app_deck:
     prefix: /deck
 
 
+app_team:
+    resource: "@AppBundle/Resources/config/routing/routing_team.yml"
+    prefix: /team
+
+
+# Provide a non-localized route name for templates/controllers that expect 'team_index'
+team_index:
+    path: /team/
+    methods: [GET]
+    defaults:
+        _controller: AppBundle:Team:index
+
+
 app_decklist:
     resource: "@AppBundle/Resources/config/routing/routing_decklist.yml"
     prefix: /decklist

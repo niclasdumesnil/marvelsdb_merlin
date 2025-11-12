@@ -1,0 +1,52 @@
+AppBundle\Entity\Team:
+    type: entity
+    table: team
+    manyToOne:
+        owner:
+            targetEntity: User
+            nullable: false
+            joinColumn:
+                name: owner_id
+                referencedColumnName: id
+    manyToMany:
+        decks:
+            targetEntity: Deck
+            joinTable:
+                name: team_deck
+                joinColumns:
+                    team_id:
+                        referencedColumnName: id
+                inverseJoinColumns:
+                    deck_id:
+                        referencedColumnName: id
+    fields:
+        id:
+            type: integer
+            id: true
+            generator:
+                strategy: AUTO
+        name:
+            type: string
+            length: 255
+        dateCreation:
+            type: datetime
+            nullable: false
+            column: date_creation
+            gedmo:
+                timestampable:
+                    on: create
+        dateUpdate:
+            type: datetime
+            nullable: false
+            column: date_update
+            gedmo:
+                timestampable:
+                    on: update
+        visibility:
+            type: string
+            length: 20
+            nullable: true
+        slug:
+            type: string
+            length: 255
+            nullable: true

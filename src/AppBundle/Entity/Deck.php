@@ -943,4 +943,21 @@ class Deck extends \AppBundle\Model\ExportableDeck implements \JsonSerializable
     {
     	return $this->majorVersion . "." . $this->minorVersion;
     }
+
+    /**
+     * Get nameCanonical
+     *
+     * @return string
+     */
+    public function getNameCanonical()
+    {
+        $name = $this->getName();
+        $version = $this->getVersion();
+        $slug = preg_replace('/[^a-z0-9]+/', '-', mb_strtolower(trim($name)));
+        $slug = trim($slug, '-');
+        if (!$slug) {
+            $slug = 'deck-' . time();
+        }
+        return $slug . '-' . $version;
+    }
 }

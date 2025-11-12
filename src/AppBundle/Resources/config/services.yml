@@ -47,3 +47,7 @@ services:
         class: AppBundle\Helper\DeckValidationHelper
         arguments: ["@agenda_helper"]
         public: true
+    team_voter:
+        class: AppBundle\Security\TeamVoter
+        tags:
+            - { name: security.voter }

@@ -11,9 +11,9 @@
 {% macro decklist_table_row(decklist) %}
 <tr>
 	<td class="decklist-name"><a href="{{ path('decklist_detail', { 'decklist_id': decklist.id, 'decklist_name': decklist.nameCanonical|e('url') }) }}">{{ decklist.name }}</a></td>
-	<td><span class="fa fa-heart social-icon-like"></span> {{ decklist.nbVotes }}</td>
-	<td><span class="fa fa-star social-icon-favorite"></span> {{ decklist.nbFavorites }}</td>
-	<td><span class="fa fa-comment social-icon-comment"></span> {{ decklist.nbComments }}</td>
+	<td><span class="fa fa-heart social-icon-like"></span> {{ attribute(decklist, 'nbVotes')|default(0) }}</td>
+	<td><span class="fa fa-star social-icon-favorite"></span> {{ attribute(decklist, 'nbFavorites')|default(0) }}</td>
+	<td><span class="fa fa-comment social-icon-comment"></span> {{ attribute(decklist, 'nbComments')|default(0) }}</td>
 	<td><span class="fa fa-code-fork social-icon-version"></span> {{ decklist.version }}</td>
 </tr>
 {% endmacro %}
@@ -33,13 +33,13 @@
 {% macro decklist_social_icons(decklist) %}
 <span class="social-icons">
 	<a id="social-icon-like" href="#" class="social-icon-like" data-toggle="tooltip" data-placement="bottom" title="Like">
-		<span class="fa fa-heart"></span> <span class="num">{{ decklist.nbVotes }}</span>
+	<span class="fa fa-heart"></span> <span class="num">{{ attribute(decklist, 'nbVotes')|default(0) }}</span>
 	</a>
 	<a id="social-icon-favorite" href="#" class="social-icon-favorite" data-toggle="tooltip" data-placement="bottom" title="Favorite">
-		<span class="fa fa-star"></span> <span class="num">{{ decklist.nbFavorites }}</span>
+	<span class="fa fa-star"></span> <span class="num">{{ attribute(decklist, 'nbFavorites')|default(0) }}</span>
 	</a>
 	<a id="social-icon-comment" href="#comment-form" class="social-icon-comment" data-toggle="tooltip" data-placement="bottom" title="Comment">
-		<span class="fa fa-comment"></span> <span class="num">{{ decklist.nbComments }}</span>
+	<span class="fa fa-comment"></span> <span class="num">{{ attribute(decklist, 'nbComments')|default(0) }}</span>
 	</a>
 	<span class="social-icon-version" data-toggle="tooltip" data-placement="bottom" title="Version">
 		<span class="fa fa-code-fork"></span> <span class="num">{{ decklist.version }}</span>
@@ -48,7 +48,8 @@
 {% endmacro %}
 
 {% macro slot_with_icons(slot) %}
-{{ slot.quantity }}x <span class="icon icon-{{ slot.card.type.code }} fg-{{ slot.card.faction.code }}"></span> <a href="{{ path('cards_zoom', {card_code: slot.card.code }) }}" class="card card-tip" data-code="{{ slot.card.code }}">{{ slot.card.name }}</a>
+{{ slot.quantity }}x <span class="icon icon-{{ slot.card.type.code }} fg-{{ slot.card.faction.code }}"></span>
+	<a href="{{ path('cards_zoom', {card_code: slot.card.code }) }}" class="card card-tip" data-code="{{ slot.card.code }}">{{ slot.card.name }}</a>
 {% endmacro %}
 
 {% macro hero_highlight(hero, hero_meta, decklists) %}
@@ -75,9 +76,15 @@
     <div class="box">
         <div style="background-color: rgba(255,255,255,0.97); border-radius: 5px;">
             <div class="bg-faction {% if data.meta.aspect is defined %}faint-{{ data.meta.aspect }}{% else %}faint-basic{% endif %}" style="display: flex; align-items: stretch;">
-                <h4 style="font-size: 1.15em; flex: 1; margin: 0; padding: 0.5rem; padding-left: 1rem; padding-right: 1rem; display: flex; align-items: center;">
-                    <a href="{{ path('decklist_detail',{decklist_id:data.decklist.id,decklist_name:data.decklist.nameCanonical}) }}">{{ data.decklist.name }}</a>
-                </h4>
+				<h4 style="font-size: 1.15em; flex: 1; margin: 0; padding: 0.5rem; padding-left: 1rem; padding-right: 1rem; display: flex; align-items: center;">
+					{# If this object represents a private Deck (no parent) link to deck_view, otherwise link to public decklist_detail #}
+					{% set parent = data.decklist.getParent() %}
+					{% if parent is not null %}
+						<a href="{{ path('decklist_detail',{decklist_id:data.decklist.id,decklist_name:data.decklist.nameCanonical}) }}">{{ data.decklist.name }}</a>
+					{% else %}
+						<a href="{{ path('deck_view',{deck_id:data.decklist.id,deck_name:data.decklist.name}) }}">{{ data.decklist.name }}</a>
+					{% endif %}
+				</h4>
                 {% if not compact %}
                     <div class="card-thumbnail-wide card-thumbnail-hero" style="min-height: 55px; {% if data.hero_meta.offset is defined%}background-position: {{data.hero_meta.offset}}; {% endif %}background-image:url(/bundles/cards/{{data.decklist.getCharacter().getCode()}}.jpg)"></div>
                 {% endif %}
@@ -229,58 +236,56 @@
 {% endmacro %}
 
 {% macro pack_plane(pack, max_height) %}
-    <div class="pack-plane"
-        data-release="{{ pack.dateRelease ? pack.dateRelease|date('Y-m-d') : '' }}"
-        data-creator="{{ pack.creator|lower }}"
-        data-alpha="{{ pack.name|lower }}"
-        data-type="{{ pack.packType.code }}"
-        data-status="{{ pack.status is defined ? pack.status|lower : '' }}"
-        data-custom="{% if pack.creator == '' or pack.creator|upper == 'FFG' %}official{% elseif pack.visibility is defined and pack.visibility == 'false' %}private{% else %}fanmade{% endif %}">
-        <span class="tag creator">{{ pack.creator }}</span>
-        {% if pack.status is defined and pack.status %}
-            <span class="tag status-{{ pack.status }}">
-                {{ pack.status|capitalize }} 
-            </span>
-        {% endif %}
-        <div class="pack-plane-image-container">
-            <a href="/set/{{ pack.code }}/spoiler">
-                <img class="pack-plane-image" src="{{ asset('bundles/packs/' ~ pack.code ~ '.jpg') }}" alt="{{ pack.name }}" crossorigin="anonymous">
-            </a>
-        </div>
-        <div class="pack-plane-title" style="min-height: {{ max_height * 32 }}px;">
-            {{ pack.name|length > 24 ? pack.name|slice(0,24) ~ '<br>' ~ pack.name|slice(24) : pack.name|e('html') }}
-            {% if pack.language is defined and pack.language == 'fr' %}
-                <img src="https://upload.wikimedia.org/wikipedia/commons/6/62/Flag_of_France.png"
-                     alt="FR" title="French only"
-                     class="pack-plane-fr-flag">
-            {% endif %}
-        </div>
-        <div class="pack-plane-footer">
-            {% set display_date = '' %}
-            {% if pack.dateRelease is defined and pack.dateRelease %}
-                {% set display_date = pack.dateRelease|date('Y-m-d') %}
-            {% endif %}
-            <span class="pack-plane-date">
-                {{ display_date }}
-            </span>
-            <span class="
-                {% if pack.packType.code == 'hero_fanmade' %}
-                    pack-type-name-hero
-                {% elseif pack.packType.code == 'fm_theme' %}
-                    pack-type-name-theme
-                {% elseif pack.packType.code == 'scenar_fanmade' %}
-                    pack-type-name-scenario
-                {% elseif pack.packType.code == 'fm_story' %}
-                    pack-type-name-campaign
-                {% else %}
-                    pack-plane-type
-                {% endif %}
-            ">
-                {{ pack.packType.name }}
-            </span>
-            <span class="pack-plane-size">
-                {% if pack.size is defined and pack.size %}Pack Size: {{ pack.size }}{% endif %}
-            </span>
-        </div>
-    </div>
+	<div class="pack-plane"
+		data-release="{{ pack.dateRelease ? pack.dateRelease|date('Y-m-d') : '' }}"
+		data-creator="{{ pack.creator|lower }}"
+		data-alpha="{{ pack.name|lower }}"
+		data-type="{{ pack.packType.code }}"
+		data-status="{{ pack.status is defined ? pack.status|lower : '' }}"
+		data-custom="{% if pack.creator == '' or pack.creator|upper == 'FFG' %}official{% elseif pack.visibility is defined and pack.visibility == 'false' %}private{% else %}fanmade{% endif %}">
+		<span class="tag creator">{{ pack.creator }}</span>
+		{% if pack.status is defined and pack.status %}
+			<span class="tag status-{{ pack.status }}">
+				{{ pack.status|capitalize }} 
+			</span>
+		{% endif %}
+		<div class="pack-plane-image-container">
+			<a href="/set/{{ pack.code }}/spoiler">
+				<img class="pack-plane-image" src="{{ asset('bundles/packs/' ~ pack.code ~ '.jpg') }}" alt="{{ pack.name }}" crossorigin="anonymous">
+			</a>
+		</div>
+		<div class="pack-plane-title" style="min-height: {{ max_height * 32 }}px;">
+			{{ pack.name|length > 24 ? pack.name|slice(0,24) ~ '<br>' ~ pack.name|slice(24) : pack.name|e('html') }}
+			{% if pack.language is defined and pack.language == 'fr' %}
+				<img src="https://upload.wikimedia.org/wikipedia/commons/6/62/Flag_of_France.png"
+					 alt="FR" title="French only"
+					 class="pack-plane-fr-flag">
+			{% endif %}
+		</div>
+		<div class="pack-plane-footer">
+			{% set display_date = '' %}
+			{% if pack.dateRelease is defined and pack.dateRelease %}
+				{% set display_date = pack.dateRelease|date('Y-m-d') %}
+			{% endif %}
+			<span class="pack-plane-date">
+				{{ display_date }}
+			</span>
+			<span class="pack-plane-type">
+				{% if pack.packType.code == 'hero_fanmade' %}
+					<span class="pack-type-name pack-type-name-hero">{{ pack.packType.name }}</span>
+				{% elseif pack.packType.code == 'fm_theme' %}
+					<span class="pack-type-name pack-type-name-theme">{{ pack.packType.name }}</span>
+				{% elseif pack.packType.code == 'scenar_fanmade' %}
+					<span class="pack-type-name pack-type-name-scenario">{{ pack.packType.name }}</span>
+				{% elseif pack.packType.code == 'fm_story' %}
+					<span class="pack-type-name pack-type-name-campaign">{{ pack.packType.name }}</span>
+				{% else %}
+					<span class="pack-type-name pack-plane-type">{{ pack.packType.name }}</span>
+				{% endif %}
+			</span>
+			<span class="pack-plane-size">
+				{% if pack.size is defined and pack.size %}Pack Size: {{ pack.size }}{% endif %}
+			</span>
+		</div>
+	</div>
 {% endmacro %}

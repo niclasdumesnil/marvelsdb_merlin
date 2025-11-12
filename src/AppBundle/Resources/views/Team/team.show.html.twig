@@ -1,0 +1,112 @@
+{% extends 'AppBundle::layout.html.twig' %}
+{% import "AppBundle::macros.html.twig" as macros %}
+
+{% block body %}
+<div class="container main team-show">
+    <style>
+        /* affinity-dot: small colored circle indicating card faction/affinity
+           Uses currentColor so fg-<code> classes control the color */
+        .affinity-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: currentColor;
+            vertical-align: middle;
+            margin-right: 0px;
+        }
+        /* Immediate overrides to align type titles and adjust column padding
+           Placed inline so changes appear without re-deploying assets */
+        .team-deck-card-group .type-title {
+            margin-left: 1rem !important;
+        }
+        /* left column items (odd) get left padding, right column (even) get right padding */
+        .team-deck-card-list li:nth-child(odd) {
+            padding-left: 1rem !important;
+        }
+        .team-deck-card-list li:nth-child(even) {
+            padding-right: 1rem !important;
+        }
+        /* reduce vertical spacing between card rows */
+        .team-deck-card-list {
+            gap: 0rem 1rem !important; /* row-gap column-gap */
+        }
+        .team-deck-card-list li {
+            margin: 0.06rem 0 !important;
+        }
+    </style>
+    {% set grad = team_gradient_map[team.id]|default(null) %}
+    <div class="team-header-box" {% if grad and grad.bg %}style="{% if grad.bg|slice(0,15) == 'linear-gradient' %}background-image: {{ grad.bg }};{% else %}background-color: {{ grad.bg }};{% endif %} color: {{ grad.text|default('#fff') }}; border-radius:8px; padding:0.8rem; margin-bottom:1rem;"{% else %}style="background:#f7f7f7; border-radius:8px; padding:0.8rem; margin-bottom:1rem;"{% endif %}>
+        <div class="team-header" style="background:transparent; border-bottom:none; padding:0;">
+            <div>
+                <h1 style="margin:20;margin-left:1rem; display:inline-block;">{{ team.name }}</h1>
+                <div style="font-size:0.95rem; color:inherit; margin-top:0rem;margin-bottom:2rem;margin-left:1rem">
+                    <span>Owner: {{ team.owner.username }}</span>
+                    &nbsp;&middot;&nbsp;
+                    <span>Visibility: {{ team.visibility }}</span>
+                </div>
+            </div>
+            {% if app.user and app.user.id == team.owner.id %}
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <a class="btn btn-default" href="{{ path('team_edit', {'team_id': team.id}) }}">Edit</a>
+                    <form method="post" action="{{ path('team_delete') }}" style="display:inline-block; margin:0;">
+                        <input type="hidden" name="team_id" value="{{ team.id }}" />
+                        <button class="btn btn-danger" type="submit">Delete</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <h3>Decks ({{ team.decks|length }})</h3>
+
+    <div class="team-view-decks">
+    {% for deck in team.decks %}
+        {% set faction = deck.getCharacter().getFaction().getCode() %}
+        <div class="team-view-deck-item">
+            {% set dm = deck_meta_map[deck.id]|default(null) %}
+            {{ macros.decklist_block({
+                        'decklist': deck,
+                        'meta': dm.meta|default({'aspect': faction}),
+                        'hero_meta': dm.hero_meta|default({'colors': ['#ffffff', '#e6e6e6', '#cccccc', '#000000']})
+                    }, false) }}
+            <div class="team-deck-cards">
+                {% set groups = deck_slot_groups_map[deck.id]|default({}) %}
+                {% if groups is empty %}
+                    <div class="groups-wrapper">No cards to show.</div>
+                {% else %}
+                    <div class="cards-container" style="border:3px solid #ccc; border-radius:6px; overflow:hidden;">
+                        <div class="cards-content groups-wrapper">
+                            <strong class="cards-heading">Affinity and basic cards</strong>
+                            {% for typeName, slots in groups %}
+                                <div class="team-deck-card-group">
+                                    <strong class="type-title">{{ typeName }}</strong>
+                                    <ul class="team-deck-card-list">
+                                        {% for slot in slots %}
+                                            {% set card = slot.getCard() %}
+                                            {% if card %}
+                                                {% set code = card.getCode() %}
+                                                    <li class="{% if shared_card_codes is defined and code in shared_card_codes %}shared{% endif %}">
+                                                        {{ macros.slot_with_icons(slot, deck.id) }}
+                                                    {% if shared_card_codes is defined and code in shared_card_codes %}
+                                                        <span class="shared-badge">shared</span>
+                                                    {% endif %}
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="text-muted">No decks in this team.</div>
+    {% endfor %}
+    </div>
+
+    <p style="margin-top:1rem;"><a href="{{ path('team_index') }}">Back to teams</a></p>
+</div>
+{% endblock %}

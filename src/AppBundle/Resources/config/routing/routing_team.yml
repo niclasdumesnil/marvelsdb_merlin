@@ -1,0 +1,49 @@
+
+team_index:
+    path: /
+    methods: [GET]
+    defaults:
+        _controller: AppBundle:Team:index
+
+team_new:
+    path: /new
+    methods: [GET]
+    defaults:
+        _controller: AppBundle:Team:new
+
+team_create:
+    path: /create
+    methods: [POST]
+    defaults:
+        _controller: AppBundle:Team:new
+
+team_view:
+    path: /view/{team_id}/{slug}
+    methods: [GET]
+    defaults:
+        _controller: AppBundle:Team:view
+    requirements:
+        team_id: \d+
+
+team_edit:
+    path: /edit/{team_id}
+    methods: [GET]
+    defaults:
+        _controller: AppBundle:Team:edit
+    requirements:
+        team_id: \d+
+
+team_update:
+    path: /update/{team_id}
+    methods: [POST]
+    defaults:
+        _controller: AppBundle:Team:edit
+    requirements:
+        team_id: \d+
+
+team_delete:
+    path: /delete
+    methods: [POST]
+    defaults:
+        _controller: AppBundle:Team:delete
+

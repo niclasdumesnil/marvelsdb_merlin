@@ -60,11 +60,9 @@
     pointer-events: none;
     transition: opacity 0.2s;
 }
-.creator-box:hover .creator-hover-box .creator {
+creator-box:hover .creator-hover-box .creator {
     opacity: 1;
     pointer-events: auto;
-}
-.creator-hover-box {
 }
 
 .tag.creator {
@@ -863,3 +861,168 @@ ul.creator-list > li {
     font-weight: bold;
     margin-right: 0.8em;
 }
+
+/* Teams styles: placed in merlinsdb.css per project convention */
+.teams-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 1rem;
+    /* Prevent grid rows from forcing equal heights — allow each team-card
+       to size itself according to its content (number of decks). */
+    align-items: start;
+}
+
+.team-card {
+    width: 100%;
+    padding: 0;
+    margin-bottom: 1rem;
+    /* Make the team card a column flex container so its height grows with content
+       (number of decks). This avoids forcing a fixed rectangle height and lets
+       each card size itself according to the amount of decks displayed. */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    /* Don't stretch to match the row height in the grid — keep its natural height. */
+    align-self: start;
+}
+
+.team-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1rem; /* increased vertical padding for larger header */
+    background: #f7f7f7;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.team-decks {
+    /* display decks in two columns inside the team card */
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem; /* space between decks */
+    padding: 0.8rem 1rem;
+    background: #fff;
+    align-items: start;
+    /* allow the decks area to grow and drive the height of the .team-card */
+    flex: 1 1 auto;
+}
+
+.team-deck-item {
+    flex: 1 1 0%;
+    min-width: 0; /* allow flex children to shrink properly */
+}
+
+.team-deck-item .deck-block {
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .teams-list {
+        grid-template-columns: 1fr;
+    }
+    .team-decks {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+}
+
+/* Team view specific deck grid: two columns on desktop, one on mobile */
+.team-view-decks {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+.team-view-deck-item {
+    display: block;
+}
+@media (max-width: 768px) {
+    .team-view-decks {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Cards list under each deck: two columns */
+.team-deck-cards ul {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.25rem 0.5rem;
+    margin: 0;
+    padding-left: 0.8rem;
+}
+.team-deck-cards li { list-style: none; }
+@media (max-width: 600px) {
+    .team-deck-cards ul { grid-template-columns: 1fr; }
+}
+
+/* Team deck card grouping and shared badge styles */
+.team-deck-cards {
+    margin-top: 0.5rem;
+}
+.team-deck-cards .groups-wrapper {
+    padding-left: 0.5rem;
+    margin: 0.25rem 0 0 0;
+}
+.team-deck-card-group {
+    margin-top: 0.5rem;
+}
+.team-deck-card-group .type-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.25rem;
+    /* align type title with the cards heading */
+    margin-left: 1rem;
+}
+.cards-heading { margin-left: 1rem; }
+.team-deck-card-list {
+    padding-left: 1rem;
+    margin: 0.25rem 0 0 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, max-content);
+    gap: 0.25rem 1rem;
+    justify-content: center; /* center the two columns */
+}
+.team-deck-card-list li { margin: 0.15rem 0; }
+.team-deck-card-list li.shared { color: #c9302c; font-weight: 600; }
+.team-deck-card-list li:nth-child(odd) { padding-left: 1rem; }
+.team-deck-card-list li:nth-child(even) { padding-right: 1rem; }
+
+/* cards container, top stripe and inner content */
+.cards-container {
+    background: transparent;
+}
+.cards-top-stripe { width: 100%; }
+.cards-content { padding: 10px 0.6rem; }
+.shared-badge {
+    display: inline-block;
+    margin-left: 0.45rem;
+    padding: 0.06rem 0.28rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    border: 1px solid #6c757d;
+    background: rgba(108,117,125,0.08);
+}
+
+/* small colored dot indicating card affinity/faction */
+.affinity-dot {
+    display: inline-block;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    margin: 0 0.35rem 0 0.25rem;
+    vertical-align: middle;
+    border: 1px solid rgba(0,0,0,0.12);
+}
+
+/* grey box around the grouped cards to match decklist macro style */
+.team-deck-cards .cards-box {
+    background: #f0f0f0;
+    border-radius: 5px;
+    padding: 0.6rem;
+}
+
+/* Selected decks preview is handled inline in the template by default. */
