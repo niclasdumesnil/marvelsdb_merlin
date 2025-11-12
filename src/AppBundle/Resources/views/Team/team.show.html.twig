@@ -80,7 +80,8 @@
                             <strong class="cards-heading">Affinity and basic cards</strong>
                             {% for typeName, slots in groups %}
                                 <div class="team-deck-card-group">
-                                    <strong class="type-title">{{ typeName }}</strong>
+                                    {# show the type name and the count of cards for this type in parentheses #}
+                                    <strong class="type-title">{{ typeName }} ({{ slots|length }})</strong>
                                     <ul class="team-deck-card-list">
                                         {% for slot in slots %}
                                             {% set card = slot.getCard() %}
