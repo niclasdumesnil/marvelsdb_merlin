@@ -591,6 +591,21 @@ class ImportStdCommand extends ContainerAwareCommand
 		$result = [];
 
 		foreach($cardsData as $cardData) {
+			// If the JSON doesn't include a subtype but the card belongs to a pack
+			// whose pack type is 'nemesis', set subtype_code to 'nemesis' here
+			// so the created Card entity gets the proper subtype link.
+			// If the JSON doesn't include a subtype, and the card's set (not pack)
+			// is of CardSetType 'nemesis', set subtype_code to 'nemesis' so the
+			// created Card entity gets the proper subtype link.
+			if ((empty($cardData['subtype_code']) || $cardData['subtype_code'] === null)
+				&& !empty($cardData['set_code'])
+				&& array_key_exists('Cardset', $this->collections)
+				&& array_key_exists($cardData['set_code'], $this->collections['Cardset'])) {
+				$cardset = $this->collections['Cardset'][$cardData['set_code']];
+				if ($cardset && $cardset->getCardSetType() && $cardset->getCardSetType()->getCode() === 'nemesis') {
+					$cardData['subtype_code'] = 'nemesis';
+				}
+			}
 			$card = $this->getEntityFromData('AppBundle\Entity\Card', $cardData, [
 				'code',
 				'position',
