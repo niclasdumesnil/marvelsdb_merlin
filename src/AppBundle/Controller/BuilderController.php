@@ -531,9 +531,28 @@ class BuilderController extends Controller
 		$deck_id = filter_var($request->get('deck_id'), FILTER_SANITIZE_NUMBER_INT);
 		$deck = $em->getRepository('AppBundle:Deck')->find($deck_id);
 		if (! $deck)
-		return $this->redirect($this->generateUrl('decks_list'));
+			return $this->redirect($this->generateUrl('decks_list'));
 		if ($this->getUser()->getId() != $deck->getUser()->getId())
-		throw new UnauthorizedHttpException("You don't have access to this deck.");
+			throw new UnauthorizedHttpException("You don't have access to this deck.");
+
+		// Prevent deletion if this deck is part of any Team (foreign key constraint)
+		$team = $em->getRepository('AppBundle:Team')
+			->createQueryBuilder('t')
+			->join('t.decks', 'd')
+			->where('d = :deck')
+			->setParameter('deck', $deck)
+			->setMaxResults(1)
+			->getQuery()
+			->getOneOrNullResult();
+		if ($team) {
+			if ($this->getUser() && $team->getOwner() && $this->getUser()->getId() == $team->getOwner()->getId()) {
+				$this->get('session')->getFlashBag()->set('error', 'This deck is part of the team "' . $team->getName() . '", remove it from the team first.');
+				return $this->redirect($this->generateUrl('team_edit', ['team_id' => $team->getId()]));
+			} else {
+				$this->get('session')->getFlashBag()->set('error', 'This deck is part of a team and cannot be deleted. Remove it from the team first.');
+				return $this->redirect($this->generateUrl('decks_list'));
+			}
+		}
 
 		if ($deck->getPreviousDeck()){
 			$deck->getPreviousDeck()->setNextDeck(null);
@@ -563,12 +582,29 @@ class BuilderController extends Controller
 
 		$list_id = explode('-', $request->get('ids'));
 
+		// If any deck is part of a team, block the operation and redirect to team edit when possible
+		$blockedTeam = null;
+
 		foreach($list_id as $id)
 		{
 			/* @var $deck Deck */
 			$deck = $em->getRepository('AppBundle:Deck')->find($id);
 			if(!$deck) continue;
 			if ($this->getUser()->getId() != $deck->getUser()->getId()) continue;
+
+			// Check for team membership
+			$team = $em->getRepository('AppBundle:Team')
+				->createQueryBuilder('t')
+				->join('t.decks', 'd')
+				->where('d = :deck')
+				->setParameter('deck', $deck)
+				->setMaxResults(1)
+				->getQuery()
+				->getOneOrNullResult();
+			if ($team) {
+				$blockedTeam = $team;
+				break;
+			}
 
 			if ($deck->getPreviousDeck()){
 				$deck->getPreviousDeck()->setNextDeck(null);
@@ -583,6 +619,16 @@ class BuilderController extends Controller
 			}
 			$em->remove($deck);
 		}
+		if ($blockedTeam) {
+			if ($this->getUser() && $blockedTeam->getOwner() && $this->getUser()->getId() == $blockedTeam->getOwner()->getId()) {
+				$this->get('session')->getFlashBag()->set('error', 'One of the selected decks is part of the team "' . $blockedTeam->getName() . '", remove it from the team first.');
+				return $this->redirect($this->generateUrl('team_edit', ['team_id' => $blockedTeam->getId()]));
+			} else {
+				$this->get('session')->getFlashBag()->set('error', 'One of the selected decks is part of a team and cannot be deleted. Remove it from the team first.');
+				return $this->redirect($this->generateUrl('decks_list'));
+			}
+		}
+
 		$em->flush();
 
 		$this->get('session')

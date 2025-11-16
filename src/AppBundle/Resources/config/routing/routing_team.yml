@@ -47,3 +47,11 @@ team_delete:
     defaults:
         _controller: AppBundle:Team:delete
 
+team_check_deck:
+    path: /check_deck/{deck_id}
+    methods: [GET]
+    defaults:
+        _controller: AppBundle:Team:checkDeck
+    requirements:
+        deck_id: \d+
+

@@ -1029,3 +1029,20 @@ ul.creator-list > li {
 }
 
 /* Selected decks preview is handled inline in the template by default. */
+
+/* Team action buttons: shared sizing and special edit color */
+.btn-team-action {
+    padding: 6px 12px;
+    line-height: 1.5;
+    display: inline-block;
+    font-family: inherit;
+    font-size: 14px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    vertical-align: middle;
+}
+.btn-team-edit {
+    background-color: #0b3d91;
+    border-color: #0b3d91;
+    color: #fff;
+}

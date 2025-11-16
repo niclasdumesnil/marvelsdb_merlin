@@ -11,52 +11,82 @@
         {{ form_start(form, {'action': path('team_create') }) }}
     {% endif %}
         {{ form_errors(form) }}
-        <div class="form-group">
-            {{ form_label(form.name) }}
-            {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
-            {{ form_errors(form.name) }}
-        </div>
 
-        <!-- selected decks preview: counter above, previews below -->
-        <div id="selected-decks-wrapper">
-            <div id="selected-counter" class="selected-counter">0 / 4</div>
-            <div id="selected-decks"></div>
-        </div>
+        <div class="two-column" style="display:flex; gap:1.5rem; align-items:flex-start;">
+            <div class="col-left" style="flex:0 0 36%;">
+                <div class="form-group">
+                    {{ form_label(form.name) }}
+                    {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.name) }}
+                </div>
 
-        <div class="form-group">
-            {{ form_label(form.decks) }}
-            {# keep the actual select for form submission but hide it; we'll drive it from the visual grid below #}
-            {{ form_widget(form.decks, {'attr': {'style': 'display:none;'}}) }}
-            <div class="team-decks-errors">
-                {{ form_errors(form.decks) }}
-            </div>
+                <div class="form-group" style="margin-top:0.75rem;">
+                    {{ form_widget(form.visibility) }}
+                </div>
 
-            
+                <!-- Selected decks preview moved to left column and stacked vertically -->
+                <div id="selected-decks-wrapper" style="margin-top:0.75rem;">
+                    <div id="selected-counter" class="selected-counter">0 / 4</div>
+                    <div id="selected-decks"></div>
+                </div>
 
-            <div id="deck-visual-grid" style="display:flex; flex-wrap:wrap; gap:1rem; margin-top:0.75rem;">
-                {% if deck_choices is defined and deck_choices is iterable %}
-                    {% for d in deck_choices %}
-                        {# include hero code on the tile so client JS can detect duplicates #}
-                        <div class="deck-visual-item" data-deck-id="{{ d.decklist.id }}" data-hero-code="{{ d.decklist.getCharacter() is defined ? d.decklist.getCharacter().getCode() : '' }}" style="flex: 0 0 calc(50% - 0.5rem); cursor:pointer;">
-                            {{ macros.decklist_block(d, true) }}
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-muted">No decks available.</div>
+                <div class="form-actions" style="margin-top:1rem; display:flex; gap:0.5rem; align-items:center;">
+                    <button class="btn btn-success" type="submit">Save</button>
+                    <button type="button" class="btn btn-link" style="color:#5b2db3; text-decoration:underline; padding:0.25rem 0.5rem;" onclick="history.back();">Cancel edits</button>
+                </div>
+                {% if team is defined %}
+                    <p style="margin-top:0.6rem;"><a href="{{ path('team_view', {'team_id': team.id, 'slug': team.slug}) }}">Back to team</a></p>
                 {% endif %}
             </div>
-        </div>
 
-        <div class="form-group">
-            {{ form_widget(form.visibility) }}
-        </div>
+            <div class="col-right" style="flex:1 1 64%;">
+                <div class="form-group">
+                    <h3>Deck list</h3>
+                    {# keep the actual select for form submission but hide it; we'll drive it from the visual grid below #}
+                    {{ form_widget(form.decks, {'attr': {'style': 'display:none;'}}) }}
+                    <div class="team-decks-errors">
+                        {{ form_errors(form.decks) }}
+                    </div>
 
-        <button class="btn btn-primary" type="submit">Save</button>
+                    <div id="deck-visual-grid" style="display:flex; flex-wrap:wrap; gap:1rem; margin-top:0.75rem;">
+                        {% if deck_choices is defined and deck_choices is iterable %}
+                            {% for d in deck_choices %}
+                                {# include hero code on the tile so client JS can detect duplicates #}
+                                <div class="deck-visual-item" data-deck-id="{{ d.decklist.id }}" data-hero-code="{{ d.decklist.getCharacter() is defined ? d.decklist.getCharacter().getCode() : '' }}" style="flex: 0 0 calc(50% - 0.5rem); cursor:pointer;">
+                                    {{ macros.decklist_block(d, true) }}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-muted">No decks available.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
     {{ form_end(form) }}
 
     <style>
     .deck-visual-item { position: relative; }
-    .deck-visual-item.selected { outline: 3px solid rgba(51,122,183,0.9); border-radius:4px; }
+    /* Flat selection style: subtle background, thin border and a left accent bar */
+    .deck-visual-item.selected {
+        outline: none;
+        box-shadow: none;
+        border-radius: 6px;
+        background: rgba(32,21,159,0.06); /* very light primary tint */
+        border: 1px solid rgba(32,21,159,0.12);
+    }
+    /* small left accent bar to indicate selection in a flat way */
+    .deck-visual-item.selected::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 7px; /* increased width per request */
+        border-top-left-radius: 6px;
+        border-bottom-left-radius: 6px;
+        background: #050505ff; /* black accent */
+    }
     .deck-visual-item.disabled { opacity:0.45; pointer-events:none; }
     /* visual flag for duplicate hero conflict */
     .deck-visual-item.hero-conflict::after {
@@ -74,7 +104,7 @@
         justify-content: center;
         font-size: 12px;
         line-height: 1;
-        box-shadow: 0 0 4px rgba(0,0,0,0.25);
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.25);
     }
     /* style the decks-count validation message (server-side validator)
        make it red and prepend a stop icon so it doesn't depend on icon fonts */
@@ -93,13 +123,20 @@
     /* selected decks preview styling (restored original inline styles) */
     #selected-decks-wrapper { width: 100%; }
     .selected-counter { width: 100%; text-align: right; font-weight: 600; font-size: 0.95rem; margin-bottom: 0.35rem; }
-    #selected-decks { min-height: 2.2rem; display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem; margin-top:0rem; margin-bottom:0.5rem; }
-    .selected-deck-item { background: #fff; border: 0px solid #e3e3e3; padding: 0.4rem; border-radius: 0px; overflow: hidden; }
+    #selected-decks { min-height: 2.2rem; display:grid; grid-template-columns: 1fr; gap:0.5rem; margin-top:0rem; margin-bottom:0.5rem; }
+    .selected-deck-item { background: #fff; border: 0px solid #e3e3e3; padding: 0.4rem; border-radius: 0px; overflow: hidden; width:100%; display:block; }
     .selected-deck-item .deck-title { font-size: 0.95rem; }
     .selected-deck-item { cursor: pointer; }
     .selected-deck-item a.deck-title { color: inherit; }
+    .selected-deck-item + .selected-deck-item { margin-top: 0.35rem; }
     /* compact preview thumbnail */
-    .selected-deck-item img { display: inline-block; vertical-align: middle; }
+    .selected-deck-item img { display: inline-block; vertical-align: middle; max-width: 48px; max-height: 48px; }
+    /* Responsive: stack columns on small screens */
+    @media (max-width: 768px) {
+        .two-column { display: block !important; }
+        .two-column .col-left, .two-column .col-right { flex: none !important; width: 100% !important; }
+        #deck-visual-grid { margin-top: 0.5rem; }
+    }
     </style>
 
     <script>

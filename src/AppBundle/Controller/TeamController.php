@@ -8,6 +8,7 @@ use Symfony\Component\Form\FormError;
 use AppBundle\Entity\Team;
 use AppBundle\Form\TeamType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class TeamController extends Controller
 {
@@ -690,5 +691,32 @@ class TeamController extends Controller
         $em->flush();
 
         return $this->redirect($this->generateUrl('team_index'));
+    }
+
+    /**
+     * Check whether a deck is part of a team owned by the current user.
+     * Returns JSON: { found: true/false, team_id: <id> }
+     */
+    public function checkDeckAction(Request $request, $deck_id)
+    {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        $user = $this->getUser();
+        $em = $this->getDoctrine()->getManager();
+
+        $qb = $em->createQueryBuilder();
+        $qb->select('t')
+            ->from('AppBundle:Team', 't')
+            ->join('t.decks', 'd')
+            ->where('d.id = :deck_id')
+            ->andWhere('t.owner = :owner')
+            ->setParameter('deck_id', $deck_id)
+            ->setParameter('owner', $user);
+
+        $team = $qb->getQuery()->setMaxResults(1)->getOneOrNullResult();
+
+        if ($team) {
+            return new JsonResponse(['found' => true, 'team_id' => $team->getId()]);
+        }
+        return new JsonResponse(['found' => false]);
     }
 }

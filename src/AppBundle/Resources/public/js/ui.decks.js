@@ -3,13 +3,46 @@
 ui.decks = [];
 
 ui.confirm_delete = function confirm_delete(event) {
-	var tr = $(event.currentTarget);
-	console.log(tr);
-	var deck_id = tr.data('id');
-	var deck_name = tr.data('name');
-	$('#delete-deck-name').text(deck_name);
-	$('#delete-deck-id').val(deck_id);
-	$('#deleteModal').modal('show');
+	var target = $(event.currentTarget);
+	// try to read data-id/name from the clicked element, otherwise look for the enclosing TR
+	var deck_id = target.data('id');
+	var deck_name = target.data('name');
+	if (!deck_id) {
+		var tr = target.closest('tr');
+		deck_id = tr.data('id');
+	}
+	if (!deck_name) {
+		// try to find a name in the row
+		var nameEl = target.closest('tr').find('a.deck-name').first();
+		if (nameEl && nameEl.length) deck_name = nameEl.text().trim();
+	}
+
+	// if still no deck_id, abort
+	if (!deck_id) return;
+
+	// check whether this deck is part of a team
+	$.ajax(Routing.generate('team_check_deck', { deck_id: deck_id }), {
+		type: 'GET',
+		dataType: 'json',
+		success: function (resp) {
+			if (resp && resp.found) {
+				// show message and open team edit page
+				alert('This deck is part of the team, remove it from the team first');
+				// redirect to team edit page so user can remove the deck
+				window.location = Routing.generate('team_edit', { team_id: resp.team_id });
+			} else {
+				$('#delete-deck-name').text(deck_name || '');
+				$('#delete-deck-id').val(deck_id);
+				$('#deleteModal').modal('show');
+			}
+		},
+		error: function () {
+			// fallback: show normal delete modal on error
+			$('#delete-deck-name').text(deck_name || '');
+			$('#delete-deck-id').val(deck_id);
+			$('#deleteModal').modal('show');
+		}
+	});
 }
 
 ui.confirm_delete_all = function confirm_delete_all(ids) {
