@@ -60,7 +60,7 @@
     pointer-events: none;
     transition: opacity 0.2s;
 }
-creator-box:hover .creator-hover-box .creator {
+.creator-box:hover .creator-hover-box .creator {
     opacity: 1;
     pointer-events: auto;
 }
