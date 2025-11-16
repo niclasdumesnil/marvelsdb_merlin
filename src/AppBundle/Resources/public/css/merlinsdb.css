@@ -865,7 +865,8 @@ ul.creator-list > li {
 /* Teams styles: placed in merlinsdb.css per project convention */
 .teams-list {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    /* single column layout: each team occupies full width */
+    grid-template-columns: 1fr;
     grid-gap: 1rem;
     /* Prevent grid rows from forcing equal heights — allow each team-card
        to size itself according to its content (number of decks). */
@@ -895,10 +896,11 @@ ul.creator-list > li {
     border-bottom: 1px solid #e5e5e5;
 }
 
-.team-decks {
-    /* display decks in two columns inside the team card */
+.team-decks,
+.teams-list .team-card .team-decks {
+    /* display decks in two columns inside the team card (stronger selector to avoid overrides) */
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 1rem; /* space between decks */
     padding: 0.8rem 1rem;
     background: #fff;
@@ -920,16 +922,17 @@ ul.creator-list > li {
     .teams-list {
         grid-template-columns: 1fr;
     }
-    .team-decks {
-        grid-template-columns: 1fr;
+    .team-decks,
+    .teams-list .team-card .team-decks {
+        grid-template-columns: 1fr !important;
         display: grid;
     }
 }
 
 /* Team view specific deck grid: two columns on desktop, one on mobile */
 .team-view-decks {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 1rem;
     margin-top: 0.5rem;
 }

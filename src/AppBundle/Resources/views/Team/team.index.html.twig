@@ -23,6 +23,10 @@
                         <a class="btn btn-sm btn-default" style="display:inline-flex; width:auto;" href="{{ path('team_view', {'team_id': team.id, 'slug': team.slug}) }}">View</a>
                         {% if app.user and app.user.id == team.owner.id %}
                             <a class="btn btn-sm btn-default" style="display:inline-flex; width:auto;" href="{{ path('team_edit', {'team_id': team.id}) }}">Edit</a>
+                                            <form method="post" action="{{ path('team_delete') }}" style="display:inline-block; margin:0;">
+                                                <input type="hidden" name="team_id" value="{{ team.id }}" />
+                                                <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette équipe ?');">Delete</button>
+                                            </form>
                         {% endif %}
                     </div>
 
