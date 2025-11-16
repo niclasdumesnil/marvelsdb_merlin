@@ -81,8 +81,12 @@
             <div class="bg-faction {% if data.meta.aspect is defined %}faint-{{ data.meta.aspect }}{% else %}faint-basic{% endif %}" style="display: flex; align-items: stretch;">
 				<h4 style="font-size: 1.15em; flex: 1; margin: 0; padding: 0.5rem; padding-left: 1rem; padding-right: 1rem; display: flex; align-items: center;">
 					{# If this object represents a private Deck (no parent) link to deck_view, otherwise link to public decklist_detail #}
-					{% set parent = data.decklist.getParent() %}
-					{% if parent is not null %}
+					{# Distinguish a published Decklist from a private Deck.
+					   Decklist entities expose a "signature" property (published items),
+					   while Deck (private) does not. Use that to choose the correct route
+					   instead of relying solely on getParent(), which can be ambiguous
+					   when Deck objects are passed in as "decklist". #}
+					{% if data.decklist.signature is defined and data.decklist.signature is not empty %}
 						<a href="{{ path('decklist_detail',{decklist_id:data.decklist.id,decklist_name:data.decklist.nameCanonical}) }}">{{ data.decklist.name }}</a>
 					{% else %}
 						<a href="{{ path('deck_view',{deck_id:data.decklist.id,deck_name:data.decklist.name}) }}">{{ data.decklist.name }}</a>
