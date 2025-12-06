@@ -83,12 +83,13 @@
 			<strong style="font-weight:700; margin-right:8px;">Additional Filters</strong>
 			<button type="button" id="btn-show-fanmade" class="btn btn-xs active" style="margin-right:6px;">Fanmade</button>
 
+
 			<!-- Alt Art toggle -->
 			<input type="checkbox" id="show-alt-art" checked style="display:none;">
 			<button type="button" id="btn-show-altart" class="btn btn-xs active" style="margin-left:6px; margin-right:6px;">Alt Art</button>
 
 			<input type="checkbox" id="show-traits-tags" checked style="display:none;">
-			<button type="button" id="btn-show-traits" class="btn btn-xs active" style="margin-left:6px;">Traits</button>
+			<button type="button" id="btn-show-traits" class="btn btn-xs active" style="margin-left:6px; margin-right:6px;">Traits</button>
 
 			<script>
 			(function(){
@@ -103,6 +104,7 @@
 						btnF.classList.toggle('active');
 					});
 				}
+                
 				var btnT = document.getElementById('btn-show-traits');
 				var cbT = document.getElementById('show-traits-tags');
 				if (btnT && cbT) {
@@ -123,8 +125,50 @@
 						btnA.classList.toggle('active');
 					});
 				}
-			})();
-			</script>
+					// Team-Up toggle will be inserted after this script so DOM is correct
+				});
+				</script>
+				<script>
+				// Fallback: ensure all filter buttons toggle their hidden checkboxes even if earlier initialization failed
+				(function(){
+					var pairs = [
+						{btnId: 'btn-show-fanmade', cbId: 'show-fanmade-affinity'},
+						{btnId: 'btn-show-traits', cbId: 'show-traits-tags'},
+						{btnId: 'btn-show-altart', cbId: 'show-alt-art'},
+						{btnId: 'btn-show-teamup', cbId: 'show-teamup-affinity'}
+					];
+					pairs.forEach(function(p){
+						var btn = document.getElementById(p.btnId);
+						var cb = document.getElementById(p.cbId);
+						if (!btn || !cb) return;
+						btn.style.pointerEvents = 'auto';
+						btn.style.cursor = 'pointer';
+						btn.addEventListener('click', function(ev){
+							cb.checked = !cb.checked;
+							try { cb.dispatchEvent(new Event('change')); } catch(e) { /* old browsers */ }
+							btn.classList.toggle('active');
+						});
+					});
+				})();
+				</script>
+
+				<!-- Team-Up toggle: placed after Traits, styled as gray tag -->
+				<input type="checkbox" id="show-teamup-affinity" style="display:none;">
+				<button type="button" id="btn-show-teamup" class="btn btn-default btn-xs" style="margin-left:6px; margin-right:6px; font-size:11px; color:#fff; pointer-events:auto; cursor:pointer;">All Team Up</button>
+				<script>
+					(function(){
+						var btnTeam = document.getElementById('btn-show-teamup');
+						var cbTeam = document.getElementById('show-teamup-affinity');
+						if (btnTeam && cbTeam) {
+							if (cbTeam.checked) btnTeam.classList.add('active'); else btnTeam.classList.remove('active');
+							btnTeam.addEventListener('click', function(){
+								cbTeam.checked = !cbTeam.checked;
+								try { cbTeam.dispatchEvent(new Event('change')); } catch(e) { /* old browsers */ }
+								btnTeam.classList.toggle('active');
+							});
+						}
+					})();
+				</script>
 	</div>
 
 	<!-- Search Bar -->
@@ -273,7 +317,7 @@ table.table td.faction {
 
 /* Toggle buttons for fanmade / trait: fixed size and colors */
 /* Shared button sizing (slightly larger) */
-#btn-show-fanmade, #btn-show-traits, #btn-show-altart {
+#btn-show-fanmade, #btn-show-traits, #btn-show-altart, #btn-show-teamup {
 	display: inline-flex !important;
 	justify-content: center;
 	align-items: center;
@@ -293,6 +337,16 @@ table.table td.faction {
 :root { --btn-disabled: #9e9e9e; }
 #btn-show-fanmade { background-color: var(--btn-disabled) !important; color: #fff !important; }
 #btn-show-fanmade.active { background-color: #1e88e5 !important; color: #fff !important; }
+
+/* Team-Up button: styled like the small gray tag used elsewhere */
+/* Team-Up button: inactive = light gray, active = dark gray */
+#btn-show-teamup { background-color: var(--btn-disabled) !important; color: #fff !important; font-size:11px !important; pointer-events: auto !important; cursor: pointer !important; }
+#btn-show-teamup.active { background-color: rgb(97,97,97) !important; color: #fff !important; pointer-events: auto !important; cursor: pointer !important; }
+/* ensure no transparency */
+#btn-show-teamup, #btn-show-teamup.active {
+	opacity: 1 !important;
+	background-image: none !important;
+}
 
 /* Trait button: active = black with white text, inactive = grey */
 #btn-show-traits { background-color: var(--btn-disabled) !important; color: #fff !important; }

@@ -953,6 +953,75 @@ if (showFanmadeAffinity && !showFanmadeAffinity.checked && fanmade === "Yes") {
     return $('');
 }
 
+	// Gestion du filtre Team-Up
+	// If the card has the 'Team-Up' trait, then either show all Team-Up cards
+	// when the checkbox is checked, or only keep Team-Up cards that mention
+	// the selected hero in their text when the checkbox is unchecked.
+	var isTeamUp = false;
+	// Team-Up is expressed either as a trait or inside the card text (e.g. "Team-Up (A and B)")
+	if (card.traits && /team\s*-?\s*up/i.test(card.traits)) {
+		isTeamUp = true;
+	}
+	if (!isTeamUp && (card.text || card.flavor)) {
+		var txtForCheck = (card.text || '') + ' ' + (card.flavor || '');
+		if (/team\s*-?\s*up/i.test(txtForCheck)) isTeamUp = true;
+	}
+	var showTeamUpElem = document.getElementById('show-teamup-affinity');
+	if (isTeamUp) {
+		if (showTeamUpElem && showTeamUpElem.checked) {
+			// show all Team-Up cards
+		} else {
+			// Only include Team-Up cards that reference the current hero's name in the text
+			var hero = app.data.cards.findById(app.deck.get_hero_code());
+			var heroName = hero ? hero.name : '';
+
+			// prepare card text: decode html entities, strip tags, normalize
+			var rawText = card.text || card.flavor || '';
+			try {
+				var txtEl = document.createElement('textarea');
+				txtEl.innerHTML = rawText;
+				rawText = txtEl.value;
+			} catch (e) {
+				// ignore
+			}
+			rawText = rawText.replace(/<[^>]+>/g, ' ');
+			var normalize = function(s) {
+				if (!s) return '';
+				try {
+					s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+				} catch (e) { /* normalize not supported */ }
+				return s.toLowerCase();
+			};
+			var textNorm = normalize(rawText);
+			var heroNorm = normalize(heroName);
+
+			var keep = false;
+			if (heroNorm && heroNorm.length) {
+				// match full name as phrase
+				var fullNameRe = new RegExp('\\b' + heroNorm.replace(/\s+/g, '\\s+') + '\\b', 'i');
+				if (fullNameRe.test(textNorm)) {
+					keep = true;
+				} else {
+					// try tokens (words longer than 2 chars) — match whole words only to avoid partial matches
+					var escapeRegex = function(s) {
+						return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+					};
+					var tokens = heroNorm.split(/\s+/).map(function(t){ return t.replace(/[^a-z0-9]/g, ''); }).filter(function(t){ return t.length > 2; });
+					for (var ti=0; ti<tokens.length && !keep; ti++) {
+						var tok = tokens[ti];
+						try {
+							var tokRe = new RegExp('\\b' + escapeRegex(tok) + '\\b', 'i');
+							if (tokRe.test(textNorm)) keep = true;
+						} catch (e) {
+							if (textNorm.indexOf(tok) !== -1) keep = true;
+						}
+					}
+				}
+			}
+			if (!keep) return $('');
+		}
+	}
+
 // isAltArt flag based on exceptions list
 var isAltArt = (DuplicateExceptions.indexOf(card.code) !== -1);
 
@@ -1190,6 +1259,15 @@ if (cb) {
         CardDivs = [[],[],[]];
         app.ui.refresh_lists();
     });
+}
+// show-teamup: toggle display of Team-Up cards (all vs only hero-specific)
+var cbTeam = document.getElementById('show-teamup-affinity');
+if (cbTeam) {
+	cbTeam.addEventListener('change', function() {
+		// force rebuild of rows so Team-Up visibility is re-evaluated
+		CardDivs = [[],[],[]];
+		app.ui.refresh_lists();
+	});
 }
 // show-alt-art: toggle display of alt-art cards
 var cbAlt = document.getElementById('show-alt-art');
