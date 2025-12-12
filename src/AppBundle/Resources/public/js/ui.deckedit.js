@@ -1002,19 +1002,23 @@ if (showFanmadeAffinity && !showFanmadeAffinity.checked && fanmade === "Yes") {
 				if (fullNameRe.test(textNorm)) {
 					keep = true;
 				} else {
-					// try tokens (words longer than 2 chars) — match whole words only to avoid partial matches
+					// try tokens (words longer than 2 chars) — require ALL tokens to be present
 					var escapeRegex = function(s) {
 						return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 					};
 					var tokens = heroNorm.split(/\s+/).map(function(t){ return t.replace(/[^a-z0-9]/g, ''); }).filter(function(t){ return t.length > 2; });
-					for (var ti=0; ti<tokens.length && !keep; ti++) {
-						var tok = tokens[ti];
-						try {
-							var tokRe = new RegExp('\\b' + escapeRegex(tok) + '\\b', 'i');
-							if (tokRe.test(textNorm)) keep = true;
-						} catch (e) {
-							if (textNorm.indexOf(tok) !== -1) keep = true;
+					if (tokens.length) {
+						var allMatch = true;
+						for (var ti=0; ti<tokens.length; ti++) {
+							var tok = tokens[ti];
+							try {
+								var tokRe = new RegExp('\\b' + escapeRegex(tok) + '\\b', 'i');
+								if (!tokRe.test(textNorm)) { allMatch = false; break; }
+							} catch (e) {
+								if (textNorm.indexOf(tok) === -1) { allMatch = false; break; }
+							}
 						}
+						if (allMatch) keep = true;
 					}
 				}
 			}
