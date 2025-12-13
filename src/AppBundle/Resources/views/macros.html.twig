@@ -261,8 +261,26 @@
 				<img class="pack-plane-image" src="{{ asset('bundles/packs/' ~ pack.code ~ '.jpg') }}" alt="{{ pack.name }}" crossorigin="anonymous">
 			</a>
 		</div>
-		<div class="pack-plane-title" style="min-height: {{ max_height * 32 }}px;">
-			{{ pack.name|length > 24 ? pack.name|slice(0,24) ~ '<br>' ~ pack.name|slice(24) : pack.name|e('html') }}
+			<div class="pack-plane-title" style="min-height: {{ max_height * 32 }}px;">
+				{% set limit = 24 %}
+				{% if pack.name|length > limit %}
+					{% set part = pack.name|slice(0, limit) %}
+					{% set rest = pack.name|slice(limit) %}
+					{% if part|slice(-1) == ' ' %}
+						{{ part|e('html') }}<br>{{ rest|e('html') }}
+					{% else %}
+						{% set toks = part|split(' ') %}
+						{% if toks|length > 1 %}
+							{% set first = toks|slice(0, toks|length - 1)|join(' ') %}
+							{% set second = pack.name|slice(first|length) %}
+							{{ first|e('html') }}<br>{{ second|e('html') }}
+						{% else %}
+							{{ part|e('html') }}<br>{{ rest|e('html') }}
+						{% endif %}
+					{% endif %}
+				{% else %}
+					{{ pack.name|e('html') }}
+				{% endif %}
 			{% if pack.language is defined and pack.language == 'fr' %}
 				<img src="https://upload.wikimedia.org/wikipedia/commons/6/62/Flag_of_France.png"
 					 alt="FR" title="French only"
