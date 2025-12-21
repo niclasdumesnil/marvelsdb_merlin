@@ -1,0 +1,58 @@
+AppBundle\Entity\Campaign:
+  type: entity
+  table: campaign
+  id:
+    id:
+      type: integer
+      generator:
+        strategy: AUTO
+  fields:
+    code:
+      type: string
+      length: 255
+      nullable: true
+    name:
+      type: string
+      length: 255
+      nullable: false
+    type:
+      type: string
+      length: 32
+      nullable: false
+    scenarios:
+      type: text
+      nullable: true
+    modulars:
+      type: text
+      nullable: true
+    scenarioNotes:
+      column: scenario_notes
+      type: text
+      nullable: true
+    scenarioCounters:
+      column: scenario_counters
+      type: text
+      nullable: true
+    campaignNotes:
+      column: campaign_notes
+      type: text
+      nullable: true
+    campaignCounters:
+      column: campaign_counters
+      type: text
+      nullable: true
+    description:
+      type: text
+      nullable: true
+    creator:
+      type: string
+      length: 255
+      nullable: true
+    image:
+      type: string
+      length: 255
+      nullable: true
+    dateCreation:
+      column: date_creation
+      type: datetime
+      nullable: false

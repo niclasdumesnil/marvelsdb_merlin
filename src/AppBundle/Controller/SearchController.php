@@ -307,7 +307,8 @@ class SearchController extends Controller
 	                if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
 	                    $card_traits = $card->getTraits();
 	                    if (is_string($card_traits) && trim($card_traits) !== '') {
-	                        $matches = preg_split('/[.,;]\s*/', $card_traits);
+							// split on period+space or period at end, or comma/semicolon — avoid splitting internal dots in acronyms like S.H.I.E.L.D.
+							$matches = preg_split('/(?:\.\s+|\.(?:$)|[;,])/', $card_traits);
 	                        foreach ($matches as $trait) {
 	                            $trait = trim($trait);
 	                            if ($trait === "A.I.M.") $trait = "AIM";
@@ -453,10 +454,12 @@ class SearchController extends Controller
             $combined_boost_counts[$boost] = ($combined_boost_counts[$boost] ?? 0) + $count;
         }
 
-        // Traits combinés
-        $modular_traits = $data['modular_traits_by_set'][$selected_modular_code] ?? [];
-        $villain_traits = $data['villain_traits_by_set'][$selected_villain_code] ?? [];
-        $combined_traits = array_merge($modular_traits, $villain_traits);
+		// Traits combinés
+		$modular_traits = $data['modular_traits_by_set'][$selected_modular_code] ?? [];
+		$villain_traits = $data['villain_traits_by_set'][$selected_villain_code] ?? [];
+		$combined_traits = array_merge($modular_traits, $villain_traits);
+		// deduplicate traits
+		$combined_traits = array_values(array_unique($combined_traits));
 
         $modular_name = $this->getSetByCode($filtered_modular_sets, $selected_modular_code) ? $this->getSetByCode($filtered_modular_sets, $selected_modular_code)->getName() : '';
         $villain_name = $this->getSetByCode($filtered_villain_sets, $selected_villain_code) ? $this->getSetByCode($filtered_villain_sets, $selected_villain_code)->getName() : '';
@@ -875,18 +878,36 @@ class SearchController extends Controller
 
 		$data = $this->getStatsAndData($filtered_modular_sets, $filtered_villain_sets, $cards);
 
+
 		$selected_modular_code = $request->query->get('modular');
 		$selected_villain_code = $request->query->get('villain');
 
-		// Pour les stats combinées, commence par villain puis modular
-		$villain_stats = $data['villain_stats_by_set'][$selected_villain_code] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
-		$modular_stats = $data['modular_stats_by_set'][$selected_modular_code] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
+		// Support multiple modular codes separated by commas for global aggregation
+		$modular_codes = [];
+		if ($selected_modular_code && strpos($selected_modular_code, ',') !== false) {
+			$modular_codes = array_filter(array_map('trim', explode(',', $selected_modular_code)));
+		} elseif ($selected_modular_code) {
+			$modular_codes = [$selected_modular_code];
+		}
 
-		$sum_differentCards = $villain_stats['differentCards'] + $modular_stats['differentCards'];
-		$sum_totalCards = $villain_stats['totalCards'] + $modular_stats['totalCards'];
-		$sum_totalBoost = $villain_stats['totalBoost'] + $modular_stats['totalBoost'];
-		$sum_totalBoostStar = $villain_stats['totalBoostStar'] + $modular_stats['totalBoostStar'];
-		$sum_averageBoost = $sum_totalCards > 0 ? number_format(($villain_stats['totalBoost'] + $modular_stats['totalBoost']) / $sum_totalCards, 2, '.', '') : '0.00';
+		// start with villain stats
+		$villain_stats = $data['villain_stats_by_set'][$selected_villain_code] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
+
+		$sum_differentCards = $villain_stats['differentCards'];
+		$sum_totalCards = $villain_stats['totalCards'];
+		$sum_totalBoost = $villain_stats['totalBoost'];
+		$sum_totalBoostStar = $villain_stats['totalBoostStar'];
+
+		// aggregate modular stats for each modular code
+		foreach ($modular_codes as $mcode) {
+			$mstats = $data['modular_stats_by_set'][$mcode] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
+			$sum_differentCards += $mstats['differentCards'];
+			$sum_totalCards += $mstats['totalCards'];
+			$sum_totalBoost += $mstats['totalBoost'];
+			$sum_totalBoostStar += $mstats['totalBoostStar'];
+		}
+
+		$sum_averageBoost = $sum_totalCards > 0 ? number_format($sum_totalBoost / $sum_totalCards, 2, '.', '') : '0.00';
 
 		$combined_stats = [
 			'differentCards' => $sum_differentCards,
@@ -900,28 +921,46 @@ class SearchController extends Controller
 		$villain_type_counts = $data['villain_set_type_counts'][$selected_villain_code] ?? [];
 		$modular_type_counts = $data['modular_set_type_counts'][$selected_modular_code] ?? [];
 		$combined_type_counts = $villain_type_counts;
-		foreach ($modular_type_counts as $type => $count) {
-			$combined_type_counts[$type] = ($combined_type_counts[$type] ?? 0) + $count;
+		// aggregate modular type counts for all requested modular codes
+		foreach ($modular_codes as $mcode) {
+			$modular_type_counts = $data['modular_set_type_counts'][$mcode] ?? [];
+			foreach ($modular_type_counts as $type => $count) {
+				$combined_type_counts[$type] = ($combined_type_counts[$type] ?? 0) + $count;
+			}
 		}
 
 		// Boosts combinés : villain puis modular
 		$villain_boost_counts = $data['villain_set_boost_counts'][$selected_villain_code] ?? [];
-		$modular_boost_counts = $data['modular_set_boost_counts'][$selected_modular_code] ?? [];
 		$combined_boost_counts = $villain_boost_counts;
-		foreach ($modular_boost_counts as $boost => $count) {
-			$combined_boost_counts[$boost] = ($combined_boost_counts[$boost] ?? 0) + $count;
+		foreach ($modular_codes as $mcode) {
+			$modular_boost_counts = $data['modular_set_boost_counts'][$mcode] ?? [];
+			foreach ($modular_boost_counts as $boost => $count) {
+				$combined_boost_counts[$boost] = ($combined_boost_counts[$boost] ?? 0) + $count;
+			}
 		}
 
 		// Traits combinés : villain puis modular
 		$villain_traits = $data['villain_traits_by_set'][$selected_villain_code] ?? [];
-		$modular_traits = $data['modular_traits_by_set'][$selected_modular_code] ?? [];
-		$combined_traits = array_merge($villain_traits, $modular_traits);
+		$combined_traits = $villain_traits;
+		foreach ($modular_codes as $mcode) {
+			$modular_traits = $data['modular_traits_by_set'][$mcode] ?? [];
+			$combined_traits = array_merge($combined_traits, $modular_traits);
+		}
+
+		// deduplicate combined traits
+		$combined_traits = array_values(array_unique($combined_traits));
 
 		$villain_name = $this->getSetByCode($filtered_villain_sets, $selected_villain_code) ? $this->getSetByCode($filtered_villain_sets, $selected_villain_code)->getName() : '';
-		$modular_name = $this->getSetByCode($filtered_modular_sets, $selected_modular_code) ? $this->getSetByCode($filtered_modular_sets, $selected_modular_code)->getName() : '';
-		$combined_set_name = $villain_name . ' + ' . $modular_name;
+		$modular_names = [];
+		foreach ($modular_codes as $mcode) {
+			$s = $this->getSetByCode($filtered_modular_sets, $mcode);
+			if ($s) $modular_names[] = $s->getName();
+		}
+		$modular_name = implode(' + ', $modular_names);
+		$combined_set_name = trim($villain_name . ' + ' . $modular_name, ' +');
 
-		return $this->render('AppBundle:Search:set_stats.html.twig', [
+		// Prepare HTML for the inner set_stats partial
+		$innerHtml = $this->renderView('AppBundle:Search:set_stats.html.twig', [
 			'stats' => $combined_stats,
 			'color' => '#111',
 			'label' => 'Statistiques combinées des sets sélectionnés :',
@@ -930,5 +969,18 @@ class SearchController extends Controller
 			'traits' => $combined_traits,
 			'set_name' => $combined_set_name
 		]);
+
+		// determine data-modular-codes to inform the client which modulars were aggregated
+		if (!empty($modular_codes)) {
+			$modcodes_attr = implode(',', $modular_codes);
+		} else {
+			// fallback to all available modular set codes
+			$codes = [];
+			foreach ($filtered_modular_sets as $s) { $codes[] = $s->getCode(); }
+			$modcodes_attr = implode(',', $codes);
+		}
+
+		$html = '<div id="combined-stats-panel" data-modular-codes="' . htmlspecialchars($modcodes_attr, ENT_QUOTES) . '">' . $innerHtml . '</div>';
+		return new \Symfony\Component\HttpFoundation\Response($html);
 	}
 }

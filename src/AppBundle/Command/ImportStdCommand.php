@@ -325,6 +325,28 @@ class ImportStdCommand extends ContainerAwareCommand
 
 
 		$output->writeln("");
+		// Import campaign lists from campaigns.json (if provided)
+		try {
+			$campaignsFile = $this->getFileInfo($path, 'campaigns.json');
+			$importedCampaignLists = $this->importCampaignlistsJsonFile($campaignsFile);
+			if(count($importedCampaignLists)) {
+				// If running non-interactive (eg. CI or -n), persist automatically.
+				$shouldImport = !$input->isInteractive();
+				if (!$shouldImport) {
+					$question = new ConfirmationQuestion("Do you confirm importing campaign lists? (Y/n) ", true);
+					$shouldImport = (bool) $helper->ask($input, $output, $question);
+				}
+				if ($shouldImport) {
+					foreach($importedCampaignLists as $c) {
+						$this->em->persist($c);
+					}
+					$this->em->flush();
+				}
+			}
+			} catch (\Exception $e) {
+				if ($this->output) $this->output->writeln("Skipping campaigns import: " . $e->getMessage());
+			}
+
 		$output->writeln("Generate cards json.");
 		$doctrine = $this->getContainer()->get('doctrine');
 
@@ -519,10 +541,10 @@ class ImportStdCommand extends ContainerAwareCommand
 		foreach($list as $data)
 		{
 			$type = $this->getEntityFromData('AppBundle\\Entity\\Campaign', $data, [
-					'code',
-					'name',
-					'size'
-			], [], []);
+						'code',
+						'name',
+						'size'
+					], [], ['creator']);
 			if($type) {
 				$result[] = $type;
 				$this->em->persist($type);
@@ -531,6 +553,181 @@ class ImportStdCommand extends ContainerAwareCommand
 
 		return $result;
 	}
+
+protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
+{
+	$result = [];
+
+	$list = $this->getDataFromFile($fileinfo);
+	if ($this->output) $this->output->writeln("Read ".(is_array($list)?count($list):0)." campaign entries from {$fileinfo->getPathname()}");
+	foreach($list as $data) {
+		if ($this->output) $this->output->writeln("Processing campaign: " . (isset($data['code']) ? $data['code'] : (isset($data['name']) ? $data['name'] : '(no id)')));
+		// Avoid creating duplicate static Campaign rows: check by code then by name
+		$repo = $this->em->getRepository('AppBundle:Campaign');
+		$existing = null;
+		if (isset($data['code']) && $data['code']) {
+			$existing = $repo->findOneBy(['code' => $data['code']]);
+		}
+		if (!$existing && isset($data['name']) && $data['name']) {
+			$existing = $repo->findOneBy(['name' => $data['name']]);
+		}
+
+		if ($existing) {
+			// If an existing campaign is found, update its fields from the JSON
+			// when those values are present so imports can enrich existing rows.
+			if (isset($data['code'])) $existing->setCode($data['code']);
+			if (isset($data['name'])) $existing->setName($data['name']);
+			if (isset($data['size'])) $existing->setSize($data['size']);
+			if (isset($data['type'])) $existing->setType($data['type']);
+			if (isset($data['scenarios'])) {
+				$norm = [];
+				if (is_array($data['scenarios'])) {
+					foreach ($data['scenarios'] as $s) {
+						if (!is_array($s)) continue;
+						$entry = [];
+						if (isset($s['code'])) $entry['code'] = $s['code'];
+						if (isset($s['name'])) $entry['name'] = $s['name'];
+						if (isset($s['description'])) $entry['description'] = $s['description'];
+						if (isset($s['introduction'])) $entry['introduction'] = $s['introduction'];
+						if (isset($s['resolution'])) $entry['resolution'] = $s['resolution'];
+						if (isset($s['image'])) $entry['image'] = $s['image'];
+						$norm[] = $entry;
+					}
+				}
+				$existing->setScenarios(json_encode($norm));
+			}
+			if (isset($data['modulars'])) {
+				$normMod = [];
+				if (is_array($data['modulars'])) {
+					foreach ($data['modulars'] as $scode => $mlist) {
+						$normMod[$scode] = [];
+						if (!is_array($mlist)) continue;
+						foreach ($mlist as $m) {
+							// accept string code, object with keys, or numeric-array [name,code]
+							if (is_string($m)) {
+								$normMod[$scode][] = ['code' => $m, 'name' => null];
+							} elseif (is_array($m)) {
+								if (isset($m['code']) || isset($m['name'])) {
+									$code = isset($m['code']) ? $m['code'] : (isset($m[1]) ? $m[1] : null);
+									$name = isset($m['name']) ? $m['name'] : (isset($m[0]) ? $m[0] : null);
+									$normMod[$scode][] = ['code' => $code, 'name' => $name];
+								} else {
+									// numeric indexed like [name,code]
+									$name = isset($m[0]) ? $m[0] : null;
+									$code = isset($m[1]) ? $m[1] : null;
+									$normMod[$scode][] = ['code' => $code, 'name' => $name];
+								}
+							}
+						}
+					}
+				}
+				$existing->setModulars(json_encode($normMod));
+			}
+			// support new campaign-level keys as well as legacy scenario-level shapes
+			if (isset($data['campaign_notes'])) {
+				if (method_exists($existing, 'setCampaignNotes')) $existing->setCampaignNotes(json_encode($data['campaign_notes']));
+				else $existing->setScenarioNotes(json_encode($data['campaign_notes']));
+			} elseif (isset($data['scenario_notes'])) {
+				if (method_exists($existing, 'setCampaignNotes')) $existing->setCampaignNotes(json_encode($data['scenario_notes']));
+				else $existing->setScenarioNotes(json_encode($data['scenario_notes']));
+			}
+			if (isset($data['campaign_counters'])) {
+				if (method_exists($existing, 'setCampaignCounters')) $existing->setCampaignCounters(json_encode($data['campaign_counters']));
+				else $existing->setScenarioCounters(json_encode($data['campaign_counters']));
+			} elseif (isset($data['scenario_counters'])) {
+				if (method_exists($existing, 'setCampaignCounters')) $existing->setCampaignCounters(json_encode($data['scenario_counters']));
+				else $existing->setScenarioCounters(json_encode($data['scenario_counters']));
+			}
+			if (isset($data['description'])) $existing->setDescription($data['description']);
+			if (isset($data['image'])) $existing->setImage($data['image']);
+			if (isset($data['creator'])) $existing->setCreator($data['creator']);
+
+			$result[] = $existing;
+			continue;
+		}
+
+		if ($this->output) $this->output->writeln("Imported/Updated campaigns count: " . count($result));
+
+		// Import static campaign definition into the new Campaign entity
+		// Import static campaign definition into the new Campaign entity
+		$campaign = new \AppBundle\Entity\Campaign();
+		if (isset($data['code'])) $campaign->setCode($data['code']);
+		if (isset($data['name'])) $campaign->setName($data['name']);
+		if (isset($data['type'])) $campaign->setType($data['type']);
+		// store arrays as json strings for static fields
+		if (isset($data['scenarios']) && is_array($data['scenarios'])) {
+			$norm = [];
+			foreach ($data['scenarios'] as $s) {
+				if (!is_array($s)) continue;
+				$entry = [];
+				if (isset($s['code'])) $entry['code'] = $s['code'];
+				if (isset($s['name'])) $entry['name'] = $s['name'];
+				if (isset($s['description'])) $entry['description'] = $s['description'];
+				if (isset($s['introduction'])) $entry['introduction'] = $s['introduction'];
+				if (isset($s['resolution'])) $entry['resolution'] = $s['resolution'];
+				if (isset($s['image'])) $entry['image'] = $s['image'];
+				$norm[] = $entry;
+			}
+			$campaign->setScenarios(json_encode($norm));
+		} else {
+			$campaign->setScenarios(null);
+		}
+		if (isset($data['modulars']) && is_array($data['modulars'])) {
+			$normMod = [];
+			foreach ($data['modulars'] as $scode => $mlist) {
+				$normMod[$scode] = [];
+				if (!is_array($mlist)) continue;
+				foreach ($mlist as $m) {
+					if (is_string($m)) {
+						$normMod[$scode][] = ['code' => $m, 'name' => null];
+					} elseif (is_array($m)) {
+						if (isset($m['code']) || isset($m['name'])) {
+							$code = isset($m['code']) ? $m['code'] : (isset($m[1]) ? $m[1] : null);
+							$name = isset($m['name']) ? $m['name'] : (isset($m[0]) ? $m[0] : null);
+							$normMod[$scode][] = ['code' => $code, 'name' => $name];
+						} else {
+							$name = isset($m[0]) ? $m[0] : null;
+							$code = isset($m[1]) ? $m[1] : null;
+							$normMod[$scode][] = ['code' => $code, 'name' => $name];
+						}
+					}
+				}
+			}
+			$campaign->setModulars(json_encode($normMod));
+		} else {
+			$campaign->setModulars(null);
+		}
+		// store notes/counters definitions (static) on Campaign - support campaign-level keys
+		if (method_exists($campaign, 'setCampaignNotes')) {
+			$campaign->setCampaignNotes(isset($data['campaign_notes']) ? json_encode($data['campaign_notes']) : (isset($data['scenario_notes']) ? json_encode($data['scenario_notes']) : null));
+		} else {
+			$campaign->setScenarioNotes(isset($data['campaign_notes']) ? json_encode($data['campaign_notes']) : (isset($data['scenario_notes']) ? json_encode($data['scenario_notes']) : null));
+		}
+		if (method_exists($campaign, 'setCampaignCounters')) {
+			$campaign->setCampaignCounters(isset($data['campaign_counters']) ? json_encode($data['campaign_counters']) : (isset($data['scenario_counters']) ? json_encode($data['scenario_counters']) : null));
+		} else {
+			$campaign->setScenarioCounters(isset($data['campaign_counters']) ? json_encode($data['campaign_counters']) : (isset($data['scenario_counters']) ? json_encode($data['scenario_counters']) : null));
+		}
+
+		// optional descriptive fields
+		if (isset($data['description'])) {
+			$campaign->setDescription($data['description']);
+		}
+		if (isset($data['image'])) {
+			$campaign->setImage($data['image']);
+		}
+		if (isset($data['creator'])) {
+			$campaign->setCreator($data['creator']);
+		}
+
+		// Only persist the static Campaign definition here. Per-team/runtime values
+		// (campaignlist rows) should not be created at initialization and will be
+		// created later via the UI. Return only the Campaign entity for import.
+		$result[] = $campaign;
+	}
+
+	return $result;
+}
 
 	protected function importTaboosJsonFile(\SplFileInfo $fileinfo)
 	{
@@ -1275,6 +1472,11 @@ class ImportStdCommand extends ContainerAwareCommand
 			if($line !== false) $lines[] = $line;
 		}
 		$content = implode('', $lines);
+
+		// Strip UTF-8 BOM if present (prevents json_decode syntax errors)
+		if (substr($content, 0, 3) === "\xEF\xBB\xBF") {
+			$content = substr($content, 3);
+		}
 
 		$data = json_decode($content, true);
 

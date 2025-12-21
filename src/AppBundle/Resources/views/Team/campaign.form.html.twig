@@ -1,0 +1,19 @@
+{% extends 'AppBundle::layout.html.twig' %}
+{% import 'AppBundle::macros.html.twig' as macros %}
+
+{% block body %}
+<div class="container main">
+    <h1>Edit Campaign Values</h1>
+    {% set camp = campaignlist.getCampaign() %}
+    {% if camp is defined and camp %}
+        <h3 style="display:inline-block; margin-right:0.5rem;">{{ camp.getName() }} ({{ camp.getCode() }})</h3>
+        {% if camp.getCreator() %}
+            <span style="background:#1976d2; color:#fff; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.9rem; margin-left:0.25rem;">{{ camp.getCreator() }}</span>
+        {% endif %}
+    {% else %}
+        <h3>Campaign (missing)</h3>
+        <div class="text-muted">The campaign linked to this entry is not available.</div>
+    {% endif %}
+    {% include 'AppBundle:Team:_campaign_form_fragment.html.twig' with {'campaignlist': campaignlist, 'campaign_defs': campaign_defs, 'campaignlist_values': campaignlist_values} %}
+</div>
+{% endblock %}

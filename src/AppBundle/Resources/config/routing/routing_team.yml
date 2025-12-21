@@ -55,3 +55,27 @@ team_check_deck:
     requirements:
         deck_id: \d+
 
+team_campaign_add:
+    path: /add_campaign/{team_id}
+    methods: [POST]
+    defaults:
+        _controller: AppBundle:Team:addCampaign
+    requirements:
+        team_id: \d+
+
+team_campaign_edit:
+    path: /campaign/{campaignlist_id}/edit
+    methods: [GET, POST]
+    defaults:
+        _controller: AppBundle:Team:editCampaignList
+    requirements:
+        campaignlist_id: \d+
+
+team_campaign_scenario_stats:
+    path: /campaign/{campaignlist_id}/scenario/{scenario_code}/stats
+    methods: [GET]
+    defaults:
+        _controller: AppBundle:Team:scenarioStats
+    requirements:
+        campaignlist_id: \d+
+

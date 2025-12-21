@@ -1,0 +1,246 @@
+{% set camp = campaignlist.getCampaign() %}
+{% if camp is not defined or camp is empty %}
+    <div style="margin-top:0.75rem; padding:0.75rem; border:1px solid #f5c6cb; background:#fff5f5; border-radius:6px;">
+        <strong>Campaign data unavailable</strong>
+        <div class="text-muted">The campaign linked to this campaignlist was removed or is missing.</div>
+    </div>
+{% else %}
+<form id="campaign-fragment-{{ campaignlist.getId() }}" method="post" action="{{ path('team_campaign_edit', {'campaignlist_id': campaignlist.getId() }) }}" style="margin-top:0.75rem; border:1px solid #eee; padding:0.75rem; border-radius:6px; background:#fafafa;">
+    <input type="hidden" name="_token" value="{{ csrf_token('edit_campaign_' ~ campaignlist.getId()) }}" />
+    <div style="margin-bottom:0.5rem;">
+        <h4 style="margin-top:0; margin-bottom:0.25rem;">Values</h4>
+        {% if camp is defined %}
+            <div style="color:#555; font-size:0.95rem;">{{ (camp_def.name is defined and camp_def.name) ? camp_def.name : (camp.getName() is defined ? camp.getName() : '') }}</div>
+        {% endif %}
+    </div>
+
+    {# Load campaign definitions and existing campaignlist values early so inputs show saved values #}
+    {% set camp_def = (campaign_defs[camp.getId()] is defined) ? campaign_defs[camp.getId()] : (campaign_defs|default({})) %}
+    {% set cl_vals = (campaignlist_values is defined and campaignlist_values[campaignlist.getId()] is defined) ? campaignlist_values[campaignlist.getId()] : ((campaignlist_values is defined) ? campaignlist_values : {}) %}
+
+    {# Players + HPs: names on first row, HPs aligned directly beneath on second row. #}
+    {% set team_deck_count = campaignlist.getTeam() ? (campaignlist.getTeam().getDecks()|length) : 0 %}
+    {% set players = cl_vals.player_names|default([]) %}
+    {% set hp_values = cl_vals.team_hps is defined ? cl_vals.team_hps : (campaignlist.getTeamHps() ? campaignlist.getTeamHps()|raw : []) %}
+    <div style="margin-bottom:0.5rem;">
+        <div style="display:flex; flex-direction:column; gap:0.25rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div style="width:60px; text-align:right; font-weight:600;">Player</div>
+                <div style="display:flex; gap:0.5rem;">
+                    {% for i in 0..3 %}
+                        {% set display = (i < team_deck_count) %}
+                        <input type="text" name="player_names[{{ i }}]" class="form-control" style="display:{{ display ? 'inline-block' : 'none' }}; width:150px; padding:0.25rem 0.5rem;" value="{{ players[i]|default('') }}" placeholder="Player {{ i+1 }}" />
+                    {% endfor %}
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div style="width:60px; text-align:right; font-weight:600;">HP</div>
+                <div style="display:flex; gap:0.5rem;">
+                    {% for i in 0..3 %}
+                        {% set display = (i < team_deck_count) %}
+                        <input type="number" name="team_hps[{{ i }}]" class="form-control" step="1" min="0" style="display:{{ display ? 'inline-block' : 'none' }}; width:150px; padding:0.25rem 0.5rem;" value="{{ hp_values[i]|default(0) }}" />
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h5>Campaign Notes</h5>
+    {% set camp_def = (campaign_defs[camp.getId()] is defined) ? campaign_defs[camp.getId()] : (campaign_defs|default({})) %}
+    {% set cl_vals = (campaignlist_values is defined and campaignlist_values[campaignlist.getId()] is defined) ? campaignlist_values[campaignlist.getId()] : ((campaignlist_values is defined) ? campaignlist_values : {}) %}
+    {% set campaign_notes_def = camp_def.campaign_notes|default([]) %}
+    {% set notes = cl_vals.campaign_notes|default({}) %}
+
+    {% if campaign_notes_def|length %}
+        <div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap;">
+            {% for n in campaign_notes_def %}
+                <div style="display:flex; gap:0.35rem; align-items:flex-start;">
+                    <small style="color:#444; min-width:120px; margin-top:0.45rem;">{{ n }}</small>
+                    <textarea name="campaign_notes[{{ n }}]" class="form-control" rows="4" style="width:320px; padding:0.25rem 0.5rem;">{{ notes[n]|default('') }}</textarea>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# Campaign Counters: show all counters inline on a single line under campaign notes #}
+    {% set campaign_counters_def = camp_def.campaign_counters|default([]) %}
+    {% set counters = cl_vals.campaign_counters|default({}) %}
+    {% if campaign_counters_def|length %}
+        <div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap;">
+            {% for cname in campaign_counters_def %}
+                <div style="display:flex; gap:0.35rem; align-items:center;">
+                    <small style="color:#444;">{{ cname }}</small>
+                    <input type="number" name="campaign_counters[{{ cname }}]" class="form-control" step="1" min="0" style="width:90px; padding:0.25rem 0.5rem;" value="{{ counters[cname]|default(0) }}" />
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# stories_modulars field removed per request #}
+
+    {# Scenario blocks: show image + editable Introduction and Conclusion textareas per scenario #}
+
+    {# persist selected scenario index across saves #}
+    <input type="hidden" name="selected_scenario" id="selected-scenario-input-{{ campaignlist.getId() }}" value="{{ cl_vals.selected_scenario|default(0) }}" />
+
+    <div id="scenarios-pager" style="margin-bottom:0.75rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; gap:0.75rem;">
+            <div>
+                <button type="button" id="scenario-prev-{{ campaignlist.getId() }}" class="btn btn-sm btn-secondary">&larr; Previous</button>
+                <button type="button" id="scenario-next-{{ campaignlist.getId() }}" class="btn btn-sm btn-secondary">Next &rarr;</button>
+            </div>
+            <div style="flex:1 1 auto; text-align:center;">
+                <select id="scenario-select-{{ campaignlist.getId() }}" class="form-control" style="display:inline-block; max-width:380px;">
+                    {% for scode, scenario in (camp_def.scenarios|default({})) %}
+                        <option value="{{ loop.index0 }}">{{ (scenario.name is defined and scenario.name) ? scenario.name : scode }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="font-size:0.95rem; color:#444;" id="scenario-indicator-{{ campaignlist.getId() }}">Scenario 1 / 1</div>
+        </div>
+        <div id="scenarios-list-{{ campaignlist.getId() }}">
+    {% set sindex = 0 %}
+    {% for scode, scenario in (camp_def.scenarios|default({})) %}
+        {% set safe_code = scode|replace({' ':'_','/':'_'}) %}
+
+        <div class="scenario-page" data-index="{{ sindex }}" style="display:none; margin-bottom:0.75rem; padding:0.5rem; border:1px solid #eee; border-radius:6px; background:#fff; display:flex; gap:0.75rem; align-items:flex-start; flex-wrap:wrap;">
+            <div class="scenario-main" style="width:100%; display:flex; gap:0.75rem; align-items:flex-start;">
+            {% if scenario and scenario.image is defined and scenario.image %}
+                <div class="scenario-image" style="flex:0 0 220px; max-width:220px; display:flex; align-items:flex-start; justify-content:center;">
+                    {% set simg = scenario.image %}
+                    {% if simg|slice(0,4) == 'http' %}
+                        <img src="{{ simg }}" alt="{{ scode }} image" style="max-width:100%; max-height:220px; border-radius:6px; object-fit:contain; display:block;" />
+                    {% else %}
+                        <img src="{{ asset('bundles/campaigns/' ~ simg) }}" alt="{{ scode }} image" crossorigin="anonymous" style="max-width:100%; max-height:220px; border-radius:6px; object-fit:contain; display:block;" />
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="scenario-text" style="flex:1 1 auto; min-width:0;">
+                <h1 style="margin-top:0; margin-bottom:0.25rem; display:inline-block; font-size:1.6rem; font-weight:700; line-height:1.1;">{{ (scenario and scenario.name is defined and scenario.name) ? scenario.name : scode }}</h1>
+                {% if scenario and (scenario.modulars is defined and scenario.modulars) %}
+                    <span style="margin-left:0.5rem; display:inline-block; vertical-align:middle;">
+                        {% for m in scenario.modulars %}
+                            {% if m is iterable %}
+                                {% set mname = (m.name is defined and m.name) ? m.name : (m.code is defined ? m.code : (m[0] is defined ? m[0] : '')) %}
+                                <span style="background:#eee; color:#333; padding:0.15rem 0.4rem; border-radius:4px; font-size:0.85rem; margin-right:0.35rem;">{{ mname }}</span>
+                            {% else %}
+                                <span style="background:#eee; color:#333; padding:0.15rem 0.4rem; border-radius:4px; font-size:0.85rem; margin-right:0.35rem;">{{ m }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+                {% endif %}
+
+                <span style="margin-left:0.5rem; display:inline-block; vertical-align:middle;">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('team_campaign_scenario_stats', {'campaignlist_id': campaignlist.getId(), 'scenario_code': scode}) }}">View statistics</a>
+                </span>
+
+                {% if scenario and scenario.description is defined and scenario.description %}
+                    {% set _desc = scenario.description|replace({'\\r\\n':'\n','\\r':'\n','\\n':'\n'}) %}
+                    <div class="scenario-subtitle text-muted" style="margin-top:0.25rem;"><em><div style="white-space:pre-wrap; display:inline">{{ _desc|e }}</div></em></div>
+                {% endif %}
+
+                {# scenario-specific note inputs removed; campaign-level notes are used instead #}
+            </div>
+
+            </div>
+
+            {# Full-width introduction + conclusion below the two-column area #}
+            <div style="width:100%; margin-top:0.75rem; display:flex; flex-direction:column; gap:0.5rem;">
+                {% if scenario and scenario.introduction is defined and scenario.introduction %}
+                    {% set _intro = scenario.introduction|replace({'\\r\\n':'\n','\\r':'\n','\\n':'\n'}) %}
+                    <div class="form-group" style="width:100%;">
+                        <label style="font-weight:600;">Setup</label>
+                        <div class="text-muted" style="white-space:pre-wrap;">{{ _intro|e }}</div>
+                    </div>
+                {% endif %}
+
+                {% if scenario and scenario.resolution is defined and scenario.resolution %}
+                    {% set _res = scenario.resolution|replace({'\\r\\n':'\n','\\r':'\n','\\n':'\n'}) %}
+                    <div class="form-group" style="width:100%;">
+                        <label style="font-weight:600;">Conclusion</label>
+                        <div class="text-muted" style="white-space:pre-wrap;">{{ _res|e }}</div>
+                    </div>
+                {% endif %}
+            </div>
+
+            {# right-side image removed - only left image is shown now #}
+        </div>
+        {% set sindex = sindex + 1 %}
+    {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            var root = document.getElementById('campaign-fragment-{{ campaignlist.getId() }}');
+            if (!root) return;
+            var pages = Array.prototype.slice.call(root.querySelectorAll('.scenario-page'));
+            if (!pages.length) return;
+            var total = pages.length;
+            var indicator = root.querySelector('#scenario-indicator-{{ campaignlist.getId() }}');
+            var prev = root.querySelector('#scenario-prev-{{ campaignlist.getId() }}');
+            var next = root.querySelector('#scenario-next-{{ campaignlist.getId() }}');
+            var select = root.querySelector('#scenario-select-{{ campaignlist.getId() }}');
+
+            function showIndex(i){
+                if (i < 0) i = 0;
+                if (i >= total) i = total - 1;
+                pages.forEach(function(p){ p.style.display = 'none'; });
+                pages[i].style.display = 'flex';
+                if (indicator) indicator.textContent = 'Scenario ' + (i+1) + ' / ' + total;
+                // update saved input so server can persist selection
+                try { var sin = document.getElementById('selected-scenario-input-{{ campaignlist.getId() }}'); if (sin) sin.value = i; } catch(e){}
+                try { if (select) select.value = i; } catch(e){}
+                // update hash for back/forward navigation (namespaced by campaign id)
+                try { history.replaceState(null, null, '#campaign-{{ campaignlist.getId() }}-scenario=' + i); } catch(e){}
+                current = i;
+            }
+
+            var current = 0;
+            // prefer server-saved value when available, otherwise honor namespaced hash
+            var saved = null;
+            try { var sin = document.getElementById('selected-scenario-input-{{ campaignlist.getId() }}'); if (sin) saved = parseInt(sin.value,10); } catch(e){}
+            var m = location.hash.match(/campaign-{{ campaignlist.getId() }}-scenario=(\d+)/);
+            if (m) {
+                current = Math.max(0, Math.min(total-1, parseInt(m[1],10)));
+            } else if (!isNaN(saved)) {
+                current = Math.max(0, Math.min(total-1, saved));
+            }
+            showIndex(current);
+
+            if (prev) prev.addEventListener('click', function(){ showIndex(current-1); });
+            if (next) next.addEventListener('click', function(){ showIndex(current+1); });
+
+            if (select) {
+                select.addEventListener('change', function(){ var v = parseInt(this.value,10); if (!isNaN(v)) showIndex(v); });
+            }
+
+            // allow Left/Right keys
+            document.addEventListener('keydown', function(e){ if (e.key === 'ArrowLeft') showIndex(current-1); if (e.key === 'ArrowRight') showIndex(current+1); });
+        })();
+    </script>
+
+    {# Modal behavior removed: 'View statistics' opens full page by default #}
+
+    
+
+    <h5>Campaign Cards (optional)</h5>
+    {% set ccards = cl_vals.campaign_cards is defined ? cl_vals.campaign_cards : (campaignlist.getCampaignCards() ? campaignlist.getCampaignCards()|raw : null) %}
+    <div class="form-group">
+        <label>Campaign Cards JSON</label>
+        <textarea name="campaign_cards" class="form-control" rows="4">{{ ccards ? (ccards|json_encode) : 'null' }}</textarea>
+    </div>
+
+    <div style="margin-top:0.5rem; display:flex; gap:0.5rem; align-items:center;">
+        <button class="btn btn-primary" type="submit">Save</button>
+        {% set t = campaignlist.getTeam() %}
+        {% if t is defined and t and t.slug is defined and t.slug %}
+            <a class="btn btn-link" href="{{ path('team_view', {'team_id': t.getId(), 'slug': t.getSlug()}) }}">Cancel</a>
+        {% else %}
+            <a class="btn btn-link" href="{{ path('team_index') }}">Cancel</a>
+        {% endif %}
+    </div>
+</form>
+    {# Tabs removed; no JS needed for static per-scenario sections #}
+{% endif %}

@@ -108,6 +108,144 @@
     {% endfor %}
     </div>
 
+    
+    {# Removed hard-coded generic campaign display — campaign data should be edited per-team via campaignlists. #}
+
+    {% if team is defined %}
+        <div class="form-group" style="margin-top:1.5rem;">
+            <h3>Campaigns</h3>
+            <p>Select a campaign and add it to this team (campaign data definitions come from the static `campaign` table).</p>
+            <form method="post" action="{{ path('team_campaign_add', {'team_id': team.id}) }}" style="display:flex; gap:0.5rem; align-items:center;">
+                <input type="hidden" name="_token" value="{{ csrf_token('add_campaign') }}" />
+                <select name="campaign_id" class="form-control" style="max-width:360px;">
+                    {% for c in available_campaigns %}
+                        <option value="{{ c.getId() }}">{{ c.getName() }}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-primary" type="submit">Add campaign to team</button>
+            </form>
+
+            <div style="margin-top:0.5rem; font-size:0.9rem; color:#666;">
+                <strong>Debug:</strong> available_campaigns count: {{ available_campaigns is defined ? available_campaigns|length : 'n/a' }}
+                {% if available_campaigns is defined and available_campaigns|length > 0 %}
+                    <ul style="margin:0.25rem 0 0 1rem; padding:0; list-style:disc;">
+                    {% for c in available_campaigns %}
+                        <li style="margin:0;">{{ c.getName() }}</li>
+                            <div style="margin-left:1rem; font-size:0.9rem; color:#444;">
+                                <div><strong>Creator:</strong> {{ c.getCreator() ? c.getCreator() : 'none' }}</div>
+                                <div><strong>Campaign notes:</strong> {{ c.getCampaignNotes() ? c.getCampaignNotes() : (c.getScenarioNotes() ? c.getScenarioNotes() : 'none') }}</div>
+                                <div><strong>Campaign counters:</strong> {{ c.getCampaignCounters() ? c.getCampaignCounters() : (c.getScenarioCounters() ? c.getScenarioCounters() : 'none') }}</div>
+                            </div>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <div style="margin-top:0.25rem; color:#a33;">No campaigns found in `available_campaigns`. Verify import and DB contents.</div>
+                {% endif %}
+            </div>
+
+            {% if team_campaignlists is defined and team_campaignlists|length > 0 %}
+                <h4 style="margin-top:1rem;">Team campaign lists</h4>
+                {# Nav tabs #}
+                <ul class="nav nav-tabs" role="tablist">
+                    {% for cl in team_campaignlists %}
+                        {% set camp = cl.getCampaign() %}
+                        {% set active_param = app.request.query.get('active_campaignlist')|default(null) %}
+                        {% set is_active = (active_param is not null and active_param == cl.getId()) or (active_param is null and loop.first) %}
+                        <li role="presentation" class="{% if is_active %}active{% endif %}">
+                            {% if camp is defined and camp %}
+                                <a href="#camp-tab-{{ cl.getId() }}" aria-controls="camp-tab-{{ cl.getId() }}" role="tab" data-toggle="tab">{{ camp.getName() }}</a>
+                            {% else %}
+                                <a href="#camp-tab-{{ cl.getId() }}" aria-controls="camp-tab-{{ cl.getId() }}" role="tab" data-toggle="tab">Campaign (missing)</a>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <div class="tab-content" style="margin-top:0.75rem;">
+                    {% for cl in team_campaignlists %}
+                        {% set camp = cl.getCampaign() %}
+                        {% set active_param = app.request.query.get('active_campaignlist')|default(null) %}
+                        {% set is_active = (active_param is not null and active_param == cl.getId()) or (active_param is null and loop.first) %}
+                        <div role="tabpanel" class="tab-pane fade {% if is_active %}in active{% endif %}" id="camp-tab-{{ cl.getId() }}">
+                            {% if camp is defined and camp %}
+                                {# Full campaign header inside tab content (image + name + full description) #}
+                                <div class="campaign-full-header" style="display:flex; gap:1rem; align-items:flex-start; margin-bottom:0.75rem;">
+                                    {# Prefer explicit image from campaign_defs or camp.getImage(), fallback to code-based filename #}
+                                    {% set campaign_img_name = (campaign_defs[camp.getId()] is defined and campaign_defs[camp.getId()].image is defined) ? campaign_defs[camp.getId()].image : ((camp.getImage() is defined and camp.getImage()) ? camp.getImage() : ((camp.getCode() is defined ? camp.getCode() : camp.getId()) ~ '.jpg')) %}
+                                    <div style="flex:0 0 auto;">
+                                        <img src="{{ asset('bundles/campaigns/' ~ campaign_img_name) }}" alt="{{ camp.getName() }}" crossorigin="anonymous" style="max-height:140px; max-width:280px; border-radius:6px; object-fit:cover;" />
+                                    </div>
+                                    <div style="flex:1 1 auto;">
+                                        <h3 style="margin-top:0; margin-bottom:0.25rem; display:inline-block;">{{ camp.getName() }}</h3>
+                                        {% if camp.getCreator() %}
+                                            <span style="background:#1976d2; color:#fff; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.9rem; margin-left:0.5rem; display:inline-block; vertical-align:middle;">{{ camp.getCreator() }}</span>
+                                        {% endif %}
+                                        {% if camp.getDescription() %}
+                                            <div class="text-muted" style="margin-bottom:0.5rem;"><em>{{ camp.getDescription() }}</em></div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% include 'AppBundle:Team:_campaign_form_fragment.html.twig' with {'campaignlist': cl, 'campaign_defs': campaign_defs, 'campaignlist_values': campaignlist_values} %}
+                            {% else %}
+                                <div class="text-muted">This campaign definition is no longer available.</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-muted" style="margin-top:0.5rem;">No campaigns attached to this team.</div>
+            {% endif %}
+        </div>
+    {% endif %}
+
     <p style="margin-top:1rem;"><a href="{{ path('team_index') }}">Back to teams</a></p>
 </div>
+{% endblock %}
+
+{% block javascripts_extra %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    var h = location.hash;
+    if (!h) return;
+    if (h.indexOf('#camp-tab-') !== 0) return;
+
+    // attempt to use Bootstrap/jQuery tab API if available
+    try {
+        if (window.jQuery) {
+            var $link = jQuery('a[href="' + h + '"]');
+            if ($link && $link.length && typeof $link.tab === 'function') {
+                // defer slightly so other scripts/bootstrap init run first
+                setTimeout(function(){
+                    try { $link.tab('show'); } catch(e) { $link.get(0).click(); }
+                }, 100);
+                return;
+            }
+        }
+    } catch (e) {
+        // ignore and fall back
+    }
+
+    // fallback: delayed manual activation to avoid being overridden by other scripts
+    setTimeout(function(){
+        try {
+            var link = document.querySelector('a[href="' + h + '"]');
+            if (link) {
+                try { link.click(); return; } catch(e) {}
+            }
+        } catch (e) {}
+
+        var nav = document.querySelector('.nav-tabs');
+        if (nav) {
+            var items = nav.querySelectorAll('li');
+            items.forEach(function(it){ it.classList.remove('active'); });
+            var activeLink = nav.querySelector('a[href="' + h + '"]');
+            if (activeLink && activeLink.parentElement) activeLink.parentElement.classList.add('active');
+        }
+        var panes = document.querySelectorAll('.tab-pane');
+        panes.forEach(function(p){ p.classList.remove('in','active'); });
+        var pane = document.querySelector(h);
+        if (pane) pane.classList.add('in','active');
+    }, 120);
+});
+</script>
 {% endblock %}

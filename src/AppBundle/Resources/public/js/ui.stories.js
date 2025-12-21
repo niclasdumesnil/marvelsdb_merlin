@@ -1,81 +1,111 @@
-let selectedModularCode, selectedVillainCode;
+let activeTab = 'modular';
+let activeModularIndex = 0;
 
-function setTab(tab) {
-    const modularBtn = document.getElementById('tab-modular');
-    const villainBtn = document.getElementById('tab-villain');
-    const modularContent = document.getElementById('tab-modular-content');
-    const villainContent = document.getElementById('tab-villain-content');
+function setTab(tab, index) {
+	const modularContent = document.getElementById('tab-modular-content');
+	const villainContent = document.getElementById('tab-villain-content');
 
-    if (tab === 'modular') {
-        modularContent.style.display = 'block';
-        villainContent.style.display = 'none';
-        modularBtn.style.background = '#ce7222ff';
-        modularBtn.style.color = '#fff';
-        villainBtn.style.background = '#eee';
-        villainBtn.style.color = '#222';
-        updatePanels('modular');
-    } else if (tab === 'villain') {
-        modularContent.style.display = 'none';
-        villainContent.style.display = 'block';
-        modularBtn.style.background = '#eee';
-        modularBtn.style.color = '#222';
-        villainBtn.style.background = '#4b2066';
-        villainBtn.style.color = '#fff';
-        updatePanels('villain');
-    }
+	activeTab = tab;
+	if (typeof index !== 'undefined') activeModularIndex = index;
+
+	// reset all tab button styles
+	document.querySelectorAll('.tab-btn').forEach(function(b){ b.style.background = '#eee'; b.style.color = '#222'; });
+
+	if (tab === 'modular') {
+		modularContent.style.display = 'block';
+		villainContent.style.display = 'none';
+		const btn = document.getElementById('tab-modular-' + activeModularIndex);
+		if (btn) { btn.style.background = '#ce7222ff'; btn.style.color = '#fff'; }
+		updatePanels('modular', activeModularIndex);
+	} else if (tab === 'villain') {
+		modularContent.style.display = 'none';
+		villainContent.style.display = 'block';
+		const btn = document.getElementById('tab-villain');
+		if (btn) { btn.style.background = '#4b2066'; btn.style.color = '#fff'; }
+		updatePanels('villain');
+	}
 }
 
-function updatePanels(tab) {
-    if (tab === 'modular') {
-        const code = document.getElementById('modular-sets').value;
-        document.querySelectorAll('.set-infos-panel, .set-cards-panel').forEach(el => el.style.display = 'none');
-        const infos = document.getElementById('infos-' + code);
-        const cards = document.getElementById('cards-' + code);
-        if (infos) infos.style.display = '';
-        if (cards) cards.style.display = '';
-    } else if (tab === 'villain') {
-        const code = document.getElementById('villain-sets').value;
-        document.querySelectorAll('.villain-cards-panel').forEach(el => el.style.display = 'none');
-        const infos = document.getElementById('villain-cards-' + code);
-        if (infos) infos.style.display = '';
-    }
+function updatePanels(tab, index) {
+	if (tab === 'modular') {
+		const code = document.getElementById('modular-sets-' + index).value;
+		document.querySelectorAll('.set-infos-panel, .set-cards-panel').forEach(el => el.style.display = 'none');
+		const infos = document.getElementById('infos-' + code);
+		const cards = document.getElementById('cards-' + code);
+		if (infos) infos.style.display = '';
+		if (cards) cards.style.display = '';
+	} else if (tab === 'villain') {
+		const code = document.getElementById('villain-sets').value;
+		document.querySelectorAll('.villain-cards-panel').forEach(el => el.style.display = 'none');
+		const infos = document.getElementById('villain-cards-' + code);
+		if (infos) infos.style.display = '';
+	}
 }
 
-function getActiveTab() {
-    const modularBtn = document.getElementById('tab-modular');
-    const villainBtn = document.getElementById('tab-villain');
-    if (modularBtn.style.background === 'rgb(206, 114, 34)' || modularBtn.style.background === '#ce7222ff') return 'modular';
-    if (villainBtn.style.background === 'rgb(75, 32, 102)' || villainBtn.style.background === '#4b2066') return 'villain';
-    return 'modular';
-}
+function getActiveTab() { return activeTab; }
 
 function updateCombinedStatsPanel() {
-    const modularCode = document.getElementById('modular-sets').value;
-    const villainCode = document.getElementById('villain-sets').value;
-    fetch(`/combined-stats?modular=${modularCode}&villain=${villainCode}`)
-        .then(response => response.text())
-        .then(html => {
-            document.getElementById('combined-stats-panel').innerHTML = html;
-        });
+	const villainCode = document.getElementById('villain-sets').value;
+	// collect only visible modular selects values to build comma-separated list
+	const allModularSelects = Array.prototype.slice.call(document.querySelectorAll('[id^="modular-sets-"]'));
+	const modularCodes = allModularSelects.filter(function(s){
+		// find nearest wrapper with class 'modular-select' if present
+		var wrapper = s.closest ? s.closest('.modular-select') : null;
+		if (!wrapper) return true; // if no wrapper, include by default
+		var disp = window.getComputedStyle(wrapper).display;
+		return disp !== 'none';
+	}).map(s => s.value).filter(Boolean);
+	const modularParam = modularCodes.join(',');
+	const panel = document.getElementById('combined-stats-panel');
+	fetch(`/combined-stats?modular=${encodeURIComponent(modularParam)}&villain=${villainCode}`)
+		.then(response => response.text())
+		.then(html => {
+			if (panel) panel.innerHTML = html;
+		});
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    selectedModularCode = document.getElementById('modular-sets').value;
-    selectedVillainCode = document.getElementById('villain-sets').value;
+	// bind villain tab
+	const tv = document.getElementById('tab-villain'); if (tv) tv.addEventListener('click', function(){ setTab('villain'); });
+	// bind modular tab buttons
+	document.querySelectorAll('.tab-modular-btn').forEach(function(btn){
+		btn.addEventListener('click', function(){
+			const idx = parseInt(this.getAttribute('data-index'),10) || 0;
+			setTab('modular', idx);
+		});
+	});
 
-    document.getElementById('tab-modular').addEventListener('click', function() { setTab('modular'); });
-    document.getElementById('tab-villain').addEventListener('click', function() { setTab('villain'); });
+	// bind modular selects
+	document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){ sel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); }); });
 
-    document.getElementById('modular-sets').addEventListener('change', function() {
-        updatePanels(getActiveTab());
-        updateCombinedStatsPanel();
-    });
+	// handle number of modulars input (if present)
+	const numInput = document.getElementById('num-modulars');
+	function applyNumModulars() {
+		if (!numInput) return;
+		let n = parseInt(numInput.value, 10) || 1;
+		// cap at available selects
+		const allSelects = Array.prototype.slice.call(document.querySelectorAll('.modular-select'));
+		const max = allSelects.length;
+		if (n > max) n = max;
+		// show/hide selects
+		allSelects.forEach(function(div){ const idx = parseInt(div.getAttribute('data-index'),10); if (idx < n) div.style.display = ''; else div.style.display = 'none'; });
+		// show/hide tab buttons
+		document.querySelectorAll('.tab-modular-btn').forEach(function(btn){ const idx = parseInt(btn.getAttribute('data-index'),10); if (idx < n) btn.style.display = ''; else btn.style.display = 'none'; });
+		// ensure active index valid
+		if (activeModularIndex >= n) { activeModularIndex = 0; setTab('modular', activeModularIndex); }
+		updatePanels(getActiveTab(), activeModularIndex);
+		updateCombinedStatsPanel();
+	}
+	if (numInput) {
+		numInput.addEventListener('change', applyNumModulars);
+		// initialize visibility based on current value
+		applyNumModulars();
+	}
 
-    document.getElementById('villain-sets').addEventListener('change', function() {
-        updatePanels(getActiveTab());
-        updateCombinedStatsPanel();
-    });
+	const vsel = document.getElementById('villain-sets'); if (vsel) vsel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); });
 
-    setTab('modular');
-    updateCombinedStatsPanel();
+	// default to modular 0
+	setTab('modular', 0);
+	updateCombinedStatsPanel();
 });
+

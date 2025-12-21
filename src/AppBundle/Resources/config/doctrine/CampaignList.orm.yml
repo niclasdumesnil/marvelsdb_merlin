@@ -1,0 +1,55 @@
+AppBundle\Entity\CampaignList:
+  type: entity
+  table: campaignlist
+  id:
+    id:
+      type: integer
+      generator:
+        strategy: AUTO
+  manyToOne:
+    campaign:
+      targetEntity: AppBundle\Entity\Campaign
+      joinColumn:
+        name: campaign_id
+        referencedColumnName: id
+        onDelete: SET NULL
+    team:
+      targetEntity: AppBundle\Entity\Team
+      joinColumn:
+        name: team_id
+        referencedColumnName: id
+        onDelete: SET NULL
+  fields:
+    teamData:
+      column: team
+      type: text
+      nullable: true
+    teamHps:
+      column: team_hps
+      type: text
+      nullable: true
+    campaignCards:
+      column: campaign_cards
+      type: text
+      nullable: true
+    # legacy scenario_* columns removed; migration to drop them should be performed manually
+    campaignNotes:
+      column: campaign_notes
+      type: text
+      nullable: true
+    campaignCounters:
+      column: campaign_counters
+      type: text
+      nullable: true
+    playerNames:
+      column: player_names
+      type: text
+      nullable: true
+    selectedScenario:
+      column: selected_scenario
+      type: integer
+      nullable: true
+    dateCreation:
+      column: date_creation
+      type: datetime
+      nullable: false

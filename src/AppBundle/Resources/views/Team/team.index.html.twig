@@ -21,7 +21,9 @@
                         </div>
                     </div>
                     <div class="team-header-actions" style="position: absolute; top: 0.6rem; right: 0.6rem; display:flex; flex-direction:row; flex-wrap:nowrap; gap:0.4rem; align-items:center; white-space:nowrap;">
-                <a href="{{ path('team_view', {'team_id': team.id, 'slug': team.slug}) }}" class="btn btn-default btn-team-action" title="View" aria-label="View"><span class="fa fa-eye fa-fw"></span></a>
+                {% if team.slug is defined and team.slug %}
+                    <a href="{{ path('team_view', {'team_id': team.id, 'slug': team.slug}) }}" class="btn btn-default btn-team-action" title="View" aria-label="View"><span class="fa fa-eye fa-fw"></span></a>
+                {% endif %}
                             {% if app.user and app.user.id == team.owner.id %}
                 <a href="{{ path('team_edit', {'team_id': team.id}) }}" class="btn btn-default btn-team-action" title="Edit" aria-label="Edit"><span class="fa fa-pencil fa-fw"></span></a>
                                                 <form method="post" action="{{ path('team_delete') }}" style="display:inline-block; margin:0;">

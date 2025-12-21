@@ -1,18 +1,40 @@
 {% extends 'AppBundle::layout.html.twig' %}
 
 
-
 {% block body %}
 
 <script src="/bundles/app/js/ui.stories.js"></script>
 
 {% set show_spoilers = true %}
 <div style="margin-left:200px; margin-right:200px;">
-    <h1>Stories</h1>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+        <h1 style="margin:0;">Stories</h1>
+        <div>
+            <button id="stories-back-btn" type="button" class="btn btn-sm btn-secondary" style="display:none;" onclick="history.back();">back</button>
+            <script>
+                (function(){
+                    try {
+                        var ref = document.referrer || '';
+                        if (ref && (ref.indexOf('/view/') !== -1 || ref.indexOf('/edit/') !== -1 || ref.indexOf('/campaign/') !== -1)) {
+                            var btn = document.getElementById('stories-back-btn');
+                            if (btn) btn.style.display = '';
+                        }
+                    } catch(e){}
+                })();
+            </script>
+        </div>
+    </div>
 
     {# Utilise les variables combinées passées par le contrôleur #}
     <div style="margin-bottom: 24px;">
-        <div id="combined-stats-panel">
+        {# expose all modular codes in a data attribute so the client can request global combined stats #}
+        {% set _modcodes = '' %}
+        {% if filtered_modular_sets is defined and filtered_modular_sets|length > 0 %}
+            {% for s in filtered_modular_sets %}
+                {% if loop.first %}{% set _modcodes = s.code %}{% else %}{% set _modcodes = _modcodes ~ ',' ~ s.code %}{% endif %}
+            {% endfor %}
+        {% endif %}
+        <div id="combined-stats-panel" data-modular-codes="{{ _modcodes }}">
             {% include 'AppBundle:Search:set_stats.html.twig' with {
                 stats: combined_stats,
                 color: '#111',
@@ -38,28 +60,59 @@
             </select>
         </div>
         <div>
-            <div style="font-weight:bold; margin-bottom:6px;">Modular</div>
-            <select id="modular-sets" name="modular_set" style="width: 100%;">
-                {% for set in filtered_modular_sets %}
-                    <option value="{{ set.code }}"
-                        {% if set.code == selected_modular_code %}selected{% endif %}>
-                        {{ set.name }}
-                    </option>
+            <div style="font-weight:bold; margin-bottom:6px;">Modular slots</div>
+            {# number of slots: prefer query param 'modulars' sent by campaign page, otherwise default to 1 #}
+            {% set requested_slots = app.request.query.get('modulars') %}
+            {% set max_slots = (filtered_modular_sets is defined) ? filtered_modular_sets|length : 0 %}
+            {# Controller can supply an explicit `slots` variable when appropriate (e.g. TeamController). #}
+            {% if slots is defined %}
+                {# use controller-provided initial slots #}
+                {% set slots = slots %}
+            {% elseif requested_slots is not null and (requested_slots + 0) > 0 %}
+                {% set slots = (requested_slots + 0) %}
+            {% else %}
+                {# default to 1 when opened directly without explicit param or controller hint #}
+                {% set slots = 1 %}
+            {% endif %}
+            {% if max_slots > 0 and slots > max_slots %}
+                {% set slots = max_slots %}
+            {% endif %}
+            {% if slots > 0 %}
+                <div style="margin-top:6px; margin-bottom:12px; display:flex; gap:8px; align-items:center;">
+                    <div style="display:flex; flex-direction:column;"><label style="font-weight:600;">Number of modulars</label>
+                        <input id="num-modulars" type="number" min="1" max="{{ filtered_modular_sets|length }}" value="{{ slots }}" style="width:100px; padding:4px;" />
+                    </div>
+                    <div style="color:#666; font-size:0.95rem;">Value passed by the campaign page if provided, otherwise default.</div>
+                </div>
+                {# render all available modular selects but mark them with data-index so JS can show/hide per requested count #}
+                {% for i in 0..(filtered_modular_sets|length - 1) %}
+                    <div style="margin-bottom:6px;" class="modular-select" data-index="{{ i }}">
+                        <select id="modular-sets-{{ i }}" name="modular_set_{{ i }}" style="width: 100%;">
+                            {% for set in filtered_modular_sets %}
+                                <option value="{{ set.code }}" {% if set.code == (filtered_modular_sets[i].code) %}selected{% endif %}>{{ set.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 {% endfor %}
-            </select>
+            {% else %}
+                <div style="color:#777;">No modular sets available</div>
+            {% endif %}
         </div>
     </div>
 
     <div style="margin-top: 32px;">
-        <div style="display: flex; gap: 18px;">
-            <button id="tab-villain" type="button"
-                style="padding: 8px 18px; border-radius: 6px; border: none; background: #eee; color: #222; font-weight: bold; cursor:pointer;">
+        <div style="display: flex; gap: 8px; align-items:center;">
+            <button id="tab-villain" type="button" class="tab-btn"
+                style="padding: 8px 14px; border-radius: 6px; border: none; background: #eee; color: #222; font-weight: bold; cursor:pointer;">
                 Villain
             </button>
-            <button id="tab-modular" type="button"
-                style="padding: 8px 18px; border-radius: 6px; border: none; background: #ce7222ff; color: #fff; font-weight: bold; cursor:pointer;">
-                Modular
-            </button>
+            {# Global tab removed per request: aggregation handled via 'Modular' selects and default behavior #}
+            {% for i in 0..(filtered_modular_sets|length - 1) %}
+                <button id="tab-modular-{{ i }}" type="button" class="tab-modular-btn tab-btn" data-index="{{ i }}"
+                    style="padding: 8px 14px; border-radius: 6px; border: none; background: #eee; color: #222; font-weight: bold; cursor:pointer;">
+                    Modular {{ i+1 }}
+                </button>
+            {% endfor %}
         </div>
 
         <div id="tab-villain-content" style="display:block;">

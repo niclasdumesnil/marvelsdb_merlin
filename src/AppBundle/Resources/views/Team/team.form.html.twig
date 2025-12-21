@@ -34,7 +34,7 @@
                     <button class="btn btn-success" type="submit">Save</button>
                     <button type="button" class="btn btn-link" style="color:#5b2db3; text-decoration:underline; padding:0.25rem 0.5rem;" onclick="history.back();">Cancel edits</button>
                 </div>
-                {% if team is defined %}
+                {% if team is defined and team.slug is defined and team.slug %}
                     <p style="margin-top:0.6rem;"><a href="{{ path('team_view', {'team_id': team.id, 'slug': team.slug}) }}">Back to team</a></p>
                 {% endif %}
             </div>
@@ -61,6 +61,8 @@
                         {% endif %}
                     </div>
                 </div>
+
+                {# Campaign add form moved to team.show.twig - kept here previously for editing flow #}
             </div>
         </div>
     {{ form_end(form) }}
@@ -337,7 +339,7 @@
     });
     </script>
 
-    {% if team is defined %}
+    {% if team is defined and team.slug is defined and team.slug %}
     <p><a href="{{ path('team_view', {'team_id': team.id, 'slug': team.slug}) }}">Back to team</a></p>
     {% endif %}
 </div>
