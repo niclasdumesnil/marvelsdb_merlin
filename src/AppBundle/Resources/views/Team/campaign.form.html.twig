@@ -14,6 +14,6 @@
         <h3>Campaign (missing)</h3>
         <div class="text-muted">The campaign linked to this entry is not available.</div>
     {% endif %}
-    {% include 'AppBundle:Team:_campaign_form_fragment.html.twig' with {'campaignlist': campaignlist, 'campaign_defs': campaign_defs, 'campaignlist_values': campaignlist_values} %}
+    {# include 'AppBundle:Team:_campaign_form_fragment.html.twig' removed to avoid duplicate rendering on this page #}
 </div>
 {% endblock %}

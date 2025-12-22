@@ -20,30 +20,32 @@
 
     {# Players + HPs: names on first row, HPs aligned directly beneath on second row. #}
     {% set team_deck_count = campaignlist.getTeam() ? (campaignlist.getTeam().getDecks()|length) : 0 %}
+    {% set team_decks = campaignlist.getTeam() ? campaignlist.getTeam().getDecks() : [] %}
     {% set players = cl_vals.player_names|default([]) %}
     {% set hp_values = cl_vals.team_hps is defined ? cl_vals.team_hps : (campaignlist.getTeamHps() ? campaignlist.getTeamHps()|raw : []) %}
     <div style="margin-bottom:0.5rem;">
         <div style="display:flex; flex-direction:column; gap:0.25rem;">
             <div style="display:flex; align-items:center; gap:0.75rem;">
-                <div style="width:60px; text-align:right; font-weight:600;">Player</div>
-                <div style="display:flex; gap:0.5rem;">
-                    {% for i in 0..3 %}
-                        {% set display = (i < team_deck_count) %}
-                        <input type="text" name="player_names[{{ i }}]" class="form-control" style="display:{{ display ? 'inline-block' : 'none' }}; width:150px; padding:0.25rem 0.5rem;" value="{{ players[i]|default('') }}" placeholder="Player {{ i+1 }}" />
-                    {% endfor %}
-                </div>
+                    <div style="width:60px; text-align:right; font-weight:600;">Players</div>
+                    <div style="display:flex; gap:0.5rem; align-items:center; flex:1 1 auto; min-width:0;">
+                        {% for i in 0..3 %}
+                            {% set display = (i < team_deck_count) %}
+                            {% set default_hp = 0 %}
+                            {% if team_decks[i] is defined and team_decks[i].getCharacter() is defined %}
+                                {% set default_hp = team_decks[i].getCharacter().getHealth()|default(0) %}
+                            {% endif %}
+                            <div style="display:{{ display ? 'flex' : 'none' }}; align-items:center; gap:0.35rem; min-width:0;">
+                                <input type="text" name="player_names[{{ i }}]" class="form-control" style="width:140px; padding:0.25rem 0.5rem;" value="{{ players[i]|default('') }}" placeholder="Player {{ i+1 }}" />
+                                <input type="number" name="team_hps[{{ i }}]" class="form-control" step="1" min="0" style="width:72px; padding:0.25rem 0.5rem; font-size:1.15rem; font-weight:600; text-align:center;" value="{{ hp_values[i]|default(default_hp) }}" />
+                            </div>
+                        {% endfor %}
+                    </div>
             </div>
-            <div style="display:flex; align-items:center; gap:0.75rem;">
-                <div style="width:60px; text-align:right; font-weight:600;">HP</div>
-                <div style="display:flex; gap:0.5rem;">
-                    {% for i in 0..3 %}
-                        {% set display = (i < team_deck_count) %}
-                        <input type="number" name="team_hps[{{ i }}]" class="form-control" step="1" min="0" style="display:{{ display ? 'inline-block' : 'none' }}; width:150px; padding:0.25rem 0.5rem;" value="{{ hp_values[i]|default(0) }}" />
-                    {% endfor %}
-                </div>
-            </div>
+            
         </div>
     </div>
+
+    {# Campaign Cards removed per request #}
 
     <h5>Campaign Notes</h5>
     {% set camp_def = (campaign_defs[camp.getId()] is defined) ? campaign_defs[camp.getId()] : (campaign_defs|default({})) %}
@@ -195,6 +197,11 @@
                 // update hash for back/forward navigation (namespaced by campaign id)
                 try { history.replaceState(null, null, '#campaign-{{ campaignlist.getId() }}-scenario=' + i); } catch(e){}
                 current = i;
+                // disable/gray prev/next when at ends
+                try {
+                    if (prev){ prev.disabled = (i <= 0); if (prev.classList) prev.classList.toggle('disabled', prev.disabled); }
+                    if (next){ next.disabled = (i >= total-1); if (next.classList) next.classList.toggle('disabled', next.disabled); }
+                } catch(e){}
             }
 
             var current = 0;
@@ -227,10 +234,410 @@
 
     <h5>Campaign Cards (optional)</h5>
     {% set ccards = cl_vals.campaign_cards is defined ? cl_vals.campaign_cards : (campaignlist.getCampaignCards() ? campaignlist.getCampaignCards()|raw : null) %}
-    <div class="form-group">
-        <label>Campaign Cards JSON</label>
-        <textarea name="campaign_cards" class="form-control" rows="4">{{ ccards ? (ccards|json_encode) : 'null' }}</textarea>
+
+    <div style="margin-bottom:0.5rem;">
+        <label style="font-weight:600;">Add cards to campaign</label>
+        <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.25rem;">
+            <input id="campaign-card-search-{{ campaignlist.getId() }}" type="search" placeholder="Search by name or code" class="form-control" style="max-width:420px;" />
+            <div style="color:#666; font-size:0.95rem;">Results below — click Add to choose quantity.</div>
+        </div>
+        <div id="campaign-card-status-{{ campaignlist.getId() }}" style="font-size:0.9rem;color:#666;margin-top:0.25rem;"></div>
+        <div id="campaign-card-results-{{ campaignlist.getId() }}" style="margin-top:0.25rem; max-height:280px; overflow:auto;"></div>
     </div>
+
+    <div style="margin-bottom:0.5rem;">
+        <label style="font-weight:600;">Campaign cards</label>
+        <div id="campaign-cards-list-{{ campaignlist.getId() }}" class="team-deck-cards" style="margin-top:0.5rem;"></div>
+    </div>
+
+    {# Hidden textarea kept for form submission; JS updates its JSON value #}
+    <textarea name="campaign_cards" id="campaign_cards_input_{{ campaignlist.getId() }}" class="form-control" rows="4" style="display:none;">{{ ccards ? (ccards|json_encode) : 'null' }}</textarea>
+
+    {# Modal for choosing quantity when adding a card #}
+    <div id="campaignCardModal-{{ campaignlist.getId() }}" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Add card to campaign</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          </div>
+          <div class="modal-body">
+            <div id="campaign-modal-card-info-{{ campaignlist.getId() }}"></div>
+            <div style="margin-top:0.5rem;"><label>Quantity</label>
+                <input id="campaign-modal-qty-{{ campaignlist.getId() }}" type="number" min="1" value="1" class="form-control" style="width:120px;" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" id="campaign-modal-add-btn-{{ campaignlist.getId() }}" class="btn btn-primary">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+        {# Card preview modal for showing card details when clicking a card name/image #}
+        <div id="cardPreviewModal-{{ campaignlist.getId() }}" class="modal fade" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="cardPreviewTitle-{{ campaignlist.getId() }}"></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body" id="cardPreviewBody-{{ campaignlist.getId() }}" style="display:flex; gap:1rem; align-items:flex-start;">
+                        <div id="cardPreviewImage-{{ campaignlist.getId() }}" style="flex:0 0 256px;"></div>
+                        <div id="cardPreviewInfo-{{ campaignlist.getId() }}" style="flex:1 1 auto;"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <script>
+    (function(){
+        try{
+            var rootId = '{{ campaignlist.getId() }}';
+            var root = document.getElementById('campaign-fragment-' + rootId);
+            if (!root){ if (typeof document !== 'undefined'){ var sd = document.getElementById('campaign-card-status-' + rootId); if (sd) sd.textContent = 'Script exception: root not found'; } return; }
+            var searchInput = document.getElementById('campaign-card-search-' + rootId);
+            var resultsDiv = document.getElementById('campaign-card-results-' + rootId);
+            var listDiv = document.getElementById('campaign-cards-list-' + rootId);
+            var hiddenInput = document.getElementById('campaign_cards_input_' + rootId);
+            // Prefer real jQuery + bootstrap modal plugin. If missing, set modal to null so
+            // detection below correctly falls back to prompt() instead of a no-op stub.
+            var modal = null;
+            try {
+                if (window.jQuery && jQuery.fn && jQuery.fn.modal) {
+                    modal = jQuery('#campaignCardModal-' + rootId);
+                }
+            } catch(_){ modal = null; }
+            var modalCardInfo = document.getElementById('campaign-modal-card-info-' + rootId);
+            var statusDiv = document.getElementById('campaign-card-status-' + rootId);
+            if (statusDiv) statusDiv.textContent = 'Script loaded';
+            var modalQty = document.getElementById('campaign-modal-qty-' + rootId);
+            var modalAddBtn = document.getElementById('campaign-modal-add-btn-' + rootId);
+
+        var allCards = null; // cache of /cards/ payload
+        var campaignCards = []; // array of {code,name,qty}
+        var lastSelectedCard = null;
+
+        try {
+            var initial = hiddenInput.value && hiddenInput.value !== 'null' ? JSON.parse(hiddenInput.value) : null;
+            if (initial) {
+                if (Array.isArray(initial)) {
+                    // ensure qty is numeric
+                    campaignCards = initial.map(function(it){ return { code: it.code, name: it.name || it.name || null, qty: parseInt(it.qty,10) || 0 }; });
+                } else if (typeof initial === 'object') {
+                    // convert map {code:qty} to array (coerce qty)
+                    for (var k in initial) {
+                        if (!initial.hasOwnProperty(k)) continue;
+                        campaignCards.push({ code: k, name: null, qty: parseInt(initial[k],10) || 0 });
+                    }
+                }
+            }
+        } catch(e){ campaignCards = []; }
+
+        function renderCampaignList(){
+            listDiv.innerHTML = '';
+            var ul = document.createElement('ul'); ul.className = 'team-deck-card-list'; ul.style.padding = '0'; ul.style.margin = '0';
+            campaignCards.forEach(function(slot){
+                var c = slot.code;
+                var qty = parseInt(slot.qty,10) || 0;
+                var name = slot.name || c;
+                var li = document.createElement('li'); li.style.listStyle='none'; li.style.display='flex'; li.style.alignItems='center'; li.style.gap='0.75rem'; li.style.margin='0.5rem 0'; li.style.padding='0.25rem 0';
+                var img = document.createElement('img'); img.src = '/bundles/cards/' + c + '.jpg'; img.style.width='88px'; img.style.height='60px'; img.style.objectFit='contain'; img.style.objectPosition='center'; img.onerror = function(){ this.onerror=null; this.src='/bundles/cards/' + c + '.png'; };
+                var info = document.createElement('div'); info.style.display='flex'; info.style.flexDirection='column'; info.style.flex='1';
+                // Try to get card meta (faction/type) to match slot_with_icons style
+                var cdef = allCards ? allCards.find(function(x){ return x.code === c; }) : null;
+                var qtySpanLine = document.createElement('div'); qtySpanLine.style.display='flex'; qtySpanLine.style.alignItems='center'; qtySpanLine.style.gap='0.5rem';
+                var qtyText = document.createElement('span'); qtyText.textContent = (qty || 0) + 'x'; qtyText.style.fontWeight='600'; qtySpanLine.appendChild(qtyText);
+                if (cdef && cdef.faction_code){ var aff = document.createElement('span'); aff.className = 'affinity-dot fg-' + cdef.faction_code; aff.setAttribute('aria-hidden','true'); qtySpanLine.appendChild(aff); }
+                if (cdef && cdef.type_code){ var it = document.createElement('span'); it.className = 'icon icon-' + cdef.type_code + ' fg-' + (cdef.faction_code||''); qtySpanLine.appendChild(it); }
+                var nameLink = document.createElement('a'); nameLink.href = '/card/' + c; nameLink.textContent = name; nameLink.className = 'card card-tip'; nameLink.style.fontWeight = '600'; nameLink.setAttribute('data-code', c);
+                var codeSpan = document.createElement('div'); codeSpan.style.fontSize='0.95rem'; codeSpan.style.color='#666'; codeSpan.textContent = c;
+                info.appendChild(qtySpanLine);
+                info.appendChild(nameLink);
+                info.appendChild(codeSpan);
+
+                // quantity buttons for already-added cards (0 => remove)
+                var limit = 1;
+                try { var cardDef = allCards ? allCards.find(function(x){ return x.code === c; }) : null; if (cardDef && cardDef.deck_limit) limit = parseInt(cardDef.deck_limit,10) || 1; } catch(_){ limit = 1; }
+                if (limit < 1) limit = 1;
+                var existing = qty || 0;
+                var btnContainer = document.createElement('div'); btnContainer.style.display = 'flex'; btnContainer.style.gap = '0.25rem';
+                for (var i = 0; i <= limit; i++){
+                    var b = document.createElement('button'); b.type = 'button';
+                    var isActive = (i === existing);
+                    b.className = 'btn btn-xs ' + (isActive ? 'btn-primary' : 'btn-outline-primary') + ' campaign-add-btn';
+                    b.textContent = i;
+                    b.setAttribute('data-code', c);
+                    b.setAttribute('data-qty', i);
+                    b.style.minWidth = '44px'; b.style.padding = '0.15rem 0.4rem';
+                    if (i === 0) b.title = 'Remove card';
+                    btnContainer.appendChild(b);
+                }
+
+                li.appendChild(img);
+                li.appendChild(info);
+                li.appendChild(btnContainer);
+                ul.appendChild(li);
+            });
+            listDiv.appendChild(ul);
+        }
+
+        function syncHidden(){
+            hiddenInput.value = (campaignCards && campaignCards.length) ? JSON.stringify(campaignCards) : 'null';
+        }
+
+        function addOrUpdateCard(code, qty){
+            try{ console.debug && console.debug('addOrUpdateCard called', {code:code, qty:qty, campaignCardsBefore: campaignCards.slice(0)}); } catch(_){ }
+            var q = parseInt(qty,10);
+            if (isNaN(q)) q = 1;
+            var cardName = null;
+            if (allCards){
+                var card = allCards.find(function(x){ return x.code === code; });
+                if (card) cardName = card.name;
+            }
+            var idx = campaignCards.findIndex(function(x){ return x.code === code; });
+            if (q === 0){
+                // remove if exists
+                if (idx !== -1){
+                    campaignCards.splice(idx,1);
+                    try{ console.debug && console.debug('removed card', code, 'idx', idx); }catch(_){ }
+                } else {
+                    try{ console.debug && console.debug('remove requested but card not found', code); }catch(_){ }
+                }
+            } else {
+                if (idx !== -1){
+                    campaignCards[idx].qty = q;
+                    if (cardName) campaignCards[idx].name = cardName;
+                    try{ console.debug && console.debug('updated card', code, 'to qty', q); }catch(_){ }
+                } else {
+                    campaignCards.push({ code: code, name: cardName || code, qty: q });
+                    try{ console.debug && console.debug('added card', code, 'qty', q); }catch(_){ }
+                }
+            }
+            try{ console.debug && console.debug('campaignCardsAfter', campaignCards.slice(0)); } catch(_){ }
+            syncHidden(); renderCampaignList();
+            // refresh results UI so quantity buttons reflect current selection
+            try{ if (typeof searchInput !== 'undefined' && searchInput && searchInput.value !== undefined) performFilter(searchInput.value); } catch(e){ }
+        }
+
+        function openModalForCard(code, edit){
+            try{ console.debug && console.debug('openModalForCard called', code, edit); } catch(_){ }
+            lastSelectedCard = code;
+            modalCardInfo.innerHTML = '';
+            if (allCards) {
+                var card = allCards.find(function(x){ return x.code === code; });
+                if (card){
+                    var title = document.createElement('div'); title.innerHTML = '<strong>' + card.name + '</strong> (' + (card.pack_name||'') + ')';
+                    modalCardInfo.appendChild(title);
+                } else {
+                    modalCardInfo.innerHTML = '<div>' + code + '</div>';
+                }
+            } else {
+                modalCardInfo.innerHTML = '<div>' + code + '</div>';
+            }
+            var existing = campaignCards.find(function(x){ return x.code === code; });
+            modalQty.value = edit && existing ? existing.qty : 1;
+            modalAddBtn.onclick = function(){
+                var q = parseInt(modalQty.value,10) || 1;
+                addOrUpdateCard(lastSelectedCard, q);
+                try{ if (modal && modal.modal) modal.modal('hide'); } catch(e){}
+            };
+            // show modal if bootstrap modal available, otherwise fallback to prompt
+            try{
+                console.debug && console.debug('modal object', modal, 'hasModalFunc', modal && modal.modal && typeof modal.modal === 'function');
+                if (modal && modal.modal && typeof modal.modal === 'function'){
+                    console.debug && console.debug('Showing bootstrap modal for', lastSelectedCard);
+                    modal.modal('show');
+                } else {
+                    console.debug && console.debug('No bootstrap modal available, using prompt fallback for', lastSelectedCard);
+                    // no modal available: ask quantity via prompt and immediately add
+                    var p = prompt('Quantity for ' + lastSelectedCard + ':', '1');
+                    if (p !== null){
+                        var q = parseInt(p,10) || 1;
+                        modalQty.value = q;
+                        modalAddBtn.onclick();
+                    }
+                }
+            } catch(e){
+                console.error('Error showing modal, falling back to prompt', e);
+                try {
+                    var p = prompt('Quantity for ' + lastSelectedCard + ':', '1');
+                    if (p !== null){ var q = parseInt(p,10) || 1; modalQty.value = q; modalAddBtn.onclick(); }
+                } catch(_){ console.error('Prompt fallback failed', _); }
+            }
+        }
+
+        function attachAddHandlers(){
+            // delegated handler for result 'Add' / quantity buttons
+            resultsDiv.addEventListener('click', function(e){
+                try{ console.debug && console.debug('resultsDiv click', e.target); } catch(_){ }
+                var node = e.target;
+                while(node && node !== resultsDiv){
+                    if (node.classList && node.classList.contains('campaign-add-btn')){
+                        try{ console.debug && console.debug('found add button via delegation', node); } catch(_){ }
+                        var code = node.getAttribute('data-code');
+                        var qtyAttr = node.getAttribute('data-qty');
+                        if (qtyAttr !== null && qtyAttr !== undefined){
+                            var q = parseInt(qtyAttr,10);
+                            if (isNaN(q)) q = 1;
+                            addOrUpdateCard(code, q);
+                        } else {
+                            openModalForCard(code, false);
+                        }
+                        return;
+                    }
+                    node = node.parentNode;
+                }
+            });
+            // also handle buttons inside the campaign list (so 0..n buttons there work)
+            if (listDiv){
+                listDiv.addEventListener('click', function(e){
+                    try{ console.debug && console.debug('listDiv click', e.target); } catch(_){ }
+                    var node = e.target;
+                    while(node && node !== listDiv){
+                        if (node.classList && node.classList.contains('campaign-add-btn')){
+                            try{ console.debug && console.debug('found add button in list via delegation', node); } catch(_){ }
+                            var code = node.getAttribute('data-code');
+                            var qtyAttr = node.getAttribute('data-qty');
+                            if (qtyAttr !== null && qtyAttr !== undefined){
+                                var q = parseInt(qtyAttr,10);
+                                if (isNaN(q)) q = 1;
+                                addOrUpdateCard(code, q);
+                            } else {
+                                openModalForCard(code, false);
+                            }
+                            return;
+                        }
+                        node = node.parentNode;
+                    }
+                });
+            }
+        }
+
+        // delegated handler to open card preview modal when clicking card links/names
+        function attachCardPreviewHandler(){
+            // use closest() for reliable target resolution and stop navigation
+            root.addEventListener('click', function(e){
+                try{ console.debug && console.debug('cardPreview root click target', e.target); } catch(_){ }
+                var a = e.target && e.target.closest ? e.target.closest('a.card.card-tip') : null;
+                if (!a || !root.contains(a)) return;
+                try{ e.preventDefault(); e.stopPropagation(); } catch(_){ }
+                try{ console.debug && console.debug('cardPreview clicked anchor', a); } catch(_){ }
+                var code = a.getAttribute('data-code') || (a.getAttribute('href') || '').replace('/card/','').replace(/\/.*/, '');
+                try{ console.debug && console.debug('extracted code', code); } catch(_){ }
+                if (!code) return;
+                function showPreview(){
+                    try{ console.debug && console.debug('showPreview for', code); } catch(_){ }
+                    var c = allCards ? allCards.find(function(x){ return x.code === code; }) : null;
+                    var titleEl = document.getElementById('cardPreviewTitle-{{ campaignlist.getId() }}');
+                    var bodyImg = document.getElementById('cardPreviewImage-{{ campaignlist.getId() }}');
+                    var info = document.getElementById('cardPreviewInfo-{{ campaignlist.getId() }}');
+                    if (!titleEl || !bodyImg || !info) return;
+                    if (c){
+                        titleEl.textContent = c.name + ' (' + c.code + ')';
+                        bodyImg.innerHTML = '<img src="/bundles/cards/' + c.code + '.jpg" style="width:256px; height:auto; object-fit:contain;" onerror="this.onerror=null;this.src=\'/bundles/cards/' + c.code + '.png\'" />';
+                        info.innerHTML = '<div style="font-size:0.95rem; color:#666; margin-bottom:0.5rem;">' + (c.pack_name||'') + '</div>' + (c.text ? '<div style="white-space:pre-wrap;">' + (c.text) + '</div>' : '');
+                    } else {
+                        titleEl.textContent = code;
+                        bodyImg.innerHTML = '<img src="/bundles/cards/' + code + '.jpg" style="width:256px; height:auto; object-fit:contain;" onerror="this.onerror=null;this.src=\'/bundles/cards/' + code + '.png\'" />';
+                        info.innerHTML = '<div>No additional data available.</div>';
+                    }
+                    try{
+                        if (window.jQuery && jQuery.fn && jQuery.fn.modal){ jQuery('#cardPreviewModal-{{ campaignlist.getId() }}').modal('show'); }
+                        else {
+                            var m = document.getElementById('cardPreviewModal-{{ campaignlist.getId() }}');
+                            if (m){ m.style.display = 'block'; m.classList.add('show'); m.setAttribute('aria-modal','true'); m.removeAttribute('aria-hidden'); }
+                        }
+                    } catch(_){ console.error('modal show error', _); }
+                }
+                if (!allCards){ fetch('/api/public/cards/').then(function(r){ return r.json(); }).then(function(data){ allCards = data; showPreview(); }).catch(function(){ showPreview(); }); }
+                else showPreview();
+            });
+        }
+
+        function renderResults(cards){
+            resultsDiv.innerHTML = '';
+            if (!cards || !cards.length){ resultsDiv.innerHTML = '<div style="color:#777;">No results</div>'; return; }
+            var wrap = document.createElement('div');
+            cards.forEach(function(card){
+                var row = document.createElement('div'); row.style.display='flex'; row.style.alignItems='center'; row.style.gap='0.75rem'; row.style.padding='0.5rem 0'; row.style.borderBottom='1px solid #f0f0f0';
+                var img = document.createElement('img'); img.src = '/bundles/cards/' + card.code + '.jpg'; img.style.width='88px'; img.style.height='60px'; img.style.objectFit='contain'; img.style.objectPosition='center'; img.onerror=function(){this.onerror=null;this.src='/bundles/cards/'+card.code+'.png';};
+                var info = document.createElement('div'); info.style.flex='1';
+                // mimic slot_with_icons: quantity (not relevant here), affinity dot, type icon, then name
+                var cdef = card;
+                var titleLine = document.createElement('div'); titleLine.style.display='flex'; titleLine.style.alignItems='center'; titleLine.style.gap='0.5rem';
+                if (cdef && cdef.faction_code){ var aff = document.createElement('span'); aff.className = 'affinity-dot fg-' + cdef.faction_code; aff.setAttribute('aria-hidden','true'); titleLine.appendChild(aff); }
+                if (cdef && cdef.type_code){ var it = document.createElement('span'); it.className = 'icon icon-' + cdef.type_code + ' fg-' + (cdef.faction_code||''); titleLine.appendChild(it); }
+                var nameLink = document.createElement('a'); nameLink.href = '/card/' + card.code; nameLink.className = 'card card-tip'; nameLink.setAttribute('data-code', card.code); nameLink.style.fontWeight = '600'; nameLink.textContent = card.name;
+                titleLine.appendChild(nameLink);
+                var subLine = document.createElement('div'); subLine.style.fontSize='0.9rem'; subLine.style.color='#666'; subLine.textContent = card.code + ' — ' + (card.pack_name||'');
+                info.appendChild(titleLine);
+                info.appendChild(subLine);
+                // create quantity buttons up to card.deck_limit (fallback to 1)
+                var limit = parseInt(card.deck_limit,10) || 1;
+                if (limit < 1) limit = 1;
+                var btnContainer = document.createElement('div'); btnContainer.style.display = 'flex'; btnContainer.style.gap = '0.25rem';
+                // include 0 to allow removing the card; determine existing qty to mark active
+                var existing = null;
+                try { var ex = campaignCards.find(function(x){ return x.code === card.code; }); if (ex) existing = parseInt(ex.qty,10) || 0; else existing = 0; } catch(_){ existing = 0; }
+                for (var i = 0; i <= limit; i++){
+                    var b = document.createElement('button'); b.type = 'button';
+                    var isActive = (i === existing);
+                    b.className = 'btn btn-xs ' + (isActive ? 'btn-primary' : 'btn-outline-primary') + ' campaign-add-btn';
+                    b.textContent = i;
+                    b.setAttribute('data-code', card.code);
+                    b.setAttribute('data-qty', i);
+                    b.style.minWidth = '44px'; b.style.padding = '0.15rem 0.4rem';
+                    if (i === 0) b.title = 'Remove card';
+                    btnContainer.appendChild(b);
+                }
+                row.appendChild(img); row.appendChild(info); row.appendChild(btnContainer);
+                wrap.appendChild(row);
+            });
+            resultsDiv.appendChild(wrap);
+        }
+
+        var searchTimeout = null;
+        function doSearch(q){
+            try {
+                if (!allCards){
+                    if (statusDiv) statusDiv.textContent = 'Loading card list...';
+                    fetch('/api/public/cards/').then(function(r){ return r.json(); }).then(function(data){ allCards = data; if (statusDiv) statusDiv.textContent = 'Loaded ' + (Array.isArray(allCards) ? allCards.length : 'unknown') + ' cards'; try{ renderCampaignList(); }catch(_){ } performFilter(q); }).catch(function(err){ console.error('cards fetch error', err); if (statusDiv) statusDiv.textContent = 'Failed to load card data: ' + (err && err.message ? err.message : 'network error'); resultsDiv.innerHTML = '<div style="color:#a33;">Failed to load card data</div>'; });
+                } else { performFilter(q); }
+            } catch(err) {
+                console.error('doSearch error', err);
+                if (statusDiv) statusDiv.textContent = 'JS error: ' + (err && err.message ? err.message : 'unknown');
+                resultsDiv.innerHTML = '<div style="color:#a33;">JS error</div>';
+            }
+        }
+
+        function performFilter(q){
+            var s = (q||'').trim().toLowerCase();
+            if (!s){ resultsDiv.innerHTML = '<div style="color:#777;">Type to search cards by name or code</div>'; return; }
+            var out = allCards.filter(function(c){ return (c.name && c.name.toLowerCase().indexOf(s) !== -1) || (c.code && c.code.toLowerCase().indexOf(s) !== -1); });
+            renderResults(out.slice(0,50));
+        }
+
+        if (searchInput){
+            searchInput.addEventListener('input', function(e){ var v = this.value; clearTimeout(searchTimeout); searchTimeout = setTimeout(function(){ doSearch(v); }, 250); });
+        }
+
+        attachAddHandlers();
+        renderCampaignList();
+        attachCardPreviewHandler();
+        // preload card list so deck_limit and icons can be applied to existing campaign cards
+        try{ doSearch(''); } catch(e){ }
+        syncHidden();
+        } catch(e){
+            try { if (typeof statusDiv !== 'undefined' && statusDiv) statusDiv.textContent = 'Script exception: ' + (e && e.message ? e.message : e); } catch(_){}
+            console.error('campaign cards script error', e);
+        }
+    })();
+    </script>
 
     <div style="margin-top:0.5rem; display:flex; gap:0.5rem; align-items:center;">
         <button class="btn btn-primary" type="submit">Save</button>
