@@ -119,6 +119,7 @@ class CardsData
 					"status" => $pack->getStatus() ?? "Official",
 					"theme" => $pack->getTheme() ?? "Marvel",
 					"language" => $pack->getLanguage() ?? "en", // Ajouté ici
+					"environment" => $pack->getEnvironment() ,
 					"visibility" => $pack->getVisibility() ?? "true",
 					"total" => $max,
 					"url" => $this->router->generate('cards_list', array('pack_code' => $pack->getCode()), UrlGeneratorInterface::ABSOLUTE_URL),
@@ -642,6 +643,18 @@ class CardsData
 		$cardinfo['theme'] = $card->getPack()->getTheme() ?? "Marvel";
 		$cardinfo['visibility'] = $card->getPack()->getVisibility() ?? "true";
 		$cardinfo['language'] = $card->getPack()->getLanguage() ?? "en"; // Ajouté ici
+		// include pack environment for API / client convenience
+		try {
+			$env = $card->getPack()->getEnvironment();
+			if ($env === null || $env === '') {
+				// keep null as-is to allow client fallback, but also provide a normalized value
+				$cardinfo['pack_environment'] = null;
+			} else {
+				$cardinfo['pack_environment'] = strtolower(trim($env));
+			}
+		} catch (\Exception $e) {
+			$cardinfo['pack_environment'] = null;
+		}
 
 		return $cardinfo;
 	}

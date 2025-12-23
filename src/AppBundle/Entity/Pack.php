@@ -14,7 +14,8 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
 				'position' => $this->position,
 				'size' => $this->size,
 				'theme' => $this->theme,
-				'language' => $this->language
+                'language' => $this->language,
+                'environment' => $this->getEnvironment()
 		];
 	}
 	
@@ -98,6 +99,11 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
     private $language;
 
     /**
+     * @var string
+     */
+    private $environment;
+
+    /**
      * @var \Doctrine\Common\Collections\Collection
      */
     private $cards;
@@ -108,6 +114,7 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
     public function __construct()
     {
         $this->cards = new \Doctrine\Common\Collections\ArrayCollection();
+       
     }
 
     /**
@@ -514,5 +521,29 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
     public function getLanguage()
     {
         return $this->language;
+    }
+
+    /**
+     * Set environment
+     *
+     * @param string $environment
+     *
+     * @return Pack
+     */
+    public function setEnvironment($environment)
+    {
+        $this->environment = $environment;
+
+        return $this;
+    }
+
+    /**
+     * Get environment
+     *
+     * @return string
+     */
+    public function getEnvironment()
+    {
+        return $this->environment;
     }
 }

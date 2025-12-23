@@ -9,6 +9,8 @@ var force_update = false;
  */
 data.load = function load() {
 
+	console.log('[DATA DEBUG] data.load() start');
+
 	data.isLoaded = false;
 
 	var fdb = new ForerunnerDB();
@@ -30,12 +32,14 @@ data.load = function load() {
 
 	// load pack data
 	data.masters.packs.load(function (err) {
+		console.log('[DATA DEBUG] masters.packs.load callback, err=', err);
 		if(err) {
 			console.log('error when loading packs', err);
 			force_update = true;
 		}
 		// loading cards
 		data.masters.cards.load(function (err) {
+			console.log('[DATA DEBUG] masters.cards.load callback, err=', err);
 			if(err) {
 				console.log('error when loading cards', err);
 				force_update = true;
@@ -83,8 +87,41 @@ data.load = function load() {
  */
 data.release = function release() {
 	data.packs = data.db.collection('pack', {primaryKey:'code', changeTimestamp: false});
-	data.packs.setData(data.masters.packs.find());
-
+	// populate working packs collection from persisted master_pack data
+	try {
+		// copy persisted master_pack rows into the runtime `pack` collection
+		// and ensure `environment` and `creator` are normalized/defaulted so UI can rely on them
+		try {
+			var _packs = data.masters.packs.find();
+			// enrich packs: normalize existing env/creator, and if env missing try master cards
+			if (Array.isArray(_packs)) {
+				_packs.forEach(function(r){
+					try {
+						if (r && r.environment) {
+							r.environment = String(r.environment).trim().toLowerCase();
+						} else {
+							// try find a sample card in persisted master cards to get pack_environment
+							try {
+								if (data.masters && data.masters.cards && typeof data.masters.cards.findOne === 'function') {
+									var sample = data.masters.cards.findOne({ pack_code: r.code });
+									if (sample && sample.pack_environment) {
+										r.environment = String(sample.pack_environment).trim().toLowerCase();
+									}
+								}
+							} catch(e) {}
+						}
+						if (r && r.creator) {
+							r.creator = String(r.creator).trim().toLowerCase();
+						}
+					} catch(e) {}
+				});
+			}
+			data.packs.setData(_packs);
+		} catch (e) {
+			// fallback: set data directly if anything goes wrong
+			data.packs.setData(data.masters.packs.find());
+		}
+	} catch (e) {}
 	data.cards = data.db.collection('card', {primaryKey:'code', changeTimestamp: false});
 	data.cards.setData(data.masters.cards.find());
 
@@ -98,9 +135,19 @@ data.release = function release() {
  * @memberOf data
  */
 data.update = function update() {
+	// Force an update regardless of local meta timestamps to ensure fresh data
+	force_update = true;
 	_.each(data.masters, function (collection) {
-		collection.drop();
+		try { collection.drop(); } catch(e) { console.warn('drop failed', e); }
 	});
+	// Also attempt to remove persisted DB for ForerunnerDB if available
+	try {
+		if (data.db && typeof data.db.drop === 'function') {
+			data.db.drop();
+		}
+	} catch(e) {
+		console.warn('db.drop failed', e);
+	}
 	data.load();
 }
 
@@ -109,20 +156,28 @@ data.update = function update() {
  * @memberOf data
  */
 data.query = function query() {
+	console.log('[DATA DEBUG] query: requesting api_packs');
 	$.ajax({
 		url: Routing.generate('api_packs'),
-		success: data.parse_packs,
+		success: function(response, textStatus, jqXHR) {
+			console.log('[DATA DEBUG] api_packs success, items=', (Array.isArray(response) ? response.length : 'unknown'));
+			data.parse_packs(response, textStatus, jqXHR);
+		},
 		error: function (jqXHR, textStatus, errorThrown) {
-			console.log('error when requesting packs', errorThrown);
+			console.log('[DATA DEBUG] error when requesting packs', errorThrown, jqXHR.status);
 			data.dfd.packs.reject(false);
 		}
 	});
 
+	console.log('[DATA DEBUG] query: requesting api_cards');
 	$.ajax({
 		url: Routing.generate('api_cards')+"?encounter=1",
-		success: data.parse_cards,
+		success: function(response, textStatus, jqXHR) {
+			console.log('[DATA DEBUG] api_cards success, items=', (Array.isArray(response) ? response.length : 'unknown'));
+			data.parse_cards(response, textStatus, jqXHR);
+		},
 		error: function (jqXHR, textStatus, errorThrown) {
-			console.log('error when requesting cards', errorThrown);
+			console.log('[DATA DEBUG] error when requesting cards', errorThrown, jqXHR.status);
 			data.dfd.cards.reject(false);
 		}
 	});
@@ -139,7 +194,41 @@ data.update_done = function update_done(packs_updated, cards_updated) {
 		return;
 	}
 
+	// If server returned updated collections, refresh the runtime collections
+	if (packs_updated === true) {
+		try {
+			// enrich runtime packs as in data.release
+			var _packs2 = data.masters.packs.find();
+			if (Array.isArray(_packs2)) {
+				_packs2.forEach(function(r){
+					try {
+						if (r && r.environment) {
+							r.environment = String(r.environment).trim().toLowerCase();
+						} else {
+							try {
+								if (data.masters && data.masters.cards && typeof data.masters.cards.findOne === 'function') {
+									var sample2 = data.masters.cards.findOne({ pack_code: r.code });
+									if (sample2 && sample2.pack_environment) {
+										r.environment = String(sample2.pack_environment).trim().toLowerCase();
+									}
+								}
+							} catch(e) {}
+						}
+						if (r && r.creator) {
+							r.creator = String(r.creator).trim().toLowerCase();
+						}
+					} catch(e) {}
+				});
+			}
+			data.packs.setData(_packs2);
+		} catch (e) {}
+	}
+	if (cards_updated === true) {
+		try { data.cards.setData(data.masters.cards.find()); } catch (e) {}
+	}
 	if(packs_updated === true || cards_updated === true) {
+		// notify modules that data has been updated
+		try { $(document).trigger('data.app'); } catch (e) {}
 		/*
 		 * we display a message informing the user that they can reload their page to use the updated data
 		 * except if we are on the front page, because data is not essential on the front page
@@ -177,6 +266,7 @@ data.update_fail = function update_fail(packs_loaded, cards_loaded) {
 data.update_collection = function update_collection(data, collection, lastModifiedData, deferred) {
 	var lastChangeDatabase = new Date(collection.metaData().lastChange)
 	var isCollectionUpdated = false;
+		console.log('[DATA DEBUG] update_collection for', collection.name(), 'lastChangeDatabase=', lastChangeDatabase, 'lastModifiedData=', lastModifiedData, 'incoming_count=', (Array.isArray(data) ? data.length : 'unknown'));
 
 	/*
 	 * if we decided to force the update,
@@ -186,6 +276,24 @@ data.update_collection = function update_collection(data, collection, lastModifi
 	 */
 	if(force_update || !lastChangeDatabase || lastChangeDatabase < lastModifiedData) {
 		console.log('data is newer than database or update forced => update the database')
+		// Normalize pack environment/creator when updating packs so client-side code can rely on them
+		try {
+			if (collection && typeof collection.name === 'function' && collection.name() && collection.name().toLowerCase().indexOf('pack') !== -1) {
+				if (Array.isArray(data)) {
+					console.log('[DATA DEBUG] Normalizing pack environment for', data.length, 'items');
+					data.forEach(function(r){
+						try {
+							if (r && r.environment) {
+								r.environment = String(r.environment).trim().toLowerCase();
+							}
+							if (r && r.creator) {
+								r.creator = String(r.creator).trim().toLowerCase();
+							}
+						} catch (e) {}
+					});
+				}
+			}
+		} catch (e) { console.warn('Normalization failed', e); }
 		collection.setData(data);
 		isCollectionUpdated = true;
 	}
@@ -205,6 +313,11 @@ data.update_collection = function update_collection(data, collection, lastModifi
  * @memberOf data
  */
 data.parse_packs = function parse_packs(response, textStatus, jqXHR) {
+	try {
+		if (window && window.console) {
+			console.log('[DATA DEBUG] parse_packs: response sample', Array.isArray(response) ? response.slice(0,6) : response);
+		}
+	} catch (e) {}
 	var lastModified = new Date(jqXHR.getResponseHeader('Last-Modified'));
 	data.update_collection(response, data.masters.packs, lastModified, data.dfd.packs);
 };
@@ -214,6 +327,11 @@ data.parse_packs = function parse_packs(response, textStatus, jqXHR) {
  * @memberOf data
  */
 data.parse_cards = function parse_cards(response, textStatus, jqXHR) {
+	try {
+		if (window && window.console) {
+			console.log('[DATA DEBUG] parse_cards: response length', (Array.isArray(response) ? response.length : 'unknown'));
+		}
+	} catch (e) {}
 	var lastModified = new Date(jqXHR.getResponseHeader('Last-Modified'));
 	data.update_collection(response, data.masters.cards, lastModified, data.dfd.cards);
 };

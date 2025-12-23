@@ -41,6 +41,10 @@ AppBundle\Entity\Campaign:
       column: campaign_counters
       type: text
       nullable: true
+    campaignCheckbox:
+      column: campaign_checkbox
+      type: text
+      nullable: true
     description:
       type: text
       nullable: true

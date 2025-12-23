@@ -965,6 +965,32 @@ class TeamController extends Controller
             if ($counters !== null) {
                 $cl->setCampaignCounters(is_string($counters) ? $counters : json_encode($counters));
             }
+            if (true) {
+                // Normalize posted checkbox values into a full map label=>bool using campaign definitions
+                $posted = $request->request->get('campaign_checkbox');
+                $posted = $posted === null ? [] : $posted;
+                $campDefsRaw = null;
+                try {
+                    $camp = $cl->getCampaign();
+                    if ($camp && method_exists($camp, 'getCampaignCheckbox')) {
+                        $campDefsRaw = $camp->getCampaignCheckbox() ? json_decode($camp->getCampaignCheckbox(), true) : null;
+                    }
+                } catch (\Exception $e) {
+                    $campDefsRaw = null;
+                }
+                $checkboxMap = [];
+                if (is_array($campDefsRaw) && count($campDefsRaw)) {
+                    foreach ($campDefsRaw as $label) {
+                        $checkboxMap[$label] = isset($posted[$label]) && ($posted[$label] === '1' || $posted[$label] === 1 || $posted[$label] === true);
+                    }
+                } else {
+                    // No static defs: store the posted map as-is (preserve existing behavior)
+                    if (is_array($posted)) {
+                        foreach ($posted as $k => $v) { $checkboxMap[$k] = ($v === '1' || $v === 1 || $v === true); }
+                    }
+                }
+                $cl->setCampaignCheckboxes(json_encode($checkboxMap));
+            }
             if ($team_hps !== null) {
                 $cl->setTeamHps(is_string($team_hps) ? $team_hps : json_encode($team_hps));
             }
@@ -1036,13 +1062,63 @@ class TeamController extends Controller
             }
         }
 
+        // robust JSON decoding helper for campaign checkbox fields
+        $decodeJsonSafe = function($raw) {
+            if ($raw === null) return null;
+            if (is_array($raw)) return $raw;
+            $res = null;
+            try {
+                $res = json_decode($raw, true);
+            } catch (\Exception $e) { $res = null; }
+            if ($res === null && is_string($raw)) {
+                // try html entity decode
+                $try = html_entity_decode($raw, ENT_QUOTES | ENT_HTML5);
+                if ($try !== $raw) {
+                    $res = json_decode($try, true);
+                }
+            }
+            if ($res === null && is_string($raw)) {
+                // try stripslashes (in case of escaping)
+                $try = stripslashes($raw);
+                $res = json_decode($try, true);
+            }
+            if ($res === null && is_string($raw)) {
+                // try double-encoded JSON (a JSON string containing a JSON string)
+                $tmp = json_decode($raw);
+                if ($tmp !== null && is_string($tmp)) {
+                    $res = json_decode($tmp, true);
+                }
+            }
+            return $res;
+        };
+
         $campDefs = [
             'campaign_notes' => $campCampaignNotes,
             'campaign_counters' => $campCampaignCounters,
             'scenario_notes' => $campScenarioNotes,
             'scenario_counters' => $campScenarioCounters,
-            'team_hps' => (method_exists($camp, 'getTeamHps') && $camp->getTeamHps()) ? json_decode($camp->getTeamHps(), true) : null,
+            'team_hps' => (method_exists($camp, 'getTeamHps') && $camp->getTeamHps()) ? $decodeJsonSafe($camp->getTeamHps()) : null,
+            'campaign_checkbox' => (method_exists($camp, 'getCampaignCheckbox') && $camp->getCampaignCheckbox()) ? $decodeJsonSafe($camp->getCampaignCheckbox()) : null,
         ];
+
+        // If the campaign defines checkbox options but this CampaignList has no stored values,
+        // initialize the CampaignList with a map label=>false so the UI shows unchecked boxes.
+        try {
+            // treat NULL or empty/blank string as "no stored values" and initialize defaults
+            $rawCheckboxes = $cl->getCampaignCheckboxes();
+            if ($rawCheckboxes === null || (is_string($rawCheckboxes) && trim($rawCheckboxes) === '')) {
+                $defs = isset($campDefs['campaign_checkbox']) ? $campDefs['campaign_checkbox'] : null;
+                if (is_array($defs) && count($defs)) {
+                    $initMap = [];
+                    foreach ($defs as $lab) { $initMap[$lab] = false; }
+                    $cl->setCampaignCheckboxes(json_encode($initMap));
+                    $em->persist($cl);
+                    $em->flush();
+                }
+            }
+        } catch (\Exception $e) {
+            // ignore initialization errors
+        }
 
         // prepare decoded campaignlist values for the template so Twig doesn't need json_decode
         // decode cl values supporting campaign-level and scenario-level shapes
@@ -1074,8 +1150,9 @@ class TeamController extends Controller
             'campaign_counters' => $clCampaignCounters,
             'scenario_notes' => $clScenarioNotes,
             'scenario_counters' => $clScenarioCounters,
-            'team_hps' => $cl->getTeamHps() ? json_decode($cl->getTeamHps(), true) : null,
-            'campaign_cards' => $cl->getCampaignCards() ? json_decode($cl->getCampaignCards(), true) : null,
+            'team_hps' => $cl->getTeamHps() ? $decodeJsonSafe($cl->getTeamHps()) : null,
+            'campaign_cards' => $cl->getCampaignCards() ? $decodeJsonSafe($cl->getCampaignCards()) : null,
+            'campaign_checkbox' => $cl->getCampaignCheckboxes() ? $decodeJsonSafe($cl->getCampaignCheckboxes()) : null,
             'player_names' => ($cl->getPlayerNames() ? json_decode($cl->getPlayerNames(), true) : []),
             'selected_scenario' => ($cl->getSelectedScenario() !== null ? intval($cl->getSelectedScenario()) : 0),
         ];

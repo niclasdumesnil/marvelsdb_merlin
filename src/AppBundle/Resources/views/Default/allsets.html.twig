@@ -34,19 +34,17 @@
                                     </span>
                                 {% endif %}
                                 <span class="set-name-hover" style="position:relative; display:inline-flex; align-items:center; gap:6px;">
-                                    <a title="{{ pack.name }}" href="{{ pack.url }}">{{ pack.name }}</a>
-                                    {% if pack.language is defined and pack.language == "fr" %}
-                                        <span class="fr-flag" title="French only">🇫🇷</span>
-                                    {% endif %}
-                                    {#
-                                    {% if pack.status in ["alpha","beta","released","sealed"] %}
-                                        <span class="tag status status-{{ pack.status }}">
-                                            {% if pack.status == 'alpha' %}alpha{% elseif pack.status == 'beta' %}beta{% elseif pack.status == 'released' %}released{% elseif pack.status == 'sealed' %}sealed{% endif %}
+                                    <span class="set-name-hover" style="position:relative; display:inline-flex; align-items:center; gap:6px;">
+                                        <a title="{{ pack.name }}" href="{{ pack.url }}">{{ pack.name }}</a>
+                                        {% if pack.language is defined and pack.language == "fr" %}
+                                            <span class="fr-flag" title="French only">🇫🇷</span>
+                                        {% endif %}
+                                        <span class="creator-hover-box" style="display:inline;">
+                                            <span class="tag creator">{{ creator_labels[pack.creator] ?? pack.creator }}</span>
+                                            {% if pack.environment is defined and pack.environment == 'current' %}
+                                                <span class="tag current">current</span>
+                                            {% endif %}
                                         </span>
-                                    {% endif %}
-                                    #}
-                                    <span class="creator-hover-box" style="display:inline;">
-                                        <span class="tag creator">{{ creator_labels[pack.creator] ?? pack.creator }}</span>
                                     </span>
                                 </span>
                                 {% if pack.pack_type_code is defined and pack.pack_type_code == 'hero_fanmade' %}
@@ -79,7 +77,7 @@
 
 <ul class="nav nav-tabs" id="packsTabs" role="tablist" style="margin-bottom:1em;">
     <li class="nav-item" role="presentation">
-        <a class="nav-link active" id="ffg-tab" data-toggle="tab" href="#ffg" role="tab" aria-controls="ffg" aria-selected="true">Current</a>
+        <a class="nav-link active" id="ffg-tab" data-toggle="tab" href="#ffg" role="tab" aria-controls="ffg" aria-selected="true">FFG</a>
     </li>
     <li class="nav-item" role="presentation">
         <a class="nav-link" id="fanmade-tab" data-toggle="tab" href="#fanmade" role="tab" aria-controls="fanmade" aria-selected="false">Fan made</a>
@@ -92,20 +90,34 @@
 </ul>
 <div class="tab-content" id="packsTabsContent">
     <div class="tab-pane fade show active" id="ffg" role="tabpanel" aria-labelledby="ffg-tab">
-        <ol>
+                        <ol>
             <span style="display:inline-block; background:rgb(70, 68, 68); color:#fff; border-radius:6px; padding:2px 12px; margin:6px 0 6px 0; font-weight:semi;">FFG</span>
             {% for pack in data %}
                 {% if pack.creator == 'FFG' %}
                     {% if pack.type == 'core' or pack.type == 'story' or pack.type =='encounter' %}
                         <li>
-                            <a href="{{ pack.url }}">{{ pack.name }}</a>
+                            <span class="set-name-hover" style="position:relative; display:inline-flex; align-items:center; gap:6px;">
+                                <a href="{{ pack.url }}">{{ pack.name }}</a>
+                                {% if pack.environment is defined and pack.environment == 'current' %}
+                                    <span class="creator-hover-box" style="display:inline;">
+                                        <span class="tag current">current</span>
+                                    </span>
+                                {% endif %}
+                            </span>
                             <span>
                                 {% if pack.available == false %}({{ pack.known }} cards){% endif %}
                             </span>
                         </li>
                     {% else %}
                         <li style="margin-left:2em;">
-                            <a href="{{ pack.url }}">{{ pack.name }}</a>
+                            <span class="set-name-hover" style="position:relative; display:inline-flex; align-items:center; gap:6px;">
+                                <a href="{{ pack.url }}">{{ pack.name }}</a>
+                                {% if pack.environment is defined and pack.environment == 'current' %}
+                                    <span class="creator-hover-box" style="display:inline;">
+                                        <span class="tag current">current</span>
+                                    </span>
+                                {% endif %}
+                            </span>
                             <span>
                                 {% if pack.available == false %}({{ pack.known }} cards){% endif %}
                             </span>

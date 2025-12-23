@@ -45,6 +45,9 @@ class Campaign
     private $campaignCounters;
 
     /** @ORM\Column(type="text", nullable=true) */
+    private $campaignCheckbox;
+
+    /** @ORM\Column(type="text", nullable=true) */
     private $description;
 
     /** @ORM\Column(type="string", length=255, nullable=true) */
@@ -89,6 +92,9 @@ class Campaign
 
     public function setCampaignCounters($v) { $this->campaignCounters = $v; return $this; }
     public function getCampaignCounters() { return $this->campaignCounters; }
+
+    public function setCampaignCheckbox($v) { $this->campaignCheckbox = $v; return $this; }
+    public function getCampaignCheckbox() { return $this->campaignCheckbox; }
 
     public function setDescription($v) { $this->description = $v; return $this; }
     public function getDescription() { return $this->description; }

@@ -84,6 +84,11 @@
 			<button type="button" id="btn-show-fanmade" class="btn btn-xs active" style="margin-right:6px;">Fanmade</button>
 
 
+			<!-- Legacy toggle -->
+			<input type="checkbox" id="show-legacy" checked style="display:none;">
+			<button type="button" id="btn-show-legacy" class="btn btn-xs active" style="margin-left:6px; margin-right:6px; font-size:11px;">Legacy</button>
+
+
 			<!-- Alt Art toggle -->
 			<input type="checkbox" id="show-alt-art" checked style="display:none;">
 			<button type="button" id="btn-show-altart" class="btn btn-xs active" style="margin-left:6px; margin-right:6px;">Alt Art</button>
@@ -125,6 +130,16 @@
 						btnA.classList.toggle('active');
 					});
 				}
+				var btnL = document.getElementById('btn-show-legacy');
+				var cbL = document.getElementById('show-legacy');
+				if (btnL && cbL) {
+					if (cbL.checked) btnL.classList.add('active'); else btnL.classList.remove('active');
+					btnL.addEventListener('click', function(){
+						cbL.checked = !cbL.checked;
+						try { cbL.dispatchEvent(new Event('change')); } catch(e) { /* old browsers */ }
+						btnL.classList.toggle('active');
+					});
+				}
 					// Team-Up toggle will be inserted after this script so DOM is correct
 				});
 				</script>
@@ -135,7 +150,8 @@
 						{btnId: 'btn-show-fanmade', cbId: 'show-fanmade-affinity'},
 						{btnId: 'btn-show-traits', cbId: 'show-traits-tags'},
 						{btnId: 'btn-show-altart', cbId: 'show-alt-art'},
-						{btnId: 'btn-show-teamup', cbId: 'show-teamup-affinity'}
+						{btnId: 'btn-show-teamup', cbId: 'show-teamup-affinity'},
+						{btnId: 'btn-show-legacy', cbId: 'show-legacy'}
 					];
 					pairs.forEach(function(p){
 						var btn = document.getElementById(p.btnId);
@@ -246,6 +262,18 @@
     display: inline-block;
 }
 
+/* Pack environment badge (used in pack selector and card rows) */
+.pack-env {
+	display: inline-block;
+	padding: 1px 8px;
+	border-radius: 6px;
+	font-size: 0.85em;
+	margin-left: 6px;
+	font-weight: bold;
+}
+.pack-env.fanmade { background-color: #1e88e5; color: #fff; }
+.pack-env.current, .pack-env.legacy { background-color: #e9ecef; color: #000; }
+
 /* Left trim (liseré) on every row: black by default, blue for fanmade rows */
 table.table td:first-child {
 	border-left: 4px solid #000; /* black by default */
@@ -317,7 +345,7 @@ table.table td.faction {
 
 /* Toggle buttons for fanmade / trait: fixed size and colors */
 /* Shared button sizing (slightly larger) */
-#btn-show-fanmade, #btn-show-traits, #btn-show-altart, #btn-show-teamup {
+#btn-show-fanmade, #btn-show-traits, #btn-show-altart, #btn-show-teamup, #btn-show-legacy {
 	display: inline-flex !important;
 	justify-content: center;
 	align-items: center;
@@ -348,6 +376,15 @@ table.table td.faction {
 	background-image: none !important;
 }
 
+/* Legacy button: inactive = light gray, active = dark gray (match Team-Up) */
+#btn-show-legacy { background-color: var(--btn-disabled) !important; color: #fff !important; font-size:11px !important; }
+#btn-show-legacy.active { background-color: rgb(97,97,97) !important; color: #fff !important; }
+/* ensure no transparency */
+#btn-show-legacy, #btn-show-legacy.active {
+    opacity: 1 !important;
+    background-image: none !important;
+}
+
 /* Trait button: active = black with white text, inactive = grey */
 #btn-show-traits { background-color: var(--btn-disabled) !important; color: #fff !important; }
 #btn-show-traits.active { background-color: #111 !important; color: #fff !important; }
@@ -357,6 +394,26 @@ table.table td.faction {
 #btn-show-altart.active { background-color: #43a047 !important; color: #fff !important; }
 
 /* Note: do not override global .btn-xs spacing to avoid changing quantity button sizes */
+
+/* Pack environment badges in pack selector */
+.pack-env {
+	display: inline-block;
+	margin-left: 8px;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-size: 11px;
+	color: #fff;
+	font-weight: 600;
+	vertical-align: middle;
+}
+.env-legacy { background-color: #616161; }
+	/* Desired visual semantics:
+	   - fanmade: white text on blue (matches Fanmade button)
+	   - current / legacy / none: black text on light-gray background
+	*/
+	.env-fanmade { background-color: #1e88e5; color: #fff; }
+	.env-current, .env-none { background-color: #e9ecef; color: #000; }
+	.env-legacy { background-color: #616161; color: #fff; }
 
 </style>
 

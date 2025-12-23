@@ -245,7 +245,49 @@ ui.build_pack_selector = function build_pack_selector() {
             checked = true;
         }
 
-        $('<li><a href="#"><label><input type="checkbox" name="' + record.code + '"' + (checked ? ' checked="checked"' : '') + '>' + record.name + '</label></a></li>').appendTo('[data-filter=pack_code]');
+		// create pack list item including an environment badge for debugging
+			(function(){
+			var env = record.environment;
+			// fallback: if runtime pack has no environment, try persisted master pack, then sample card pack_environment
+			if (!env) {
+				try {
+					if (app.data && app.data.masters && app.data.masters.packs && typeof app.data.masters.packs.findById === 'function') {
+						var _mp = app.data.masters.packs.findById(record.code);
+						if (_mp && _mp.environment) env = String(_mp.environment).trim().toLowerCase();
+					}
+				} catch (e) {}
+			}
+			if (!env) {
+				try {
+					if (app.data && app.data.cards) {
+						var _c = app.data.cards.findOne({ pack_code: record.code });
+						if (_c && _c.pack_environment) env = String(_c.pack_environment).trim().toLowerCase();
+					}
+				} catch (e) {}
+			}
+			var displayEnv;
+			// if pack creator is not FFG, mark as fanmade
+			try {
+				if (record.creator && String(record.creator).toLowerCase() !== 'ffg') {
+					displayEnv = 'fanmade';
+				}
+			} catch (e) {}
+			if (typeof displayEnv === 'undefined') {
+				displayEnv = env || 'legacy';
+			}
+			var $li = $('<li/>');
+			var $a = $('<a href="#"/>');
+			var $label = $('<label/>');
+			var $input = $("<input type=\"checkbox\">").attr('name', record.code);
+			if (checked) $input.prop('checked', true);
+			$label.append($input).append(' ' + record.name);
+				var $badge = $('<span/>').addClass('pack-env env-' + displayEnv).text(displayEnv);
+			// styling handled by CSS classes (.pack-env, .env-*)
+			$label.append($badge);
+			$a.append($label);
+			$li.append($a);
+			$('[data-filter=pack_code]').append($li);
+		})();
         // special case for core set 2
         if (record.code == "core"){
             if (collection[record.id+"-2"]){
@@ -268,7 +310,30 @@ ui.build_pack_selector = function build_pack_selector() {
             });
             if(cards.length) checked = true;
 
-            $('<li><a href="#"><label><input type="checkbox" name="' + record.code + '-2"' + (checked ? ' checked="checked"' : '') + '>Second ' + record.name + '</label></a></li>').appendTo('[data-filter=pack_code]');
+			(function(){
+				var env2 = record.environment;
+				var displayEnv2;
+				try {
+					if (record.creator && String(record.creator).toLowerCase() !== 'ffg') {
+						displayEnv2 = 'fanmade';
+					}
+				} catch (e) {}
+				if (typeof displayEnv2 === 'undefined') {
+					displayEnv2 = env2 || 'legacy';
+				}
+				var $li2 = $('<li/>');
+				var $a2 = $('<a href="#"/>');
+				var $label2 = $('<label/>');
+				var $input2 = $("<input type=\"checkbox\">").attr('name', record.code + '-2');
+				if (checked) $input2.prop('checked', true);
+				$label2.append($input2).append(' Second ' + record.name);
+				var $badge2 = $('<span/>').addClass('pack-env env-' + displayEnv2).text(displayEnv2);
+				// styling handled by CSS classes (.pack-env, .env-*)
+				$label2.append($badge2);
+				$a2.append($label2);
+				$li2.append($a2);
+				$('[data-filter=pack_code]').append($li2);
+			})();
         }
     });
 }
@@ -765,6 +830,7 @@ ui.setup_event_handlers = function setup_event_handlers() {
 
 ui.in_selected_packs = function in_selected_packs(card, filters) {
 	var found = false;
+	
 	if (card && filters && filters.pack_code && filters.pack_code['$in']) {
 		filters.pack_code['$in'].forEach(function(pack_code) {
 			if (pack_code == card.pack_code) {
@@ -850,8 +916,10 @@ ui.update_list_template = function update_list_template() {
 				+ '</td>'
 				+ '<td class="fm_code">'
 				+ '<% if (fanmade === "Yes") { %><span class="fm_code_yes"><%= card.pack_name %></span><% } %>'
+
 				+ '<% if (card.text && card.text.toLowerCase().indexOf("team-up") !== -1) { %> <span class="custom_tag">Team-Up</span><% } %>'
 				+ '<% if (card.custom) { %> <span class="custom_tag"><%= card.custom %></span><% } %>'
+
 				// Ajout des traits comme tags noirs, avec remplacement S.H.I.E.L.D. -> SHIELD et S.W.O.R.D. -> SWORD
 				+ '<% if (card.traits && window.showTraitsTags !== false) { '
 				+ 'var traitArr = [];'
@@ -943,15 +1011,31 @@ ui.build_row = function build_row(card) {
         });
     }
 
-    // Récupère le pack de la carte
+// Récupère le pack de la carte
 var pack = app.data.packs.findById(card.pack_code);
-var fanmade = (pack && pack.creator && pack.creator !== "" && pack.creator !== "FFG") ? "Yes" : "";
+var fanmade = (pack && pack.creator && String(pack.creator).toLowerCase() !== 'ffg') ? "Yes" : "";
 
 // Gestion du filtre fanmade sans casser les autres filtres
 var showFanmadeAffinity = document.getElementById('show-fanmade-affinity');
 if (showFanmadeAffinity && !showFanmadeAffinity.checked && fanmade === "Yes") {
     return $('');
 }
+ 
+// Legacy filter: when Legacy is unchecked, only show cards from packs whose environment is 'current'
+var showLegacyElem = document.getElementById('show-legacy');
+if (showLegacyElem && !showLegacyElem.checked) {
+	// Legacy is unchecked → only include cards from packs explicitly marked as 'current' or official FFG packs
+	try {
+		var env = pack.environment;
+		var isCurrent = (env === 'current');
+		if (!isCurrent) {
+			return $('');
+		}
+	} catch (e) {
+		// If anything goes wrong while evaluating, don't hide the card
+	}
+}
+
 
 	// Gestion du filtre Team-Up
 	// If the card has the 'Team-Up' trait, then either show all Team-Up cards
@@ -1035,7 +1119,34 @@ if (showAltArtElem && !showAltArtElem.checked && isAltArt) {
 	return $('');
 }
 
-    var html = DisplayColumnsTpl({
+	// attach pack environment/creator to card for template rendering
+	try {
+		// prefer runtime `pack` collection, but fall back to persisted `masters.packs`
+		var _pack_for_tpl = null;
+			try { _pack_for_tpl = app.data.packs.findById(card.pack_code); } catch(e) {}
+		if (!_pack_for_tpl && app.data.masters && app.data.masters.packs && typeof app.data.masters.packs.findById === 'function') {
+			try { _pack_for_tpl = app.data.masters.packs.findById(card.pack_code); } catch(e) {}
+		}
+		if (_pack_for_tpl) {
+			// preserve actual environment when present; otherwise leave null so UI can show 'none'
+			if (typeof _pack_for_tpl.environment === 'undefined' || _pack_for_tpl.environment === null) {
+				card.pack_environment = null;
+			} else {
+				try { card.pack_environment = String(_pack_for_tpl.environment).trim().toLowerCase(); } catch(e) { card.pack_environment = _pack_for_tpl.environment; }
+			}
+			// creator fallback default
+			if (typeof _pack_for_tpl.creator === 'undefined' || _pack_for_tpl.creator === null) {
+				card.pack_creator = 'ffg';
+			} else {
+				card.pack_creator = _pack_for_tpl.creator;
+			}
+		} else {
+			card.pack_environment = null;
+			card.pack_creator = null;
+		}
+	} catch (e) {}
+
+	var html = DisplayColumnsTpl({
         radios: radios,
         resources: $span.html(),
         url: Routing.generate('cards_zoom', {card_code:card.code}),
@@ -1282,6 +1393,15 @@ if (cbAlt) {
 		app.ui.refresh_lists();
 	});
 }
+
+// show-legacy: toggle display of legacy cards (when unchecked only show 'current' packs)
+var cbLegacy = document.getElementById('show-legacy');
+if (cbLegacy) {
+	cbLegacy.addEventListener('change', function() {
+		CardDivs = [[],[],[]];
+		app.ui.refresh_lists();
+	});
+}
 var cbTraits = document.getElementById('show-traits-tags');
 window.showTraitsTags = cbTraits ? cbTraits.checked : true;
 if (cbTraits) {
@@ -1325,6 +1445,16 @@ ui.on_all_loaded = function on_all_loaded() {
 
 	var heroCode = app.deck.get_hero_code && app.deck.get_hero_code();
 	ui.render_special_deck_section(heroCode);
+
+	// Temporary debug log: dump packs and their environments
+	try {
+		if (window.console && app && app.data && app.data.packs) {
+			console.log('[DEBUG] app.data.packs dump (code => environment):');
+			app.data.packs.find().forEach(function(p){ var e = (p && p.environment) ? String(p.environment).trim().toLowerCase() : 'none'; console.log(p.code + ' => ' + e); });
+		}
+	} catch (e) {
+		console.warn('[DEBUG] failed to dump app.data.packs', e);
+	}
 };
 ui.render_special_deck_section = function(heroCode) {
     // Toujours vider le conteneur avant

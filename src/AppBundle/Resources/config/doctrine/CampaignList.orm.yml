@@ -32,6 +32,10 @@ AppBundle\Entity\CampaignList:
       column: campaign_cards
       type: text
       nullable: true
+    campaignCheckboxes:
+      column: campaign_checkbox
+      type: text
+      nullable: true
     # legacy scenario_* columns removed; migration to drop them should be performed manually
     campaignNotes:
       column: campaign_notes

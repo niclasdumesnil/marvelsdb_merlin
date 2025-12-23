@@ -3,17 +3,23 @@
 
 {% block body %}
 <div class="container main">
-    <h1>Edit Campaign Values</h1>
     {% set camp = campaignlist.getCampaign() %}
     {% if camp is defined and camp %}
-        <h3 style="display:inline-block; margin-right:0.5rem;">{{ camp.getName() }} ({{ camp.getCode() }})</h3>
-        {% if camp.getCreator() %}
-            <span style="background:#1976d2; color:#fff; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.9rem; margin-left:0.25rem;">{{ camp.getCreator() }}</span>
-        {% endif %}
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; border-bottom:2px solid #eee; padding-bottom:1rem;">
+            <div>
+                <h1 style="margin:0;">Edit Campaign</h1>
+                <div style="color:#666; font-size:1.1rem;">{{ camp.getName() }} <span class="text-muted">({{ camp.getCode() }})</span></div>
+            </div>
+            {% if camp.getCreator() %}
+                <span style="background:#1976d2; color:#fff; padding:0.3rem 0.6rem; border-radius:6px; font-size:0.9rem; font-weight:600;">Creator: {{ camp.getCreator() }}</span> 
+            {% endif %}
+        </div>
+        
+        {{ include('AppBundle:Team:_campaign_form_fragment.html.twig') }}
+        
     {% else %}
-        <h3>Campaign (missing)</h3>
-        <div class="text-muted">The campaign linked to this entry is not available.</div>
+        <h3>Campaign Data Unavailable</h3>
+        <div class="text-muted">The campaign linked to this entry is missing.</div> [cite: 2]
     {% endif %}
-    {# include 'AppBundle:Team:_campaign_form_fragment.html.twig' removed to avoid duplicate rendering on this page #}
 </div>
 {% endblock %}

@@ -638,6 +638,9 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 				if (method_exists($existing, 'setCampaignCounters')) $existing->setCampaignCounters(json_encode($data['scenario_counters']));
 				else $existing->setScenarioCounters(json_encode($data['scenario_counters']));
 			}
+			if (isset($data['campaign_checkbox'])) {
+				if (method_exists($existing, 'setCampaignCheckbox')) $existing->setCampaignCheckbox(json_encode($data['campaign_checkbox']));
+			}
 			if (isset($data['description'])) $existing->setDescription($data['description']);
 			if (isset($data['image'])) $existing->setImage($data['image']);
 			if (isset($data['creator'])) $existing->setCreator($data['creator']);
@@ -708,6 +711,10 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 		} else {
 			$campaign->setScenarioCounters(isset($data['campaign_counters']) ? json_encode($data['campaign_counters']) : (isset($data['scenario_counters']) ? json_encode($data['scenario_counters']) : null));
 		}
+		// campaign checkbox definitions (optional)
+		if (isset($data['campaign_checkbox'])) {
+			if (method_exists($campaign, 'setCampaignCheckbox')) $campaign->setCampaignCheckbox(json_encode($data['campaign_checkbox']));
+		}
 
 		// optional descriptive fields
 		if (isset($data['description'])) {
@@ -773,9 +780,11 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 					'status',
 					'theme',
 					'visibility',
-					'language'
+					'language',
+					'environment'
 			]);
 			if($pack) {
+				
 				$result[] = $pack;
 				$this->em->persist($pack);
 			}
@@ -963,6 +972,12 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 			if ($value){
 				$value = json_encode($value);
 			}
+		}
+
+		// If environment is present but empty in JSON, do not overwrite existing value
+		if ($key === 'environment' && ($value === null || $value === '')) {
+			// treat empty environment in JSON as "no change"
+			return;
 		}
 
 		if ($key == "meta"){

@@ -806,20 +806,31 @@ deck.create_card = function create_card(card){
     }
 
 
-    if (!no_collection){
-        var pack = app.data.packs.findById(card.pack_code);
-        var in_collection = false;
-        if (collection[pack.id]) {
-            in_collection = true;
-        } else {
+	if (!no_collection){
+		var pack = app.data.packs.findById(card.pack_code);
+		// Diagnostic: if pack can't be found, log once to help trace missing pack codes or loading issues
+		if (!window._reportedMissingPacks) window._reportedMissingPacks = {};
+		if (!pack) {
+			var key = String(card.pack_code || 'undefined');
+			if (!window._reportedMissingPacks[key]) {
+				window._reportedMissingPacks[key] = true;
+				try {
+					console.warn('[DEBUG] pack not found for card', card.code, 'pack_code=', card.pack_code, 'card=', card);
+				} catch (e) { console.warn('[DEBUG] pack missing and card could not be stringified'); }
+			}
+		}
+		var in_collection = false;
+		if (pack && collection[pack.id]) {
+			in_collection = true;
+		} else {
             if (card.duplicated_by) {
                 card.duplicated_by.forEach(function (dupe_code) {
                     var dupe_card = app.data.cards.findById(dupe_code);
                     if (dupe_card) {
-                        pack = app.data.packs.findById(dupe_card.pack_code);
-                        if (collection[pack.id]) {
-                            in_collection = true;
-                        }
+						pack = app.data.packs.findById(dupe_card.pack_code);
+						if (pack && collection[pack.id]) {
+							in_collection = true;
+						}
                     }
                 });
             }

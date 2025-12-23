@@ -40,6 +40,9 @@ class CampaignList
     /** @ORM\Column(type="text", nullable=true) */
     private $campaignCards;
 
+    /** @ORM\Column(type="text", nullable=true) */
+    private $campaignCheckboxes;
+
     
 
     /** @ORM\Column(type="text", nullable=true) */
@@ -78,6 +81,9 @@ class CampaignList
 
     public function setCampaignCards($v) { $this->campaignCards = $v; return $this; }
     public function getCampaignCards() { return $this->campaignCards; }
+
+    public function setCampaignCheckboxes($v) { $this->campaignCheckboxes = $v; return $this; }
+    public function getCampaignCheckboxes() { return $this->campaignCheckboxes; }
 
     
 
