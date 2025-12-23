@@ -117,10 +117,10 @@
     color: #fff;
 }
 
-/* Current tag: white text on grey background, shown only on hover like creators */
+/* Current tag: black text on light-gray background */
 .tag.current {
-    background: #666666;
-    color: #fff;
+    background: #e9ecef; /* light gray */
+    color: #000; /* black text */
 }
 
 .set-name-hover .tag.current {

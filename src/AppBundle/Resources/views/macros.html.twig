@@ -110,12 +110,28 @@
                     <div style="flex: 0.5;">
                         <a class="card card-tip fg-{{ character.getFaction().getCode() }}" data-code="{{ character.getCode() }}" data-toggle="modal" data-target="#cardModal" data-remote="false" href="">{{ character.getName() }}</a>
                         {# Tags factorisés via merlinsdb.css #}
-                        {% if pack.creator is defined and (pack.creator == "FFG" or pack.creator == "") %}
-                            <span class="tag ffg">Official</span>
-                        {% endif %}
-                        {% if pack.status is defined and pack.status in ["alpha", "beta", "released", "sealed"] %}
-                            <span class="tag status-{{ pack.status }}">{{ pack.status }}</span>
-                        {% endif %}
+						{% if pack.creator is defined and (pack.creator == "FFG" or pack.creator == "") %}
+							<span class="tag ffg">Official</span>
+						{% endif %}
+						{# If all cards in this decklist are from the 'current' environment, show a current tag #}
+						{% set all_current = true %}
+						{% if data.decklist is defined %}
+							{% for slot in data.decklist.getSlots() %}
+								{% set card = slot.card %}
+								{% if card is defined and card.pack is defined %}
+									{% set card_env = card.pack.environment|default(card.pack_environment|default('')) %}
+									{% if card_env != 'current' %}
+										{% set all_current = false %}
+									{% endif %}
+								{% endif %}
+							{% endfor %}
+						{% endif %}
+						{% if all_current %}
+							<span class="tag current">current</span>
+						{% endif %}
+						{% if pack.status is defined and pack.status in ["alpha", "beta", "released", "sealed"] %}
+							<span class="tag status-{{ pack.status }}">{{ pack.status }}</span>
+						{% endif %}
                         {% if pack.language is defined and pack.language == "fr" %}
                             <span class="tag french-only">French only</span>
                         {% endif %}
