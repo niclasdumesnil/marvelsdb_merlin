@@ -275,10 +275,22 @@ ui.build_pack_selector = function build_pack_selector() {
 			if (typeof displayEnv === 'undefined') {
 				displayEnv = env || 'legacy';
 			}
+
+			// Respect the global legacy toggle: if legacy packs are hidden, avoid checking legacy packs
+			try {
+				var cbLegacyLocal = document.getElementById('show-legacy');
+				var showLegacyLocal = cbLegacyLocal ? cbLegacyLocal.checked : true;
+				if (displayEnv === 'legacy') {
+					if (!checked) {
+						// only auto-check legacy packs when the global toggle is on AND the pack is in the user's collection
+						checked = !!(showLegacyLocal && collection[record.id]);
+					}
+				}
+			} catch (e) {}
 			var $li = $('<li/>');
 			var $a = $('<a href="#"/>');
 			var $label = $('<label/>');
-			var $input = $("<input type=\"checkbox\">").attr('name', record.code);
+			var $input = $("<input type=\"checkbox\">").attr('name', record.code).attr('data-owned', collection[record.id] ? '1' : '0');
 			if (checked) $input.prop('checked', true);
 			$label.append($input).append(' ' + record.name);
 				var $badge = $('<span/>').addClass('pack-env env-' + displayEnv).text(displayEnv);
@@ -321,10 +333,21 @@ ui.build_pack_selector = function build_pack_selector() {
 				if (typeof displayEnv2 === 'undefined') {
 					displayEnv2 = env2 || 'legacy';
 				}
+
+				// Respect global legacy toggle for the secondary core set entry as well
+				try {
+					var cbLegacyLocal2 = document.getElementById('show-legacy');
+					var showLegacyLocal2 = cbLegacyLocal2 ? cbLegacyLocal2.checked : true;
+					if (displayEnv2 === 'legacy') {
+						if (!checked) {
+							checked = !!(showLegacyLocal2 && collection[record.id+"-2"]);
+						}
+					}
+				} catch (e) {}
 				var $li2 = $('<li/>');
 				var $a2 = $('<a href="#"/>');
 				var $label2 = $('<label/>');
-				var $input2 = $("<input type=\"checkbox\">").attr('name', record.code + '-2');
+				var $input2 = $("<input type=\"checkbox\">").attr('name', record.code + '-2').attr('data-owned', collection[record.id+"-2"] ? '1' : '0');
 				if (checked) $input2.prop('checked', true);
 				$label2.append($input2).append(' Second ' + record.name);
 				var $badge2 = $('<span/>').addClass('pack-env env-' + displayEnv2).text(displayEnv2);
@@ -1398,6 +1421,23 @@ if (cbAlt) {
 var cbLegacy = document.getElementById('show-legacy');
 if (cbLegacy) {
 	cbLegacy.addEventListener('change', function() {
+		// When legacy filter toggles, also check/uncheck legacy packs in the pack filter dropdown
+		try {
+			var show = !!this.checked;
+			$('[data-filter=pack_code]').find('input[type=checkbox]').each(function(){
+				var $input = $(this);
+				var $label = $input.parent();
+				if ($label.find('.pack-env.env-legacy').length) {
+					var owned = $input.attr('data-owned') === '1' || $input.data('owned') === 1;
+					if (owned) {
+						$input.prop('checked', show).trigger('change');
+					}
+				}
+			});
+		} catch (e) {
+			console.warn('Failed to toggle legacy packs in pack filter', e);
+		}
+
 		CardDivs = [[],[],[]];
 		app.ui.refresh_lists();
 	});
