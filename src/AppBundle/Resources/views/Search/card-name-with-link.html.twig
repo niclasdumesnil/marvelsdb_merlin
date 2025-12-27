@@ -19,6 +19,10 @@
     <span class="tag status-{{ card.status }}">{{ card.status ?? 'Official' }}</span>
 {% elseif card.creator is not defined or card.creator == "FFG" or card.creator == "" %}
     <span class="tag ffg">Official</span>
+    {% set card_pack_env = card.pack.environment|default(card.pack_environment|default('')) %}
+    {% if card_pack_env == 'current' %}
+        <span class="tag current">current</span>
+    {% endif %}
 {% else %}
     <span class="tag">{{ card.creator }}</span>
 {% endif %}
