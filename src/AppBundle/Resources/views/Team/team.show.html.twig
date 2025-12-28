@@ -34,6 +34,11 @@
         .team-deck-card-list li {
             margin: 0.06rem 0 !important;
         }
+        /* Campaign dropdown tweaks */
+        .campaign-select-item { display:flex; align-items:center; justify-content:space-between; white-space:nowrap; }
+        .campaign-creator-badge { display:inline-block; margin-left:8px; white-space:nowrap; }
+        #campaignDropdownBtn { overflow: hidden; text-overflow: ellipsis; }
+        .dropdown-menu.campaign-menu { max-width: 90vw; }
     </style>
     {% set grad = team_gradient_map[team.id]|default(null) %}
     <div class="team-header-box" {% if grad and grad.bg %}style="{% if grad.bg|slice(0,15) == 'linear-gradient' %}background-image: {{ grad.bg }};{% else %}background-color: {{ grad.bg }};{% endif %} color: {{ grad.text|default('#fff') }}; border-radius:8px; padding:0.8rem; margin-bottom:1rem;"{% else %}style="background:#f7f7f7; border-radius:8px; padding:0.8rem; margin-bottom:1rem;"{% endif %}>
@@ -117,11 +122,40 @@
             <p>Select a campaign and add it to this team (campaign data definitions come from the static `campaign` table).</p>
             <form method="post" action="{{ path('team_campaign_add', {'team_id': team.id}) }}" style="display:flex; gap:0.5rem; align-items:center;">
                 <input type="hidden" name="_token" value="{{ csrf_token('add_campaign') }}" />
-                <select name="campaign_id" class="form-control" style="max-width:360px;">
-                    {% for c in available_campaigns %}
-                        <option value="{{ c.getId() }}">{{ c.getName() }}</option>
-                    {% endfor %}
-                </select>
+                <div style="max-width:360px;">
+                    <input type="hidden" name="campaign_id" id="campaign_id_input" />
+                    <div class="dropdown">
+                        <button id="campaignDropdownBtn" class="btn btn-default dropdown-toggle form-control" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="text-align:left; display:flex; justify-content:space-between; align-items:center;">
+                            <span id="campaignDropdownLabel">Select a campaign...</span>
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu campaign-menu" aria-labelledby="campaignDropdownBtn" style="max-height:300px; overflow:auto;">
+                            {% for c in available_campaigns %}
+                                {% set creator = c.getCreator() %}
+                                {% if creator %}
+                                    {% set badge_color = '#1976d2' %}
+                                    {% set badge_text = creator %}
+                                {% else %}
+                                    {% set badge_color = '#000' %}
+                                    {% set badge_text = 'Official' %}
+                                {% endif %}
+                                <li style="padding:0;">
+                                    <a class="dropdown-item campaign-select-item" href="#" data-id="{{ c.getId() }}" data-name="{{ c.getName()|e('html_attr') }}" data-badge-text="{{ badge_text|e('html_attr') }}" data-badge-color="{{ badge_color }}" style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.75rem;">
+                                        <span class="campaign-name">{{ c.getName() }}</span>
+                                        <span class="campaign-creator-badge" style="background:{{ badge_color }}; color:#fff; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.85rem;">{{ badge_text }}</span>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <noscript>
+                        <select name="campaign_id" class="form-control" style="max-width:360px;">
+                            {% for c in available_campaigns %}
+                                <option value="{{ c.getId() }}">{{ c.getName() }} - {{ c.getCreator() ? c.getCreator() : 'Official' }}</option>
+                            {% endfor %}
+                        </select>
+                    </noscript>
+                </div>
                 <button class="btn btn-primary" type="submit">Add campaign to team</button>
             </form>
 
@@ -142,6 +176,95 @@
                     <div style="margin-top:0.25rem; color:#a33;">No campaigns found in `available_campaigns`. Verify import and DB contents.</div>
                 {% endif %}
             </div>
+
+            <div id="campaignDebug" style="margin-top:0.5rem; font-size:0.85rem; color:#333; background:#f7f7f7; padding:0.5rem; border-radius:4px; display:none;"></div>
+            <script>
+                (function(){
+                    try {
+                        var dbg = document.getElementById('campaignDebug');
+                        if (!dbg) return;
+                        var btn = document.getElementById('campaignDropdownBtn');
+                        var menu = document.querySelector('.dropdown-menu[aria-labelledby="campaignDropdownBtn"]');
+                        var items = menu ? Array.from(menu.querySelectorAll('.campaign-select-item')) : [];
+                        var out = [];
+                        out.push('Immediate debug:');
+                        out.push('button: ' + (btn ? 'found' : 'missing'));
+                        out.push('menu: ' + (menu ? 'found' : 'missing'));
+                        out.push('items: ' + items.length);
+                        if (btn) out.push('btnWidth: ' + Math.round(btn.getBoundingClientRect().width) + 'px');
+                        items.forEach(function(it,i){
+                            var w = Math.round(it.getBoundingClientRect().width);
+                            out.push('item['+i+'] width=' + w + 'px text="' + (it.querySelector('.campaign-name') ? it.querySelector('.campaign-name').textContent.trim() : it.textContent.trim()).replace(/\n/g,' ') + '"');
+                        });
+                        dbg.style.display = 'block';
+                        dbg.innerHTML = '<pre style="margin:0; white-space:pre-wrap;">' + out.join('\n') + '</pre>';
+                    } catch(e) {
+                        console && console.warn && console.warn('Immediate campaign debug failed', e);
+                    }
+                })();
+            </script>
+            <script>
+                (function(){
+                    try {
+                        var dbg = document.getElementById('campaignDebug');
+                        if (!dbg) return;
+                        var menu = document.querySelector('.dropdown-menu[aria-labelledby="campaignDropdownBtn"]');
+                        var items = menu ? Array.from(menu.querySelectorAll('.campaign-select-item')) : [];
+                        var canvas = document.createElement('canvas');
+                        var ctx = canvas.getContext('2d');
+                        var results = [];
+                        results.push('Canvas measurement debug:');
+                        results.push('items: ' + items.length);
+                        var max = 0;
+                        items.forEach(function(it,i){
+                            var nameEl = it.querySelector('.campaign-name');
+                            var badgeEl = it.querySelector('.campaign-creator-badge');
+                            var nameText = nameEl ? nameEl.textContent.trim() : it.textContent.trim();
+                            var badgeText = badgeEl ? badgeEl.textContent.trim() : '';
+                            var comp = window.getComputedStyle(nameEl || it);
+                            var font = comp.font || [comp.fontStyle, comp.fontVariant, comp.fontWeight, comp.fontSize, comp.fontFamily].join(' ');
+                            ctx.font = font;
+                            var nameW = ctx.measureText(nameText).width;
+                            var badgeW = 0;
+                            if (badgeText) {
+                                var compB = window.getComputedStyle(badgeEl);
+                                var badgeFont = compB.font || [compB.fontStyle, compB.fontVariant, compB.fontWeight, compB.fontSize, compB.fontFamily].join(' ');
+                                ctx.font = badgeFont;
+                                badgeW = ctx.measureText(badgeText).width;
+                                var padLeft = parseFloat(compB.paddingLeft) || 6;
+                                var padRight = parseFloat(compB.paddingRight) || 6;
+                                badgeW += padLeft + padRight;
+                            }
+                            var compA = window.getComputedStyle(it);
+                            var padA = (parseFloat(compA.paddingLeft) || 8) + (parseFloat(compA.paddingRight) || 8);
+                            var gap = 12;
+                            var total = Math.round(nameW + badgeW + padA + gap);
+                            results.push('item['+i+'] text="'+nameText.replace(/\n/g,' ')+'" name='+Math.round(nameW)+'px badge='+Math.round(badgeW)+'px total='+total+'px');
+                            if (total > max) max = total;
+                        });
+                        var btn = document.getElementById('campaignDropdownBtn');
+                        var btnW = btn ? Math.round(btn.getBoundingClientRect().width) : 0;
+                        var extra = 40;
+                        var target = Math.max(btnW, Math.ceil(max + extra));
+                        results.push('measured max='+max+'px btnW='+btnW+'px target='+target+'px');
+                        // apply sizing so the menu uses the computed width
+                        var menu = document.querySelector('.dropdown-menu[aria-labelledby="campaignDropdownBtn"]');
+                        var btnEl = document.getElementById('campaignDropdownBtn');
+                        if (menu) {
+                            menu.style.minWidth = target + 'px';
+                            menu.style.width = target + 'px';
+                        }
+                        if (btnEl) {
+                            btnEl.style.minWidth = target + 'px';
+                            btnEl.style.width = target + 'px';
+                        }
+                        dbg.style.display = 'block';
+                        dbg.innerHTML = '<pre style="margin:0; white-space:pre-wrap;">' + results.join('\n') + '</pre>';
+                    } catch(e) {
+                        console && console.warn && console.warn('Canvas immediate debug failed', e);
+                    }
+                })();
+            </script>
 
             {% if team_campaignlists is defined and team_campaignlists|length > 0 %}
                 <h4 style="margin-top:1rem;">Team campaign lists</h4>
@@ -246,6 +369,116 @@ document.addEventListener('DOMContentLoaded', function(){
         var pane = document.querySelector(h);
         if (pane) pane.classList.add('in','active');
     }, 120);
+});
+</script>
+<script>
+// Campaign dropdown behavior: update hidden input and button label
+document.addEventListener('DOMContentLoaded', function(){
+    try {
+        var input = document.getElementById('campaign_id_input');
+        var label = document.getElementById('campaignDropdownLabel');
+        var menu = document.querySelector('.dropdown-menu[aria-labelledby="campaignDropdownBtn"]');
+        var btn = document.getElementById('campaignDropdownBtn');
+        if (!input || !label || !menu || !btn) return;
+
+        // Scope items to the menu so we only measure relevant anchors
+        var items = Array.from(menu.querySelectorAll('.campaign-select-item'));
+        if (!items.length) return;
+
+        // Measure after a small delay so styles and fonts have settled
+        setTimeout(function(){
+            // Measure widest item using canvas text measurement to avoid layout quirks
+            var maxWidth = 0;
+            try {
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+                items.forEach(function(it){
+                    var nameEl = it.querySelector('.campaign-name');
+                    var badgeEl = it.querySelector('.campaign-creator-badge');
+                    var nameText = nameEl ? nameEl.textContent.trim() : it.textContent.trim();
+                    var badgeText = badgeEl ? badgeEl.textContent.trim() : '';
+
+                    // derive font from the name element (fallback to button font)
+                    var comp = window.getComputedStyle(nameEl || it);
+                    var font = comp.font || [comp.fontStyle, comp.fontVariant, comp.fontWeight, comp.fontSize, comp.fontFamily].join(' ');
+                    ctx.font = font;
+                    var nameWidth = ctx.measureText(nameText).width;
+
+                    var badgeWidth = 0;
+                    if (badgeText) {
+                        var compB = window.getComputedStyle(badgeEl);
+                        var badgeFont = compB.font || [compB.fontStyle, compB.fontVariant, compB.fontWeight, compB.fontSize, compB.fontFamily].join(' ');
+                        ctx.font = badgeFont;
+                        badgeWidth = ctx.measureText(badgeText).width;
+                        // include badge paddings
+                        var padLeft = parseFloat(compB.paddingLeft) || 6;
+                        var padRight = parseFloat(compB.paddingRight) || 6;
+                        badgeWidth += padLeft + padRight;
+                    }
+
+                    // include anchor padding and potential gap between name and badge
+                    var compA = window.getComputedStyle(it);
+                    var padA = (parseFloat(compA.paddingLeft) || 8) + (parseFloat(compA.paddingRight) || 8);
+                    var gap = 12; // gap between name and badge
+
+                    var total = nameWidth + badgeWidth + padA + gap;
+                    if (total > maxWidth) maxWidth = total;
+                });
+            } catch(e) {
+                maxWidth = btn.getBoundingClientRect().width;
+                console && console.warn && console.warn('Campaign canvas measurement failed', e);
+            }
+
+            // Add some padding for scrollbar/caret
+            var extra = 40; // pixels
+            var targetWidth = Math.ceil(Math.max(btn.getBoundingClientRect().width, maxWidth + extra));
+            if (!targetWidth || targetWidth <= 0) targetWidth = btn.getBoundingClientRect().width;
+            menu.style.minWidth = targetWidth + 'px';
+            menu.style.width = targetWidth + 'px';
+            // ensure button is at least targetWidth
+            btn.style.minWidth = targetWidth + 'px';
+            btn.style.width = targetWidth + 'px';
+
+            console && console.log && console.log('Campaign dropdown: items=', items.length, 'maxWidth=', maxWidth, 'targetWidth=', targetWidth);
+            var dbg = document.getElementById('campaignDebug');
+            if (dbg) {
+                dbg.style.display = 'block';
+                dbg.innerHTML = '<pre style="margin:0; white-space:pre-wrap;">Campaign dropdown debug:\nitems = ' + items.length + '\nmaxWidth = ' + Math.round(maxWidth) + 'px\ntargetWidth = ' + Math.round(targetWidth) + 'px</pre>';
+            }
+        }, 50);
+
+        // Wire click handler to update selected value and visible badge
+        items.forEach(function(it){
+            it.addEventListener('click', function(ev){
+                ev.preventDefault();
+                var id = this.getAttribute('data-id');
+                var name = this.getAttribute('data-name');
+                var badgeText = this.getAttribute('data-badge-text');
+                var badgeColor = this.getAttribute('data-badge-color');
+                input.value = id;
+                label.textContent = name;
+
+                // remove existing badge if any
+                var existing = btn.querySelector('.campaign-creator-badge');
+                if (existing) existing.remove();
+                var span = document.createElement('span');
+                span.className = 'campaign-creator-badge';
+                span.textContent = badgeText;
+                span.style.background = badgeColor;
+                span.style.color = '#fff';
+                span.style.padding = '0.15rem 0.45rem';
+                span.style.borderRadius = '4px';
+                span.style.fontSize = '0.85rem';
+                span.style.marginLeft = '0.5rem';
+                span.style.display = 'inline-block';
+                var caret = btn.querySelector('.caret');
+                if (caret) btn.insertBefore(span, caret);
+            });
+        });
+    } catch(e) {
+        // ignore measurement errors
+        console && console.warn && console.warn('Campaign dropdown sizing failed', e);
+    }
 });
 </script>
 {% endblock %}

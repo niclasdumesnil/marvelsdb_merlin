@@ -71,6 +71,12 @@ team_campaign_edit:
     requirements:
         campaignlist_id: \d+
 
+team_campaign_delete:
+    path: /campaign/delete
+    methods: [POST]
+    defaults:
+        _controller: AppBundle:Team:deleteCampaignList
+
 team_campaign_scenario_stats:
     path: /campaign/{campaignlist_id}/scenario/{scenario_code}/stats
     methods: [GET]

@@ -56,6 +56,9 @@ class Campaign
     /** @ORM\Column(type="string", length=255, nullable=true) */
     private $image;
 
+    /** @ORM\Column(type="integer", nullable=true) */
+    private $position;
+
     /** @ORM\Column(type="datetime") */
     private $dateCreation;
 
@@ -106,4 +109,7 @@ class Campaign
     public function getImage() { return $this->image; }
 
     public function getDateCreation() { return $this->dateCreation; }
+
+    public function setPosition($v) { $this->position = $v; return $this; }
+    public function getPosition() { return $this->position; }
 }

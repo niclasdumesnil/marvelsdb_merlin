@@ -589,7 +589,7 @@ class TeamController extends Controller
 
         // load available static campaigns for selection in the team view
         $campaignRepo = $this->getDoctrine()->getRepository('AppBundle:Campaign');
-        $availableCampaigns = $campaignRepo->findAll();
+        $availableCampaigns = $campaignRepo->findBy([], ['position' => 'ASC']);
 
         // load existing campaignlist rows for this team so the view can show them
         $campaignListRepo = $this->getDoctrine()->getRepository('AppBundle:CampaignList');
@@ -805,7 +805,7 @@ class TeamController extends Controller
 
         // load available static campaigns for selection
         $campaignRepo = $this->getDoctrine()->getRepository('AppBundle:Campaign');
-        $availableCampaigns = $campaignRepo->findAll();
+        $availableCampaigns = $campaignRepo->findBy([], ['position' => 'ASC']);
 
         // load existing campaignlist rows for this team so editor can show them
         $campaignListRepo = $this->getDoctrine()->getRepository('AppBundle:CampaignList');
@@ -1472,6 +1472,53 @@ class TeamController extends Controller
         $em->flush();
 
         return $this->redirect($this->generateUrl('team_index'));
+    }
+
+    public function deleteCampaignListAction(Request $request)
+    {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        $campaignlistId = $request->request->get('campaignlist_id');
+        if (!$campaignlistId) {
+            throw $this->createNotFoundException('CampaignList id missing');
+        }
+        $token = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('delete_campaign_' . $campaignlistId, $token)) {
+            $this->addFlash('error', 'CSRF token invalid.');
+            // attempt to redirect back to team view if possible
+            $em = $this->getDoctrine()->getManager();
+            $cl_try = $em->getRepository('AppBundle:CampaignList')->find($campaignlistId);
+            $team_try = $cl_try ? $cl_try->getTeam() : null;
+            if ($team_try) {
+                try { $slug = $team_try->getSlug(); } catch (\Exception $e) { $slug = null; }
+                if ($slug) return $this->redirect($this->generateUrl('team_view', ['team_id' => $team_try->getId(), 'slug' => $slug]));
+                return $this->redirect($this->generateUrl('team_edit', ['team_id' => $team_try->getId()]));
+            }
+            return $this->redirect($this->generateUrl('team_index'));
+        }
+        $em = $this->getDoctrine()->getManager();
+        $cl = $em->getRepository('AppBundle:CampaignList')->find($campaignlistId);
+        if (!$cl) {
+            throw $this->createNotFoundException('CampaignList not found');
+        }
+        $team = $cl->getTeam();
+        if (!$team) {
+            throw $this->createNotFoundException('Associated team not found');
+        }
+        if (!$this->isGranted('DELETE', $team)) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $em->remove($cl);
+        $em->flush();
+
+        // Redirect back to team view if possible
+        try {
+            $slug = $team->getSlug();
+        } catch (\Exception $e) { $slug = null; }
+        if ($slug) {
+            return $this->redirect($this->generateUrl('team_view', ['team_id' => $team->getId(), 'slug' => $slug]));
+        }
+        return $this->redirect($this->generateUrl('team_edit', ['team_id' => $team->getId()]));
     }
 
     /**

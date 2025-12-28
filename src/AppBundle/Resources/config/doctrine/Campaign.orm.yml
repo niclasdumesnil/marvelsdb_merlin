@@ -56,6 +56,9 @@ AppBundle\Entity\Campaign:
       type: string
       length: 255
       nullable: true
+    position:
+      type: integer
+      nullable: true
     dateCreation:
       column: date_creation
       type: datetime

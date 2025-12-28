@@ -229,10 +229,20 @@
             <textarea name="campaign_cards" id="json-card-{{ campaignlist.getId() }}" style="display:none !important;">{{ ccards ? (ccards|json_encode) : 'null' }}</textarea>
         </div>
 
+        </form>
+
         <div class="text-right mt-3">
-            <button type="submit" class="btn btn-primary btn-lg px-5 shadow">Save Campaign</button>
+            <div style="display:inline-flex; gap:8px; align-items:center;">
+                <button type="submit" class="btn btn-primary btn-lg px-3 btn-team-action" form="campaign-form-{{ campaignlist.getId() }}"><span class="fa fa-save fa-fw"></span> Save Campaign</button>
+
+                <form method="post" action="{{ path('team_campaign_delete') }}" style="display:inline-block; margin:0;">
+                    <input type="hidden" name="campaignlist_id" value="{{ campaignlist.getId() }}" />
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_campaign_' ~ campaignlist.getId()) }}" />
+                    <button class="btn btn-danger btn-delete-team btn-team-action" data-toggle="tooltip" title="Delete" type="submit" onclick="return confirm('Are you sure you want to delete this campaign from the team?');"><span class="fa fa-trash-o fa-fw"></span> Delete</button>
+                </form>
+            </div>
         </div>
-    </form>
+    <!-- Buttons fixed at bottom-right; removed dynamic positioning script to ensure visibility -->
 </div>
 
 <div id="floating-card-preview">

@@ -544,7 +544,7 @@ class ImportStdCommand extends ContainerAwareCommand
 						'code',
 						'name',
 						'size'
-					], [], ['creator']);
+					], [], ['creator', 'position']);
 			if($type) {
 				$result[] = $type;
 				$this->em->persist($type);
@@ -644,6 +644,7 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 			if (isset($data['description'])) $existing->setDescription($data['description']);
 			if (isset($data['image'])) $existing->setImage($data['image']);
 			if (isset($data['creator'])) $existing->setCreator($data['creator']);
+			if (isset($data['position'])) $existing->setPosition($data['position']);
 
 			$result[] = $existing;
 			continue;
@@ -726,6 +727,9 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 		if (isset($data['creator'])) {
 			$campaign->setCreator($data['creator']);
 		}
+			if (isset($data['position'])) {
+				$campaign->setPosition($data['position']);
+			}
 
 		// Only persist the static Campaign definition here. Per-team/runtime values
 		// (campaignlist rows) should not be created at initialization and will be
