@@ -129,6 +129,40 @@
                             <span id="campaignDropdownLabel">Select a campaign...</span>
                             <span class="caret"></span>
                         </button>
+                        <script>
+                        // Immediate restore: run inline during parse to reduce flicker on load
+                        (function(){
+                            try {
+                                var teamId = '{{ team.id }}';
+                                var key = 'selectedCampaign_team_' + teamId;
+                                var stored = null;
+                                try { stored = sessionStorage.getItem(key); } catch(e) { stored = null; }
+                                if (!stored) return;
+                                var obj = JSON.parse(stored);
+                                var input = document.getElementById('campaign_id_input'); if (input && obj.id) input.value = obj.id;
+                                var btn = document.getElementById('campaignDropdownBtn');
+                                if (btn) {
+                                    var label = btn.querySelector('#campaignDropdownLabel');
+                                    if (!label) { label = document.createElement('span'); label.id = 'campaignDropdownLabel'; btn.insertBefore(label, btn.querySelector('.caret')); }
+                                    label.textContent = obj.name || '';
+                                    var existing = btn.querySelector('.campaign-creator-badge'); if (existing) existing.remove();
+                                    if (obj.badgeText) {
+                                        var span = document.createElement('span');
+                                        span.className = 'campaign-creator-badge';
+                                        span.textContent = obj.badgeText;
+                                        span.style.background = obj.badgeColor || '#000';
+                                        span.style.color = '#fff';
+                                        span.style.padding = '0.15rem 0.45rem';
+                                        span.style.borderRadius = '4px';
+                                        span.style.fontSize = '0.85rem';
+                                        span.style.marginLeft = '0.5rem';
+                                        span.style.display = 'inline-block';
+                                        var caret = btn.querySelector('.caret'); if (caret) btn.insertBefore(span, caret);
+                                    }
+                                }
+                            } catch(e) {}
+                        })();
+                        </script>
                         <ul class="dropdown-menu campaign-menu" aria-labelledby="campaignDropdownBtn" style="max-height:300px; overflow:auto;">
                             {% for c in available_campaigns %}
                                 {% set creator = c.getCreator() %}
@@ -140,13 +174,59 @@
                                     {% set badge_text = 'Official' %}
                                 {% endif %}
                                 <li style="padding:0;">
-                                    <a class="dropdown-item campaign-select-item" href="#" data-id="{{ c.getId() }}" data-name="{{ c.getName()|e('html_attr') }}" data-badge-text="{{ badge_text|e('html_attr') }}" data-badge-color="{{ badge_color }}" style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.75rem;">
+                                    <button type="button" onclick="try{applySelectionInline(this);}catch(e){}" class="dropdown-item campaign-select-item" data-id="{{ c.getId() }}" data-name="{{ c.getName()|e('html_attr') }}" data-badge-text="{{ badge_text|e('html_attr') }}" data-badge-color="{{ badge_color }}" style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.75rem; width:100%; text-align:left; border:none; background:transparent;">
                                         <span class="campaign-name">{{ c.getName() }}</span>
                                         <span class="campaign-creator-badge" style="background:{{ badge_color }}; color:#fff; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.85rem;">{{ badge_text }}</span>
-                                    </a>
+                                    </button>
                                 </li>
                             {% endfor %}
                         </ul>
+                        <script>
+                        // Reliable inline setter for selection — overrides/ complements other definitions
+                        (function(){
+                            window.applySelectionInline = function(el){
+                                try {
+                                    if (!el) return;
+                                    var id = el.getAttribute('data-id');
+                                    var name = el.getAttribute('data-name');
+                                    var badgeText = el.getAttribute('data-badge-text');
+                                    var badgeColor = el.getAttribute('data-badge-color');
+
+                                    // set hidden input
+                                    try { var input = document.getElementById('campaign_id_input'); if (input && id) input.value = id; } catch(e) {}
+
+                                    // update button label and badge
+                                    try {
+                                        var btn = document.getElementById('campaignDropdownBtn');
+                                        if (btn) {
+                                            var label = btn.querySelector('#campaignDropdownLabel');
+                                            if (!label) { label = document.createElement('span'); label.id = 'campaignDropdownLabel'; btn.insertBefore(label, btn.querySelector('.caret')); }
+                                            label.textContent = name || '';
+                                            var existing = btn.querySelector('.campaign-creator-badge'); if (existing) existing.remove();
+                                            if (badgeText) {
+                                                var span = document.createElement('span');
+                                                span.className = 'campaign-creator-badge';
+                                                span.textContent = badgeText;
+                                                span.style.background = badgeColor || '#000';
+                                                span.style.color = '#fff';
+                                                span.style.padding = '0.15rem 0.45rem';
+                                                span.style.borderRadius = '4px';
+                                                span.style.fontSize = '0.85rem';
+                                                span.style.marginLeft = '0.5rem';
+                                                span.style.display = 'inline-block';
+                                                var caret = btn.querySelector('.caret'); if (caret) btn.insertBefore(span, caret);
+                                            }
+                                        }
+                                    } catch(e) {}
+
+                                    // persist selection
+                                    try { var teamId = '{{ team.id }}'; var key = 'selectedCampaign_team_' + teamId; sessionStorage.setItem(key, JSON.stringify({id:id, name:name, badgeText:badgeText, badgeColor:badgeColor})); } catch(e) {}
+
+                                    try { console && console.log && console.log('applySelectionInline: set id=', id); } catch(e) {}
+                                } catch(e) { try { console && console.warn && console.warn('applySelectionInline error', e); } catch(e) {} }
+                            };
+                        })();
+                        </script>
                     </div>
                     <noscript>
                         <select name="campaign_id" class="form-control" style="max-width:360px;">
@@ -390,7 +470,37 @@ document.addEventListener('DOMContentLoaded', function(){
             }
         }, 50);
 
-        // Wire click handler to update selected value and visible badge
+        // Restore selection from localStorage if present
+        try {
+            if (window.localStorage) {
+                var savedId = localStorage.getItem('selected_campaign_id');
+                if (savedId) {
+                    var sel = menu.querySelector('.campaign-select-item[data-id="' + savedId + '"]');
+                    if (sel) {
+                        input.value = savedId;
+                        label.textContent = sel.getAttribute('data-name');
+                        var badgeText = sel.getAttribute('data-badge-text');
+                        var badgeColor = sel.getAttribute('data-badge-color');
+                        var existing = btn.querySelector('.campaign-creator-badge');
+                        if (existing) existing.remove();
+                        var spanR = document.createElement('span');
+                        spanR.className = 'campaign-creator-badge';
+                        spanR.textContent = badgeText;
+                        spanR.style.background = badgeColor;
+                        spanR.style.color = '#fff';
+                        spanR.style.padding = '0.15rem 0.45rem';
+                        spanR.style.borderRadius = '4px';
+                        spanR.style.fontSize = '0.85rem';
+                        spanR.style.marginLeft = '0.5rem';
+                        spanR.style.display = 'inline-block';
+                        var caretR = btn.querySelector('.caret');
+                        if (caretR) btn.insertBefore(spanR, caretR);
+                    }
+                }
+            }
+        } catch(e) {}
+
+        // Wire click handler to update selected value, visible badge and persist selection
         items.forEach(function(it){
             it.addEventListener('click', function(ev){
                 ev.preventDefault();
@@ -400,6 +510,9 @@ document.addEventListener('DOMContentLoaded', function(){
                 var badgeColor = this.getAttribute('data-badge-color');
                 input.value = id;
                 label.textContent = name;
+
+                // persist selection so re-renders/restores can pick it up
+                try { if (window.localStorage) localStorage.setItem('selected_campaign_id', id); } catch(e) {}
 
                 // remove existing badge if any
                 var existing = btn.querySelector('.campaign-creator-badge');

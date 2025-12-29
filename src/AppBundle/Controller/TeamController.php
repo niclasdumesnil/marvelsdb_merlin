@@ -678,21 +678,45 @@ class TeamController extends Controller
             $clCampaignNotes = [];
             $clScenarioNotes = [];
             if (is_array($rawClNotes)) {
-                // if numeric-indexed list of keys => campaign-level
-                if (array_values($rawClNotes) === $rawClNotes && count($rawClNotes) && is_string(reset($rawClNotes))) {
-                    foreach ($rawClNotes as $k) { $clCampaignNotes[$k] = ''; }
+                // If the campaign definition declares campaign-level notes, accept both
+                // associative map (key => value) and legacy numeric list of keys.
+                if (isset($campaignDefs[$cid]) && !empty($campaignDefs[$cid]['campaign_notes'])) {
+                    // campaign-level expected
+                    if (array_values($rawClNotes) === $rawClNotes && count($rawClNotes) && is_string(reset($rawClNotes))) {
+                        foreach ($rawClNotes as $k) { $clCampaignNotes[$k] = ''; }
+                    } else {
+                        // associative map: map values to the expected campaign note keys
+                        foreach ($campaignDefs[$cid]['campaign_notes'] as $k) {
+                            $clCampaignNotes[$k] = array_key_exists($k, $rawClNotes) ? $rawClNotes[$k] : '';
+                        }
+                    }
                 } else {
-                    $clScenarioNotes = $rawClNotes;
+                    // scenario-level shape
+                    if (array_values($rawClNotes) === $rawClNotes && count($rawClNotes) && is_string(reset($rawClNotes))) {
+                        foreach ($rawClNotes as $k) { $clCampaignNotes[$k] = ''; }
+                    } else {
+                        $clScenarioNotes = $rawClNotes;
+                    }
                 }
             }
 
             $clCampaignCounters = [];
             $clScenarioCounters = [];
             if (is_array($rawClCounters)) {
-                if (array_values($rawClCounters) === $rawClCounters && count($rawClCounters) && is_string(reset($rawClCounters))) {
-                    foreach ($rawClCounters as $k) { $clCampaignCounters[$k] = 0; }
+                if (isset($campaignDefs[$cid]) && !empty($campaignDefs[$cid]['campaign_counters'])) {
+                    if (array_values($rawClCounters) === $rawClCounters && count($rawClCounters) && is_string(reset($rawClCounters))) {
+                        foreach ($rawClCounters as $k) { $clCampaignCounters[$k] = 0; }
+                    } else {
+                        foreach ($campaignDefs[$cid]['campaign_counters'] as $k) {
+                            $clCampaignCounters[$k] = array_key_exists($k, $rawClCounters) ? intval($rawClCounters[$k]) : 0;
+                        }
+                    }
                 } else {
-                    $clScenarioCounters = $rawClCounters;
+                    if (array_values($rawClCounters) === $rawClCounters && count($rawClCounters) && is_string(reset($rawClCounters))) {
+                        foreach ($rawClCounters as $k) { $clCampaignCounters[$k] = 0; }
+                    } else {
+                        $clScenarioCounters = $rawClCounters;
+                    }
                 }
             }
 
