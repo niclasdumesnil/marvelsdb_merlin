@@ -177,95 +177,6 @@
                 {% endif %}
             </div>
 
-            <div id="campaignDebug" style="margin-top:0.5rem; font-size:0.85rem; color:#333; background:#f7f7f7; padding:0.5rem; border-radius:4px; display:none;"></div>
-            <script>
-                (function(){
-                    try {
-                        var dbg = document.getElementById('campaignDebug');
-                        if (!dbg) return;
-                        var btn = document.getElementById('campaignDropdownBtn');
-                        var menu = document.querySelector('.dropdown-menu[aria-labelledby="campaignDropdownBtn"]');
-                        var items = menu ? Array.from(menu.querySelectorAll('.campaign-select-item')) : [];
-                        var out = [];
-                        out.push('Immediate debug:');
-                        out.push('button: ' + (btn ? 'found' : 'missing'));
-                        out.push('menu: ' + (menu ? 'found' : 'missing'));
-                        out.push('items: ' + items.length);
-                        if (btn) out.push('btnWidth: ' + Math.round(btn.getBoundingClientRect().width) + 'px');
-                        items.forEach(function(it,i){
-                            var w = Math.round(it.getBoundingClientRect().width);
-                            out.push('item['+i+'] width=' + w + 'px text="' + (it.querySelector('.campaign-name') ? it.querySelector('.campaign-name').textContent.trim() : it.textContent.trim()).replace(/\n/g,' ') + '"');
-                        });
-                        dbg.style.display = 'block';
-                        dbg.innerHTML = '<pre style="margin:0; white-space:pre-wrap;">' + out.join('\n') + '</pre>';
-                    } catch(e) {
-                        console && console.warn && console.warn('Immediate campaign debug failed', e);
-                    }
-                })();
-            </script>
-            <script>
-                (function(){
-                    try {
-                        var dbg = document.getElementById('campaignDebug');
-                        if (!dbg) return;
-                        var menu = document.querySelector('.dropdown-menu[aria-labelledby="campaignDropdownBtn"]');
-                        var items = menu ? Array.from(menu.querySelectorAll('.campaign-select-item')) : [];
-                        var canvas = document.createElement('canvas');
-                        var ctx = canvas.getContext('2d');
-                        var results = [];
-                        results.push('Canvas measurement debug:');
-                        results.push('items: ' + items.length);
-                        var max = 0;
-                        items.forEach(function(it,i){
-                            var nameEl = it.querySelector('.campaign-name');
-                            var badgeEl = it.querySelector('.campaign-creator-badge');
-                            var nameText = nameEl ? nameEl.textContent.trim() : it.textContent.trim();
-                            var badgeText = badgeEl ? badgeEl.textContent.trim() : '';
-                            var comp = window.getComputedStyle(nameEl || it);
-                            var font = comp.font || [comp.fontStyle, comp.fontVariant, comp.fontWeight, comp.fontSize, comp.fontFamily].join(' ');
-                            ctx.font = font;
-                            var nameW = ctx.measureText(nameText).width;
-                            var badgeW = 0;
-                            if (badgeText) {
-                                var compB = window.getComputedStyle(badgeEl);
-                                var badgeFont = compB.font || [compB.fontStyle, compB.fontVariant, compB.fontWeight, compB.fontSize, compB.fontFamily].join(' ');
-                                ctx.font = badgeFont;
-                                badgeW = ctx.measureText(badgeText).width;
-                                var padLeft = parseFloat(compB.paddingLeft) || 6;
-                                var padRight = parseFloat(compB.paddingRight) || 6;
-                                badgeW += padLeft + padRight;
-                            }
-                            var compA = window.getComputedStyle(it);
-                            var padA = (parseFloat(compA.paddingLeft) || 8) + (parseFloat(compA.paddingRight) || 8);
-                            var gap = 12;
-                            var total = Math.round(nameW + badgeW + padA + gap);
-                            results.push('item['+i+'] text="'+nameText.replace(/\n/g,' ')+'" name='+Math.round(nameW)+'px badge='+Math.round(badgeW)+'px total='+total+'px');
-                            if (total > max) max = total;
-                        });
-                        var btn = document.getElementById('campaignDropdownBtn');
-                        var btnW = btn ? Math.round(btn.getBoundingClientRect().width) : 0;
-                        var extra = 40;
-                        var target = Math.max(btnW, Math.ceil(max + extra));
-                        results.push('measured max='+max+'px btnW='+btnW+'px target='+target+'px');
-                        // apply sizing so the menu uses the computed width
-                        var menu = document.querySelector('.dropdown-menu[aria-labelledby="campaignDropdownBtn"]');
-                        var btnEl = document.getElementById('campaignDropdownBtn');
-                        if (menu) {
-                            menu.style.minWidth = target + 'px';
-                            menu.style.width = target + 'px';
-                        }
-                        if (btnEl) {
-                            btnEl.style.minWidth = target + 'px';
-                            btnEl.style.width = target + 'px';
-                        }
-                        dbg.style.display = 'block';
-                        dbg.innerHTML = '<pre style="margin:0; white-space:pre-wrap;">' + results.join('\n') + '</pre>';
-                    } catch(e) {
-                        console && console.warn && console.warn('Canvas immediate debug failed', e);
-                    }
-                })();
-            </script>
-
             {% if team_campaignlists is defined and team_campaignlists|length > 0 %}
                 <h4 style="margin-top:1rem;">Team campaign lists</h4>
                 {# Nav tabs #}
@@ -303,8 +214,40 @@
                                         {% if camp.getCreator() %}
                                             <span style="background:#1976d2; color:#fff; padding:0.15rem 0.45rem; border-radius:4px; font-size:0.9rem; margin-left:0.5rem; display:inline-block; vertical-align:middle;">{{ camp.getCreator() }}</span>
                                         {% endif %}
+                                        {% set camp_def_inline = (campaign_defs[camp.getId()] is defined) ? campaign_defs[camp.getId()] : null %}
                                         {% if camp.getDescription() %}
-                                            <div class="text-muted" style="margin-bottom:0.5rem;"><em>{{ camp.getDescription() }}</em></div>
+                                            <div id="camp-desc-{{ camp.getId() }}" class="text-muted" style="margin-bottom:0.5rem;"><em></em></div>
+                                            <script>
+                                            (function(){
+                                                try {
+                                                    var raw = {{ camp.getDescription()|json_encode|raw }};
+                                                    if (typeof raw === 'string') {
+                                                        // normalize CRLF and literal "\\n", then convert every newline to <br/>
+                                                            raw = raw.replace(/\r\n/g,'\n');
+                                                            raw = raw.replace(/\\n/g,'\n');
+                                                            var out = raw.replace(/\n/g, '<br/>');
+                                                        var el = document.querySelector('#camp-desc-{{ camp.getId() }} em');
+                                                        if (el) el.innerHTML = out;
+                                                    }
+                                                } catch(e) { console && console.warn && console.warn('camp desc parse', e); }
+                                            })();
+                                            </script>
+                                        {% elseif camp_def_inline is defined and camp_def_inline and camp_def_inline.description is defined and camp_def_inline.description %}
+                                            <div id="camp-def-desc-{{ camp.getId() }}" class="text-muted" style="margin-bottom:0.5rem;"><em></em></div>
+                                            <script>
+                                            (function(){
+                                                try {
+                                                    var raw = {{ camp_def_inline.description|json_encode|raw }};
+                                                    if (typeof raw === 'string') {
+                                                        raw = raw.replace(/\r\n/g,'\n');
+                                                        raw = raw.replace(/\\n/g,'\n');
+                                                        var out = raw.replace(/\n/g, '<br/>');
+                                                        var el = document.querySelector('#camp-def-desc-{{ camp.getId() }} em');
+                                                        if (el) el.innerHTML = out;
+                                                    }
+                                                } catch(e) { console && console.warn && console.warn('camp def desc parse', e); }
+                                            })();
+                                            </script>
                                         {% endif %}
                                     </div>
                                 </div>

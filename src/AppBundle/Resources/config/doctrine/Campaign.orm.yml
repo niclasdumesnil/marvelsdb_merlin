@@ -48,6 +48,9 @@ AppBundle\Entity\Campaign:
     description:
       type: text
       nullable: true
+    epilogue:
+      type: text
+      nullable: true
     creator:
       type: string
       length: 255

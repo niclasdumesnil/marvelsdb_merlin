@@ -7,7 +7,6 @@
     
     .comic-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: #95a5a6; display: block; margin-bottom: 0.25rem; }
     .comic-input { border: 1px solid #e0e6ed; border-radius: 6px; padding: 0.5rem; font-family: inherit; transition: all 0.2s; }
-
     /* Styles dynamiques pour la santé */
     .hp-at-max { font-weight: 800 !important; color: #2c3e50 !important; }
     .hp-damaged { color: #e74c3c !important; font-weight: 800 !important; background-color: #fff5f5 !important; border-color: #fab1a0 !important; }
@@ -45,6 +44,12 @@
 {% set camp = campaignlist.getCampaign() %}
 {% if camp is defined and camp %}
 {% set camp_def = (campaign_defs[camp.getId()] is defined) ? campaign_defs[camp.getId()] : (campaign_defs|default({})) %}
+{# Prefer scenarios stored on the Campaign DB row when available (they are stored as JSON string)
+    Decode DB scenarios if present and use them as the source; otherwise fall back to static camp_def.scenarios #}
+{# Note: Twig in this environment doesn't provide a json_decode filter. We will
+    render the static `camp_def.scenarios` server-side and, if the Campaign row
+    contains an updated scenarios JSON string, decode & apply it client-side via JS. #}
+{% set scenarios_source = camp_def.scenarios|default({}) %}
 {% set cl_vals = (campaignlist_values is defined and campaignlist_values[campaignlist.getId()] is defined) ? campaignlist_values[campaignlist.getId()] : ((campaignlist_values is defined) ? campaignlist_values : {}) %}
 {% set ccards = cl_vals.campaign_cards is defined ? cl_vals.campaign_cards : (campaignlist.getCampaignCards() ? campaignlist.getCampaignCards()|raw : null) %}
 
@@ -164,14 +169,14 @@
         <div class="scenario-nav-bar">
             <button type="button" id="prev-scen-{{ campaignlist.getId() }}" class="btn btn-sm btn-outline-light px-3">&larr; Previous</button>
             <select id="select-scen-{{ campaignlist.getId() }}" class="scenario-select-custom">
-                {% for scode, scenario in (camp_def.scenarios|default({})) %}
-                    <option value="{{ loop.index0 }}">{{ scenario.name|default(scode) }}</option>
+                {% for scode, scenario in (scenarios_source) %}
+                    <option value="{{ loop.index0 }}">{{ scenario.name|default(scenario.code|default(scode)) }}</option>
                 {% endfor %}
             </select>
             <button type="button" id="next-scen-{{ campaignlist.getId() }}" class="btn btn-sm btn-outline-light px-3">Next &rarr;</button>
         </div>
         <div class="scenario-content">
-            {% for scode, scenario in (camp_def.scenarios|default({})) %}
+            {% for scode, scenario in (scenarios_source) %}
                 <div class="scenario-block" data-index="{{ loop.index0 }}" style="display:none;">
                     <div style="display:flex; gap:25px; align-items:flex-start; margin-bottom:20px;">
                         {% if scenario.image is defined and scenario.image %}
@@ -181,10 +186,11 @@
                         {% endif %}
                         <div style="flex:1;">
                             <div class="d-flex align-items-center mb-2">
-                                <h2 style="margin:0;">{{ scenario.name|default(scode) }}</h2>
-                                <a class="btn btn-sm btn-outline-primary ml-3" href="{{ path('team_campaign_scenario_stats', {'campaignlist_id': campaignlist.getId(), 'scenario_code': scode}) }}">View statistics</a>
+                                {% set scenario_code = scenario.code is defined ? scenario.code : scode %}
+                                <h2 style="margin:0;">{{ scenario.name|default(scenario_code) }}</h2>
+                                <a class="btn btn-sm btn-outline-primary ml-3" href="{{ path('team_campaign_scenario_stats', {'campaignlist_id': campaignlist.getId(), 'scenario_code': scenario_code}) }}">View statistics</a>
                             </div>
-                            <p class="text-muted"><em>{{ scenario.description|default('')|e }}</em></p>
+                            <p class="text-muted"><em>{{ (scenario.description|default('')|replace({'\\n':'\n'}))|nl2br|raw }}</em></p>
                             <div class="mt-2">
                                 {% for m in scenario.modulars|default([]) %}
                                     <span class="badge badge-secondary mr-1" style="font-size: 0.7rem;">{{ m.name|default(m) }}</span>
@@ -196,13 +202,23 @@
                     <div class="row">
                         <div class="col-md-6 border-right">
                             <h5 class="text-primary font-weight-bold">Setup</h5>
-                            <div class="small text-muted" style="white-space:pre-wrap;">{{ scenario.introduction|default('N/A')|e }}</div>
+                            <div class="small text-muted" style="white-space:pre-wrap;">{{ (scenario.introduction|default('N/A')|replace({'\\n':'\n'}))|nl2br|raw }}</div>
                         </div>
                         <div class="col-md-6">
                             <h5 class="text-success font-weight-bold">Conclusion</h5>
-                            <div class="small text-muted" style="white-space:pre-wrap;">{{ scenario.resolution|default('N/A')|e }}</div>
+                            <div class="small text-muted" style="white-space:pre-wrap;">{{ (scenario.resolution|default('N/A')|replace({'\\n':'\n'}))|nl2br|raw }}</div>
                         </div>
                     </div>
+
+                    {% if scenario.epilogue is defined and scenario.epilogue %}
+                        <div class="deck-divider-container" style="margin:1rem 0 0.75rem 0;">
+                            <div class="deck-divider-line"></div>
+                        </div>
+
+                        <h5 class="text-dark font-weight-bold">Epilogue</h5>
+                        <p class="text-muted" style="white-space:normal;"><em>{{ (scenario.epilogue|replace({'\\r\\n':'\n','\\n':'\n'}))|raw }}</em></p>
+                    {% endif %}
+
                 </div>
             {% endfor %}
         </div>
@@ -231,6 +247,19 @@
 
         </form>
 
+        <div class="ui-card" style="margin-top:1rem;">
+            <div class="section-header">Epilogue</div>
+            <div id="campaign-epilogue-{{ camp.getId() }}" class="text-muted" style="color:#4a4a4a; margin-bottom:0.5rem; text-align:left; white-space:normal;">
+                {% if camp.getEpilogue() %}
+                    {{ (camp.getEpilogue()|replace({'\\r\\n':'\n','\\n':'\n'}))|raw }}
+                {% elseif camp_def.epilogue is defined and camp_def.epilogue %}
+                    {{ (camp_def.epilogue|replace({'\\r\\n':'\n','\\n':'\n'}))|raw }}
+                {% else %}
+                    <em>No epilogue.</em>
+                {% endif %}
+            </div>
+        </div>
+
         <div class="text-right mt-3">
             <div style="display:inline-flex; gap:8px; align-items:center;">
                 <button type="submit" class="btn btn-primary btn-lg px-3 btn-team-action" form="campaign-form-{{ campaignlist.getId() }}"><span class="fa fa-save fa-fw"></span> Save Campaign</button>
@@ -254,6 +283,7 @@
 <script>
 (function() {
     const rId = '{{ campaignlist.getId() }}';
+    const players = {{ players|json_encode|raw }};
     const form = document.getElementById('campaign-form-' + rId);
     if (!form) return;
 
@@ -312,6 +342,17 @@
         list.innerHTML = mine.map(c => {
             const def = all ? all.find(x => x.code === c.code) : null;
             const limit = def ? (parseInt(def.deck_limit) || 1) : 1;
+            const owner = c.owner || 'Team';
+            // build owner select
+            let ownerSelect = `<select class="form-control owner-select" data-code="${c.code}" onchange="window.setOwner_${rId}('${c.code}', this.value)" style="width:140px; margin-left:8px;">`;
+            ownerSelect += `<option value="Team"${owner==='Team' ? ' selected' : ''}>Team</option>`;
+            players.forEach((p, idx) => {
+                const val = 'Player ' + (idx+1);
+                const label = (p && String(p).trim().length) ? p : ('Player ' + (idx+1));
+                ownerSelect += `<option value="${val}"${owner===val ? ' selected' : ''}>${label}</option>`;
+            });
+            ownerSelect += `</select>`;
+
             return `
             <div class="col-md-6">
                 <div class="card-row">
@@ -321,10 +362,13 @@
                         </div>
                         <span style="font-size:0.85rem; font-weight:700; color:#333; overflow:hidden; text-overflow:ellipsis;">${c.name}</span>
                     </div>
-                    <div class="qty-btn-group">
-                        ${Array.from({length: limit + 1}, (_, i) => 
-                            `<button type="button" class="qty-btn ${c.qty == i ? 'active' : ''}" onclick="window.modC_${rId}('${c.code}', ${i})">${i}</button>`
-                        ).join('')}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${ownerSelect}
+                        <div class="qty-btn-group">
+                            ${Array.from({length: limit + 1}, (_, i) => 
+                                `<button type="button" class="qty-btn ${c.qty == i ? 'active' : ''}" onclick="window.modC_${rId}('${c.code}', ${i})">${i}</button>`
+                            ).join('')}
+                        </div>
                     </div>
                 </div>
             </div>`;
@@ -339,11 +383,21 @@
             if (hit) mine = mine.filter(x => x.code !== code);
         } else {
             if (hit) hit.qty = qty;
-            else mine.push({ code, name: name || code, qty: qty });
+            else mine.push({ code, name: name || code, qty: qty, owner: 'Team' });
         }
         draw();
         if (sIn.value.length >= 2) performFilter(sIn.value);
         auto();
+    };
+
+    // owner setter used by the owner select in the drawn list
+    window['setOwner_' + rId] = function(code, owner) {
+        const hit = mine.find(x => x.code === code);
+        if (!hit) return;
+        hit.owner = owner;
+        jIn.value = JSON.stringify(mine);
+        auto();
+        draw();
     };
 
     sIn.oninput = (e) => {
@@ -423,5 +477,70 @@
     }
     form.querySelectorAll('.auto-save, textarea').forEach(i => i.addEventListener('input', auto));
 })();
+</script>
+{% endif %}
+
+{% if camp.getScenarios() is defined and camp.getScenarios() %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    try {
+        var dbRaw = {{ camp.getScenarios()|json_encode|raw }};
+        var dbScenarios = dbRaw ? JSON.parse(dbRaw) : null;
+        if (!dbScenarios || !Array.isArray(dbScenarios)) return;
+
+        // Find scenario blocks for this campaignlist and replace content
+        var blocks = document.querySelectorAll('#campaign-form-{{ campaignlist.getId() }} .scenario-block');
+        blocks.forEach(function(block, idx){
+            var s = dbScenarios[idx];
+            if (!s) return;
+            var scenario_code = s.code || block.getAttribute('data-index') || idx;
+            // title
+            var h2 = block.querySelector('h2');
+            if (h2) h2.textContent = s.name || scenario_code;
+            // image
+            if (s.image) {
+                var img = block.querySelector('img');
+                if (img) {
+                    img.src = (s.image.slice && s.image.slice(0,4) == 'http') ? s.image : ('/bundles/campaigns/' + s.image);
+                }
+            }
+            // description (allow HTML from JSON, preserve newlines)
+            var p = block.querySelector('p.text-muted em');
+            if (p) {
+                var desc = s.description || '';
+                desc = desc.replace(/\r\n/g, '\n');
+                desc = desc.replace(/\\n/g, '\n');
+                p.innerHTML = desc.replace(/\n/g, '<br/>');
+            }
+            // modulars badges
+            var mcont = block.querySelector('div.mt-2');
+            if (mcont) {
+                var mods = s.modulars || [];
+                if (Array.isArray(mods) && mods.length) {
+                    mcont.innerHTML = mods.map(function(m){ var name = (m && m.name) ? m.name : (typeof m === 'string' ? m : ''); return '<span class="badge badge-secondary mr-1" style="font-size: 0.7rem;">' + name + '</span>'; }).join('');
+                }
+            }
+            // introduction & resolution: these are the two .small.text-muted elements
+            var smalls = block.querySelectorAll('.small.text-muted');
+            if (smalls && smalls.length) {
+                var intro = s.introduction || '';
+                var resol = s.resolution || '';
+                intro = intro.replace(/\r\n/g, '\n');
+                intro = intro.replace(/\\n/g, '\n');
+                resol = resol.replace(/\r\n/g, '\n');
+                resol = resol.replace(/\\n/g, '\n');
+                if (smalls[0]) smalls[0].innerHTML = intro.replace(/\n/g, '<br/>');
+                if (smalls[1]) smalls[1].innerHTML = resol.replace(/\n/g, '<br/>');
+                // epilogue element (if present)
+                var epiEl = block.querySelector('.scenario-epilogue em');
+                if (epiEl) {
+                    var epi = s.epilogue || '';
+                    epi = epi.replace(/\r\n/g, '\n'); epi = epi.replace(/\\n/g, '\n');
+                    epiEl.innerHTML = epi.replace(/\n/g, '<br/>');
+                }
+            }
+        });
+    } catch(e) { console && console.warn && console.warn('Applying DB scenarios failed', e); }
+});
 </script>
 {% endif %}

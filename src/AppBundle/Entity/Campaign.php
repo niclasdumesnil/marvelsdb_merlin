@@ -50,6 +50,9 @@ class Campaign
     /** @ORM\Column(type="text", nullable=true) */
     private $description;
 
+    /** @ORM\Column(type="text", nullable=true) */
+    private $epilogue;
+
     /** @ORM\Column(type="string", length=255, nullable=true) */
     private $creator;
 
@@ -101,6 +104,9 @@ class Campaign
 
     public function setDescription($v) { $this->description = $v; return $this; }
     public function getDescription() { return $this->description; }
+
+    public function setEpilogue($v) { $this->epilogue = $v; return $this; }
+    public function getEpilogue() { return $this->epilogue; }
 
     public function setCreator($v) { $this->creator = $v; return $this; }
     public function getCreator() { return $this->creator; }

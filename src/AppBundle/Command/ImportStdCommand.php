@@ -591,6 +591,7 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 						if (isset($s['introduction'])) $entry['introduction'] = $s['introduction'];
 						if (isset($s['resolution'])) $entry['resolution'] = $s['resolution'];
 						if (isset($s['image'])) $entry['image'] = $s['image'];
+						if (isset($s['epilogue'])) $entry['epilogue'] = $s['epilogue'];
 						$norm[] = $entry;
 					}
 				}
@@ -641,7 +642,8 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 			if (isset($data['campaign_checkbox'])) {
 				if (method_exists($existing, 'setCampaignCheckbox')) $existing->setCampaignCheckbox(json_encode($data['campaign_checkbox']));
 			}
-			if (isset($data['description'])) $existing->setDescription($data['description']);
+			if (array_key_exists('description', $data)) $existing->setDescription($data['description']);
+			if (array_key_exists('epilogue', $data)) $existing->setEpilogue($data['epilogue']);
 			if (isset($data['image'])) $existing->setImage($data['image']);
 			if (isset($data['creator'])) $existing->setCreator($data['creator']);
 			if (isset($data['position'])) $existing->setPosition($data['position']);
@@ -669,7 +671,8 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 				if (isset($s['description'])) $entry['description'] = $s['description'];
 				if (isset($s['introduction'])) $entry['introduction'] = $s['introduction'];
 				if (isset($s['resolution'])) $entry['resolution'] = $s['resolution'];
-				if (isset($s['image'])) $entry['image'] = $s['image'];
+					if (isset($s['image'])) $entry['image'] = $s['image'];
+					if (isset($s['epilogue'])) $entry['epilogue'] = $s['epilogue'];
 				$norm[] = $entry;
 			}
 			$campaign->setScenarios(json_encode($norm));
@@ -717,8 +720,8 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 			if (method_exists($campaign, 'setCampaignCheckbox')) $campaign->setCampaignCheckbox(json_encode($data['campaign_checkbox']));
 		}
 
-		// optional descriptive fields
-		if (isset($data['description'])) {
+		// optional descriptive fields (accept empty string/null to overwrite existing value)
+		if (array_key_exists('description', $data)) {
 			$campaign->setDescription($data['description']);
 		}
 		if (isset($data['image'])) {
@@ -729,6 +732,9 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 		}
 			if (isset($data['position'])) {
 				$campaign->setPosition($data['position']);
+			}
+			if (array_key_exists('epilogue', $data)) {
+				$campaign->setEpilogue($data['epilogue']);
 			}
 
 		// Only persist the static Campaign definition here. Per-team/runtime values
