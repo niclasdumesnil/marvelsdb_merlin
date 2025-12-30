@@ -559,6 +559,26 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 	$result = [];
 
 	$list = $this->getDataFromFile($fileinfo);
+	// Support legacy full objects or new codes-only list where each item is a campaign code string
+	if (is_array($list) && count($list) > 0 && is_string(reset($list))) {
+		$codes = $list;
+		$list = [];
+		$baseDir = dirname($fileinfo->getPathname()) . DIRECTORY_SEPARATOR . 'campaign';
+		foreach ($codes as $code) {
+			$campaignFile = $baseDir . DIRECTORY_SEPARATOR . $code . '.json';
+			if (file_exists($campaignFile)) {
+				$raw = file_get_contents($campaignFile);
+				$entry = json_decode($raw, true);
+				if ($entry !== null) {
+					$list[] = $entry;
+				} else {
+					if ($this->output) $this->output->writeln("Warning: unable to decode $campaignFile");
+				}
+			} else {
+				if ($this->output) $this->output->writeln("Warning: campaign file not found: $campaignFile");
+			}
+		}
+	}
 	if ($this->output) $this->output->writeln("Read ".(is_array($list)?count($list):0)." campaign entries from {$fileinfo->getPathname()}");
 	foreach($list as $data) {
 		if ($this->output) $this->output->writeln("Processing campaign: " . (isset($data['code']) ? $data['code'] : (isset($data['name']) ? $data['name'] : '(no id)')));
