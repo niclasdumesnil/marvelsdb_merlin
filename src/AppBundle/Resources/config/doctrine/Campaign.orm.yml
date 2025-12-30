@@ -45,6 +45,9 @@ AppBundle\Entity\Campaign:
       column: campaign_checkbox
       type: text
       nullable: true
+    tracks:
+      type: text
+      nullable: true
     description:
       type: text
       nullable: true

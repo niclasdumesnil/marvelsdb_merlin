@@ -662,6 +662,9 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 			if (isset($data['campaign_checkbox'])) {
 				if (method_exists($existing, 'setCampaignCheckbox')) $existing->setCampaignCheckbox(json_encode($data['campaign_checkbox']));
 			}
+			if (isset($data['tracks'])) {
+				if (method_exists($existing, 'setTracks')) $existing->setTracks(json_encode($data['tracks']));
+			}
 			if (array_key_exists('description', $data)) $existing->setDescription($data['description']);
 			if (array_key_exists('epilogue', $data)) $existing->setEpilogue($data['epilogue']);
 			if (isset($data['image'])) $existing->setImage($data['image']);
@@ -738,6 +741,10 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 		// campaign checkbox definitions (optional)
 		if (isset($data['campaign_checkbox'])) {
 			if (method_exists($campaign, 'setCampaignCheckbox')) $campaign->setCampaignCheckbox(json_encode($data['campaign_checkbox']));
+		}
+		// tracks (optional)
+		if (isset($data['tracks'])) {
+			if (method_exists($campaign, 'setTracks')) $campaign->setTracks(json_encode($data['tracks']));
 		}
 
 		// optional descriptive fields (accept empty string/null to overwrite existing value)

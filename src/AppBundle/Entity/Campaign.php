@@ -48,6 +48,9 @@ class Campaign
     private $campaignCheckbox;
 
     /** @ORM\Column(type="text", nullable=true) */
+    private $tracks;
+
+    /** @ORM\Column(type="text", nullable=true) */
     private $description;
 
     /** @ORM\Column(type="text", nullable=true) */
@@ -101,6 +104,9 @@ class Campaign
 
     public function setCampaignCheckbox($v) { $this->campaignCheckbox = $v; return $this; }
     public function getCampaignCheckbox() { return $this->campaignCheckbox; }
+
+    public function setTracks($v) { $this->tracks = $v; return $this; }
+    public function getTracks() { return $this->tracks; }
 
     public function setDescription($v) { $this->description = $v; return $this; }
     public function getDescription() { return $this->description; }

@@ -87,7 +87,7 @@
         </div>
 
         <div class="row">
-            <div class="col-lg-8">
+            <div class="col-lg-7">
                 <div class="ui-card">
                     <div class="section-header">Campaign Notes</div>
                     {% for n in camp_def.campaign_notes|default([]) %}
@@ -98,8 +98,14 @@
                     {% endfor %}
                 </div>
             </div>
-            <div class="col-lg-4">
+            {# Right column: show only if we have counters, tracks or checkboxes #}
+            {% set has_counters = (camp_def.campaign_counters is defined and camp_def.campaign_counters|length > 0) or (camp.getCampaignCounters() is defined and camp.getCampaignCounters()) or (cl_vals.campaign_counters is defined and cl_vals.campaign_counters|length > 0) %}
+            {% set has_tracks = (camp_def.tracks is defined and camp_def.tracks|length > 0) or (camp.getTracks() is defined and camp.getTracks()) %}
+            {% set has_checkboxes = (camp_def.campaign_checkbox is defined and camp_def.campaign_checkbox|length > 0) or (camp.getCampaignCheckbox() is defined and camp.getCampaignCheckbox()) %}
+            {% if has_counters or has_tracks or has_checkboxes %}
+            <div class="col-lg-5">
                 <div class="ui-card">
+                    {% if has_counters %}
                     <div class="section-header">Counters</div>
                     {% for cname in camp_def.campaign_counters|default([]) %}
                         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
@@ -107,7 +113,43 @@
                             <input type="number" name="campaign_counters[{{ cname }}]" class="form-control auto-save" style="width: 80px;" value="{{ cl_vals.campaign_counters[cname]|default(0) }}">
                         </div>
                     {% endfor %}
-                    
+                    {% endif %}
+
+                    {# Tracks: display static tracks if defined on camp_def else fall back to DB-stored JSON via JS #}
+                    {% if camp_def.tracks is defined and camp_def.tracks|length > 0 %}
+                        <hr>
+                        <div class="section-header">Tracks</div>
+                        {% for t in camp_def.tracks %}
+                            <div class="mb-3">
+                                <div class="small"><strong>{{ t.title|default('') }}</strong></div>
+                                <div class="small text-muted" style="white-space:pre-wrap;">{{ t.text|default('')|raw }}</div>
+                            </div>
+                        {% endfor %}
+                    {% elseif camp.getTracks() %}
+                        <hr>
+                        <div class="section-header">Tracks</div>
+                        <div id="tracks-container-{{ campaignlist.getId() }}"></div>
+                        <script>
+                        (function(){
+                            try {
+                                var raw = {{ camp.getTracks() ? camp.getTracks()|json_encode|raw : 'null' }};
+                                var container = document.getElementById('tracks-container-{{ campaignlist.getId() }}');
+                                if (!raw || !container) return;
+                                var tracks = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                                if (!Array.isArray(tracks) || tracks.length === 0) return;
+                                tracks.forEach(function(t){
+                                    var wrap = document.createElement('div'); wrap.className = 'mb-3';
+                                    var titleDiv = document.createElement('div'); titleDiv.className = 'small';
+                                    var strong = document.createElement('strong'); strong.textContent = t.title || '';
+                                    titleDiv.appendChild(strong);
+                                    var txt = document.createElement('div'); txt.className = 'small text-muted'; txt.style.whiteSpace = 'pre-wrap'; txt.innerHTML = t.text || '';
+                                    wrap.appendChild(titleDiv); wrap.appendChild(txt); container.appendChild(wrap);
+                                });
+                            } catch(e) { /* ignore */ }
+                        })();
+                        </script>
+                    {% endif %}
+
                     {% set cb_container_id = 'cb-container-' ~ campaignlist.getId() %}
                     <div id="{{ cb_container_id }}"></div>
                     <script>
@@ -163,6 +205,7 @@
                     </script>
                 </div>
             </div>
+            {% endif %}
         </div>
 
         <input type="hidden" name="selected_scenario" id="scen-input-{{ campaignlist.getId() }}" value="{{ cl_vals.selected_scenario|default(0) }}">
@@ -188,7 +231,10 @@
                             <div class="d-flex align-items-center mb-2">
                                 {% set scenario_code = scenario.code is defined ? scenario.code : scode %}
                                 <h2 style="margin:0;">{{ scenario.name|default(scenario_code) }}</h2>
-                                <a class="btn btn-sm btn-outline-primary ml-3" href="{{ path('team_campaign_scenario_stats', {'campaignlist_id': campaignlist.getId(), 'scenario_code': scenario_code}) }}">View statistics</a>
+                                {# Do not show statistics for interlude scenarios #}
+                                {% if not (scenario_code matches('/interlude/i')) %}
+                                    <a class="btn btn-sm btn-outline-primary ml-3" href="{{ path('team_campaign_scenario_stats', {'campaignlist_id': campaignlist.getId(), 'scenario_code': scenario_code}) }}">View statistics</a>
+                                {% endif %}
                             </div>
                             <p class="text-muted"><em>{{ (scenario.description|default('')|replace({'\\n':'\n'}))|nl2br|raw }}</em></p>
                             <div class="mt-2">
