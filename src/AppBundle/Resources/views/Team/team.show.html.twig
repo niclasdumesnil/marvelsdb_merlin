@@ -239,23 +239,7 @@
                 <button class="btn btn-primary" type="submit">Add campaign to team</button>
             </form>
 
-            <div style="margin-top:0.5rem; font-size:0.9rem; color:#666;">
-                <strong>Debug:</strong> available_campaigns count: {{ available_campaigns is defined ? available_campaigns|length : 'n/a' }}
-                {% if available_campaigns is defined and available_campaigns|length > 0 %}
-                    <ul style="margin:0.25rem 0 0 1rem; padding:0; list-style:disc;">
-                    {% for c in available_campaigns %}
-                        <li style="margin:0;">{{ c.getName() }}</li>
-                            <div style="margin-left:1rem; font-size:0.9rem; color:#444;">
-                                <div><strong>Creator:</strong> {{ c.getCreator() ? c.getCreator() : 'none' }}</div>
-                                <div><strong>Campaign notes:</strong> {{ c.getCampaignNotes() ? c.getCampaignNotes() : (c.getScenarioNotes() ? c.getScenarioNotes() : 'none') }}</div>
-                                <div><strong>Campaign counters:</strong> {{ c.getCampaignCounters() ? c.getCampaignCounters() : (c.getScenarioCounters() ? c.getScenarioCounters() : 'none') }}</div>
-                            </div>
-                    {% endfor %}
-                    </ul>
-                {% else %}
-                    <div style="margin-top:0.25rem; color:#a33;">No campaigns found in `available_campaigns`. Verify import and DB contents.</div>
-                {% endif %}
-            </div>
+            {# Removed debug output for available_campaigns #}
 
             {% if team_campaignlists is defined and team_campaignlists|length > 0 %}
                 <h4 style="margin-top:1rem;">Team campaign lists</h4>
