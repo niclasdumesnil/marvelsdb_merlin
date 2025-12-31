@@ -47,7 +47,7 @@
         </div>
     </div>
 
-    <div style="display: flex; align-items: flex-end; gap: 32px; margin-bottom: 18px;">
+    <div style="display: flex; align-items: flex-start; gap: 32px; margin-bottom: 18px;">
         <div>
             <div style="font-weight:bold; margin-bottom:6px;">Villain</div>
             <select id="villain-sets" name="villain_set" style="width: 100%;">
@@ -98,6 +98,32 @@
                 <div style="color:#777;">No modular sets available</div>
             {% endif %}
         </div>
+        <div>
+            <div style="font-weight:bold; margin-bottom:6px;">Standard modular</div>
+            <select id="standard-sets" name="standard_set" style="width: 100%;">
+                <option value="" {% if selected_standard_code is empty %}selected{% endif %}>none</option>
+                {% if filtered_standard_sets is defined and filtered_standard_sets|length > 0 %}
+                    {% for set in filtered_standard_sets %}
+                        <option value="{{ set.code }}" {% if set.code == selected_standard_code %}selected{% endif %}>{{ set.name }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="">No standard sets</option>
+                {% endif %}
+            </select>
+            <div style="height:6px;"></div>
+            <div style="font-weight:bold; margin-bottom:6px;">Expert modular</div>
+            <select id="expert-sets" name="expert_set" style="width: 100%;">
+                <option value="" {% if selected_expert_code is empty %}selected{% endif %}>none</option>
+                {% if filtered_expert_sets is defined and filtered_expert_sets|length > 0 %}
+                    {% for set in filtered_expert_sets %}
+                        <option value="{{ set.code }}" {% if set.code == selected_expert_code %}selected{% endif %}>{{ set.name }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="">No expert sets</option>
+                {% endif %}
+            </select>
+            
+        </div>
     </div>
 
     <div style="margin-top: 32px;">
@@ -105,6 +131,14 @@
             <button id="tab-villain" type="button" class="tab-btn"
                 style="padding: 8px 14px; border-radius: 6px; border: none; background: #eee; color: #222; font-weight: bold; cursor:pointer;">
                 Villain
+            </button>
+            <button id="tab-standard" type="button" class="tab-btn"
+                style="padding: 8px 14px; border-radius: 6px; border: none; background: #eee; color: #222; font-weight: bold; cursor:pointer;">
+                Standard
+            </button>
+            <button id="tab-expert" type="button" class="tab-btn"
+                style="padding: 8px 14px; border-radius: 6px; border: none; background: #eee; color: #222; font-weight: bold; cursor:pointer;">
+                Expert
             </button>
             {# Global tab removed per request: aggregation handled via 'Modular' selects and default behavior #}
             {% for i in 0..(filtered_modular_sets|length - 1) %}
@@ -140,11 +174,77 @@
             {% endif %}
         </div>
 
+        <div id="tab-standard-content" style="display:none;">
+            <div style="height:18px;"></div>
+            {% if filtered_standard_sets|length > 0 %}
+                {% for set in filtered_standard_sets %}
+                    <div class="set-infos-panel" id="infos-standard-{{ set.code }}" style="{% if set.code != selected_standard_code %}display:none;{% endif %}">
+                        {% include 'AppBundle:Search:set_stats.html.twig' with {
+                            stats: standard_set_stats[set.code],
+                            color: '#445566ff',
+                            label: 'Statistiques du set standard sélectionné :',
+                            type_counts: standard_set_type_counts[set.code],
+                            boost_counts: standard_set_boost_counts[set.code],
+                            traits: standard_traits_by_set[set.code],
+                            set_name: set.name
+                        } %}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <div>
+                {% if filtered_standard_sets|length > 0 %}
+                    {% for set in filtered_standard_sets %}
+                        <div class="set-cards-panel" id="cards-standard-{{ set.code }}" style="{% if set.code != selected_standard_code %}display:none;{% endif %}">
+                            {% if standard_cards_by_set[set.code]|length > 0 %}
+                                {% include 'AppBundle:Search:display-card-list.html.twig' with {
+                                    cards: standard_cards_by_set[set.code],
+                                    set: set
+                                } %}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div id="tab-expert-content" style="display:none;">
+            <div style="height:18px;"></div>
+            {% if filtered_expert_sets|length > 0 %}
+                {% for set in filtered_expert_sets %}
+                    <div class="set-infos-panel" id="infos-expert-{{ set.code }}" style="{% if set.code != selected_expert_code %}display:none;{% endif %}">
+                        {% include 'AppBundle:Search:set_stats.html.twig' with {
+                            stats: expert_set_stats[set.code],
+                            color: '#445566ff',
+                            label: 'Statistiques du set expert sélectionné :',
+                            type_counts: expert_set_type_counts[set.code],
+                            boost_counts: expert_set_boost_counts[set.code],
+                            traits: expert_traits_by_set[set.code],
+                            set_name: set.name
+                        } %}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <div>
+                {% if filtered_expert_sets|length > 0 %}
+                    {% for set in filtered_expert_sets %}
+                        <div class="set-cards-panel" id="cards-expert-{{ set.code }}" style="{% if set.code != selected_expert_code %}display:none;{% endif %}">
+                            {% if expert_cards_by_set[set.code]|length > 0 %}
+                                {% include 'AppBundle:Search:display-card-list.html.twig' with {
+                                    cards: expert_cards_by_set[set.code],
+                                    set: set
+                                } %}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
         <div id="tab-modular-content" style="display:none;">
             <div style="height:18px;"></div>
             {% if filtered_modular_sets|length > 0 %}
                 {% for set in filtered_modular_sets %}
-                    <div class="set-infos-panel" id="infos-{{ set.code }}" style="{% if set.code != selected_modular_code %}display:none;{% endif %}">
+                    <div class="set-infos-panel" id="infos-modular-{{ set.code }}" style="{% if set.code != selected_modular_code %}display:none;{% endif %}">
                         {% include 'AppBundle:Search:set_stats.html.twig' with {
                             stats: modular_set_stats[set.code],
                             color: '#445566ff',
@@ -160,7 +260,7 @@
             <div>
                 {% if filtered_modular_sets|length > 0 %}
                     {% for set in filtered_modular_sets %}
-                        <div class="set-cards-panel" id="cards-{{ set.code }}" style="{% if set.code != selected_modular_code %}display:none;{% endif %}">
+                        <div class="set-cards-panel" id="cards-modular-{{ set.code }}" style="{% if set.code != selected_modular_code %}display:none;{% endif %}">
                             {% if modular_cards_by_set[set.code]|length > 0 %}
                                 {% include 'AppBundle:Search:display-card-list.html.twig' with {
                                     cards: modular_cards_by_set[set.code],

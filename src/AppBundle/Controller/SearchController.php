@@ -411,24 +411,32 @@ class SearchController extends Controller
 
         $em = $this->getDoctrine()->getManager();
 
-        $filtered_modular_sets = $this->getFilteredSets($em, 'modular');
-        $filtered_villain_sets = $this->getFilteredSets($em, 'villain');
+		$filtered_modular_sets = $this->getFilteredSets($em, 'modular');
+		$filtered_villain_sets = $this->getFilteredSets($em, 'villain');
+		$filtered_standard_sets = $this->getFilteredSets($em, 'standard');
+		$filtered_expert_sets = $this->getFilteredSets($em, 'expert');
         $cards = $this->getDoctrine()->getRepository('AppBundle:Card')->findAll();
 
-        $data = $this->getStatsAndData($filtered_modular_sets, $filtered_villain_sets, $cards);
+		$data = $this->getStatsAndData($filtered_modular_sets, $filtered_villain_sets, $cards);
+		$data_standard = $this->getStatsAndData($filtered_standard_sets, $filtered_villain_sets, $cards);
+		$data_expert = $this->getStatsAndData($filtered_expert_sets, $filtered_villain_sets, $cards);
 
-        $selected_modular_code = $request->query->get('modular_set') ?: $filtered_modular_sets[0]->getCode();
+		$selected_modular_code = $request->query->get('modular_set') ?: ($filtered_modular_sets ? $filtered_modular_sets[0]->getCode() : null);
+		$selected_standard_code = $request->query->get('standard_set') ?: ($filtered_standard_sets ? $filtered_standard_sets[0]->getCode() : null);
+		$selected_expert_code = $request->query->get('expert_set') ?: ($filtered_expert_sets ? $filtered_expert_sets[0]->getCode() : null);
         $selected_villain_code = $request->query->get('villain_set') ?: $filtered_villain_sets[0]->getCode();
 
-        $modular_stats = $data['modular_stats_by_set'][$selected_modular_code] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
+		$modular_stats = $data['modular_stats_by_set'][$selected_modular_code] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
+		$standard_stats = $data_standard['modular_stats_by_set'][$selected_standard_code] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
+		$expert_stats = $data_expert['modular_stats_by_set'][$selected_expert_code] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
         $villain_stats = $data['villain_stats_by_set'][$selected_villain_code] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
 
         // Calculs combinés (modular + villain, comme avant)
-        $sum_differentCards = $modular_stats['differentCards'] + $villain_stats['differentCards'];
-        $sum_totalCards = $modular_stats['totalCards'] + $villain_stats['totalCards'];
-        $sum_totalBoost = $modular_stats['totalBoost'] + $villain_stats['totalBoost'];
-        $sum_totalBoostStar = $modular_stats['totalBoostStar'] + $villain_stats['totalBoostStar'];
-        $sum_averageBoost = $sum_totalCards > 0 ? number_format(($modular_stats['totalBoost'] + $villain_stats['totalBoost']) / $sum_totalCards, 2, '.', '') : '0.00';
+		$sum_differentCards = $modular_stats['differentCards'] + $standard_stats['differentCards'] + $expert_stats['differentCards'] + $villain_stats['differentCards'];
+		$sum_totalCards = $modular_stats['totalCards'] + $standard_stats['totalCards'] + $expert_stats['totalCards'] + $villain_stats['totalCards'];
+		$sum_totalBoost = $modular_stats['totalBoost'] + $standard_stats['totalBoost'] + $expert_stats['totalBoost'] + $villain_stats['totalBoost'];
+		$sum_totalBoostStar = $modular_stats['totalBoostStar'] + $standard_stats['totalBoostStar'] + $expert_stats['totalBoostStar'] + $villain_stats['totalBoostStar'];
+		$sum_averageBoost = $sum_totalCards > 0 ? number_format(($modular_stats['totalBoost'] + $standard_stats['totalBoost'] + $expert_stats['totalBoost'] + $villain_stats['totalBoost']) / $sum_totalCards, 2, '.', '') : '0.00';
 
         $combined_stats = [
             'differentCards' => $sum_differentCards,
@@ -439,31 +447,39 @@ class SearchController extends Controller
         ];
 
         // Types combinés
-        $modular_type_counts = $data['modular_set_type_counts'][$selected_modular_code] ?? [];
-        $villain_type_counts = $data['villain_set_type_counts'][$selected_villain_code] ?? [];
-        $combined_type_counts = $modular_type_counts;
-        foreach ($villain_type_counts as $type => $count) {
-            $combined_type_counts[$type] = ($combined_type_counts[$type] ?? 0) + $count;
-        }
+		$modular_type_counts = $data['modular_set_type_counts'][$selected_modular_code] ?? [];
+		$standard_type_counts = $data_standard['modular_set_type_counts'][$selected_standard_code] ?? [];
+		$expert_type_counts = $data_expert['modular_set_type_counts'][$selected_expert_code] ?? [];
+		$villain_type_counts = $data['villain_set_type_counts'][$selected_villain_code] ?? [];
+		$combined_type_counts = $modular_type_counts;
+		foreach ($standard_type_counts as $type => $count) { $combined_type_counts[$type] = ($combined_type_counts[$type] ?? 0) + $count; }
+		foreach ($expert_type_counts as $type => $count) { $combined_type_counts[$type] = ($combined_type_counts[$type] ?? 0) + $count; }
+		foreach ($villain_type_counts as $type => $count) { $combined_type_counts[$type] = ($combined_type_counts[$type] ?? 0) + $count; }
 
         // Boosts combinés
-        $modular_boost_counts = $data['modular_set_boost_counts'][$selected_modular_code] ?? [];
-        $villain_boost_counts = $data['villain_set_boost_counts'][$selected_villain_code] ?? [];
-        $combined_boost_counts = $modular_boost_counts;
-        foreach ($villain_boost_counts as $boost => $count) {
-            $combined_boost_counts[$boost] = ($combined_boost_counts[$boost] ?? 0) + $count;
-        }
+		$modular_boost_counts = $data['modular_set_boost_counts'][$selected_modular_code] ?? [];
+		$standard_boost_counts = $data_standard['modular_set_boost_counts'][$selected_standard_code] ?? [];
+		$expert_boost_counts = $data_expert['modular_set_boost_counts'][$selected_expert_code] ?? [];
+		$villain_boost_counts = $data['villain_set_boost_counts'][$selected_villain_code] ?? [];
+		$combined_boost_counts = $modular_boost_counts;
+		foreach ($standard_boost_counts as $boost => $count) { $combined_boost_counts[$boost] = ($combined_boost_counts[$boost] ?? 0) + $count; }
+		foreach ($expert_boost_counts as $boost => $count) { $combined_boost_counts[$boost] = ($combined_boost_counts[$boost] ?? 0) + $count; }
+		foreach ($villain_boost_counts as $boost => $count) { $combined_boost_counts[$boost] = ($combined_boost_counts[$boost] ?? 0) + $count; }
 
 		// Traits combinés
 		$modular_traits = $data['modular_traits_by_set'][$selected_modular_code] ?? [];
+		$standard_traits = $data_standard['modular_traits_by_set'][$selected_standard_code] ?? [];
+		$expert_traits = $data_expert['modular_traits_by_set'][$selected_expert_code] ?? [];
 		$villain_traits = $data['villain_traits_by_set'][$selected_villain_code] ?? [];
-		$combined_traits = array_merge($modular_traits, $villain_traits);
+		$combined_traits = array_merge($modular_traits, $standard_traits, $expert_traits, $villain_traits);
 		// deduplicate traits
 		$combined_traits = array_values(array_unique($combined_traits));
 
-        $modular_name = $this->getSetByCode($filtered_modular_sets, $selected_modular_code) ? $this->getSetByCode($filtered_modular_sets, $selected_modular_code)->getName() : '';
+		$modular_name = $this->getSetByCode($filtered_modular_sets, $selected_modular_code) ? $this->getSetByCode($filtered_modular_sets, $selected_modular_code)->getName() : '';
+		$standard_name = $this->getSetByCode($filtered_standard_sets, $selected_standard_code) ? $this->getSetByCode($filtered_standard_sets, $selected_standard_code)->getName() : '';
+		$expert_name = $this->getSetByCode($filtered_expert_sets, $selected_expert_code) ? $this->getSetByCode($filtered_expert_sets, $selected_expert_code)->getName() : '';
         $villain_name = $this->getSetByCode($filtered_villain_sets, $selected_villain_code) ? $this->getSetByCode($filtered_villain_sets, $selected_villain_code)->getName() : '';
-        $combined_set_name = $modular_name . ' + ' . $villain_name;
+		$combined_set_name = trim($modular_name . ' + ' . $standard_name . ' + ' . $expert_name . ' + ' . $villain_name, ' + ');
 
         return $this->render('AppBundle:Search:story.html.twig', [
             "pagetitle" => "Stories",
@@ -476,18 +492,32 @@ class SearchController extends Controller
             "modular_traits_by_set" => $data['modular_traits_by_set'],
             "modular_cards_by_set" => $data['modular_cards_by_set'],
             "modular_set_stats" => $data['modular_stats_by_set'],
-            "filtered_villain_sets" => $filtered_villain_sets,
+			"filtered_villain_sets" => $filtered_villain_sets,
+			"filtered_standard_sets" => $filtered_standard_sets,
+			"filtered_expert_sets" => $filtered_expert_sets,
             "villain_set_type_counts" => $data['villain_set_type_counts'],
             "villain_set_boost_counts" => $data['villain_set_boost_counts'],
             "villain_cards_by_set" => $data['villain_cards_by_set'],
             "villain_set_stats" => $data['villain_stats_by_set'],
             "villain_traits_by_set" => $data['villain_traits_by_set'],
+			"standard_set_type_counts" => $data_standard['modular_set_type_counts'],
+			"standard_set_boost_counts" => $data_standard['modular_set_boost_counts'],
+			"standard_traits_by_set" => $data_standard['modular_traits_by_set'],
+			"standard_cards_by_set" => $data_standard['modular_cards_by_set'],
+			"standard_set_stats" => $data_standard['modular_stats_by_set'],
+			"expert_set_type_counts" => $data_expert['modular_set_type_counts'],
+			"expert_set_boost_counts" => $data_expert['modular_set_boost_counts'],
+			"expert_traits_by_set" => $data_expert['modular_traits_by_set'],
+			"expert_cards_by_set" => $data_expert['modular_cards_by_set'],
+			"expert_set_stats" => $data_expert['modular_stats_by_set'],
             'combined_stats' => $combined_stats,
             'combined_type_counts' => $combined_type_counts,
             'combined_boost_counts' => $combined_boost_counts,
             'combined_traits' => $combined_traits,
             'combined_set_name' => $combined_set_name,
             'selected_modular_code' => $selected_modular_code,
+			'selected_standard_code' => $selected_standard_code,
+			'selected_expert_code' => $selected_expert_code,
             'selected_villain_code' => $selected_villain_code,
         ], $response);
     } 
@@ -874,9 +904,13 @@ class SearchController extends Controller
 
 		$filtered_modular_sets = $this->getFilteredSets($em, 'modular');
 		$filtered_villain_sets = $this->getFilteredSets($em, 'villain');
+		$filtered_standard_sets = $this->getFilteredSets($em, 'standard');
+		$filtered_expert_sets = $this->getFilteredSets($em, 'expert');
 		$cards = $this->getDoctrine()->getRepository('AppBundle:Card')->findAll();
 
 		$data = $this->getStatsAndData($filtered_modular_sets, $filtered_villain_sets, $cards);
+		$data_standard = $this->getStatsAndData($filtered_standard_sets, $filtered_villain_sets, $cards);
+		$data_expert = $this->getStatsAndData($filtered_expert_sets, $filtered_villain_sets, $cards);
 
 
 		$selected_modular_code = $request->query->get('modular');
@@ -898,9 +932,17 @@ class SearchController extends Controller
 		$sum_totalBoost = $villain_stats['totalBoost'];
 		$sum_totalBoostStar = $villain_stats['totalBoostStar'];
 
-		// aggregate modular stats for each modular code
+		// aggregate modular/standard/expert stats for each requested code
 		foreach ($modular_codes as $mcode) {
-			$mstats = $data['modular_stats_by_set'][$mcode] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
+			if (isset($data['modular_stats_by_set'][$mcode])) {
+				$mstats = $data['modular_stats_by_set'][$mcode];
+			} elseif (isset($data_standard['modular_stats_by_set'][$mcode])) {
+				$mstats = $data_standard['modular_stats_by_set'][$mcode];
+			} elseif (isset($data_expert['modular_stats_by_set'][$mcode])) {
+				$mstats = $data_expert['modular_stats_by_set'][$mcode];
+			} else {
+				$mstats = ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
+			}
 			$sum_differentCards += $mstats['differentCards'];
 			$sum_totalCards += $mstats['totalCards'];
 			$sum_totalBoost += $mstats['totalBoost'];
@@ -917,34 +959,52 @@ class SearchController extends Controller
 			'averageBoost' => $sum_averageBoost
 		];
 
-		// Types combinés : villain puis modular
+		// Types combinés : villain puis modular/standard/expert
 		$villain_type_counts = $data['villain_set_type_counts'][$selected_villain_code] ?? [];
-		$modular_type_counts = $data['modular_set_type_counts'][$selected_modular_code] ?? [];
 		$combined_type_counts = $villain_type_counts;
-		// aggregate modular type counts for all requested modular codes
 		foreach ($modular_codes as $mcode) {
-			$modular_type_counts = $data['modular_set_type_counts'][$mcode] ?? [];
-			foreach ($modular_type_counts as $type => $count) {
-				$combined_type_counts[$type] = ($combined_type_counts[$type] ?? 0) + $count;
+			if (isset($data['modular_set_type_counts'][$mcode])) {
+				$counts = $data['modular_set_type_counts'][$mcode];
+			} elseif (isset($data_standard['modular_set_type_counts'][$mcode])) {
+				$counts = $data_standard['modular_set_type_counts'][$mcode];
+			} elseif (isset($data_expert['modular_set_type_counts'][$mcode])) {
+				$counts = $data_expert['modular_set_type_counts'][$mcode];
+			} else {
+				$counts = [];
 			}
+			foreach ($counts as $type => $count) { $combined_type_counts[$type] = ($combined_type_counts[$type] ?? 0) + $count; }
 		}
 
 		// Boosts combinés : villain puis modular
 		$villain_boost_counts = $data['villain_set_boost_counts'][$selected_villain_code] ?? [];
 		$combined_boost_counts = $villain_boost_counts;
 		foreach ($modular_codes as $mcode) {
-			$modular_boost_counts = $data['modular_set_boost_counts'][$mcode] ?? [];
-			foreach ($modular_boost_counts as $boost => $count) {
-				$combined_boost_counts[$boost] = ($combined_boost_counts[$boost] ?? 0) + $count;
+			if (isset($data['modular_set_boost_counts'][$mcode])) {
+				$counts = $data['modular_set_boost_counts'][$mcode];
+			} elseif (isset($data_standard['modular_set_boost_counts'][$mcode])) {
+				$counts = $data_standard['modular_set_boost_counts'][$mcode];
+			} elseif (isset($data_expert['modular_set_boost_counts'][$mcode])) {
+				$counts = $data_expert['modular_set_boost_counts'][$mcode];
+			} else {
+				$counts = [];
 			}
+			foreach ($counts as $boost => $count) { $combined_boost_counts[$boost] = ($combined_boost_counts[$boost] ?? 0) + $count; }
 		}
 
 		// Traits combinés : villain puis modular
 		$villain_traits = $data['villain_traits_by_set'][$selected_villain_code] ?? [];
 		$combined_traits = $villain_traits;
 		foreach ($modular_codes as $mcode) {
-			$modular_traits = $data['modular_traits_by_set'][$mcode] ?? [];
-			$combined_traits = array_merge($combined_traits, $modular_traits);
+			if (isset($data['modular_traits_by_set'][$mcode])) {
+				$mt = $data['modular_traits_by_set'][$mcode];
+			} elseif (isset($data_standard['modular_traits_by_set'][$mcode])) {
+				$mt = $data_standard['modular_traits_by_set'][$mcode];
+			} elseif (isset($data_expert['modular_traits_by_set'][$mcode])) {
+				$mt = $data_expert['modular_traits_by_set'][$mcode];
+			} else {
+				$mt = [];
+			}
+			$combined_traits = array_merge($combined_traits, $mt);
 		}
 
 		// deduplicate combined traits
@@ -954,6 +1014,8 @@ class SearchController extends Controller
 		$modular_names = [];
 		foreach ($modular_codes as $mcode) {
 			$s = $this->getSetByCode($filtered_modular_sets, $mcode);
+			if (!$s) $s = $this->getSetByCode($filtered_standard_sets, $mcode);
+			if (!$s) $s = $this->getSetByCode($filtered_expert_sets, $mcode);
 			if ($s) $modular_names[] = $s->getName();
 		}
 		$modular_name = implode(' + ', $modular_names);
@@ -974,9 +1036,11 @@ class SearchController extends Controller
 		if (!empty($modular_codes)) {
 			$modcodes_attr = implode(',', $modular_codes);
 		} else {
-			// fallback to all available modular set codes
+			// fallback to all available modular/standard/expert set codes
 			$codes = [];
 			foreach ($filtered_modular_sets as $s) { $codes[] = $s->getCode(); }
+			foreach ($filtered_standard_sets as $s) { $codes[] = $s->getCode(); }
+			foreach ($filtered_expert_sets as $s) { $codes[] = $s->getCode(); }
 			$modcodes_attr = implode(',', $codes);
 		}
 

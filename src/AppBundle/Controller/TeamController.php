@@ -1402,6 +1402,50 @@ class TeamController extends Controller
         $villain_set_type_counts = $setTypeCounts($filtered_villain_sets, $villain_cards_by_set, $type_label);
         $villain_set_boost_counts = $setBoostCounts($filtered_villain_sets, $villain_cards_by_set);
 
+        // Build standard & expert filtered sets (reuse same filtering logic as SearchController::getFilteredSets)
+        $qb = $em->createQueryBuilder();
+        $forbidden = [
+            'campaign', 'shield executive board', 's.h.i.e.l.d. executive board', 'expert kang',
+            'brawler', 'commander', 'defender', 'mission', 'the market', 'shield tech',
+            'challenge', 'peacekeeper', 'community service', 'bad publicity', 'longshot', 'hope summers'
+        ];
+
+        // helper to fetch and filter sets by type code
+        $fetchFilteredSets = function($typeCode) use ($em, $forbidden) {
+            $qb = $em->createQueryBuilder();
+            $qb->select('s')
+                ->from('AppBundle:Cardset', 's')
+                ->join('s.cardset_type', 't')
+                ->where('t.code = :type')
+                ->setParameter('type', $typeCode);
+            $sets = $qb->getQuery()->getResult();
+            $filtered = array_filter($sets, function($set) use ($forbidden) {
+                $name = strtolower($set->getName());
+                foreach($forbidden as $f) {
+                    if (strpos($name, $f) !== false) return false;
+                }
+                return true;
+            });
+            usort($filtered, function($a, $b) { return strcasecmp($a->getName(), $b->getName()); });
+            return $filtered;
+        };
+
+        $filtered_standard_sets = $fetchFilteredSets('standard');
+        $filtered_expert_sets = $fetchFilteredSets('expert');
+
+        // compute stats for standard and expert sets using existing closures
+        $standard_cards_by_set = $cardsBySet($filtered_standard_sets, $cards);
+        $standard_stats_by_set = $setStats($standard_cards_by_set);
+        $standard_traits_by_set = $traitsBySet($filtered_standard_sets, $cards);
+        $standard_set_type_counts = $setTypeCounts($filtered_standard_sets, $standard_cards_by_set, $type_label);
+        $standard_set_boost_counts = $setBoostCounts($filtered_standard_sets, $standard_cards_by_set);
+
+        $expert_cards_by_set = $cardsBySet($filtered_expert_sets, $cards);
+        $expert_stats_by_set = $setStats($expert_cards_by_set);
+        $expert_traits_by_set = $traitsBySet($filtered_expert_sets, $cards);
+        $expert_set_type_counts = $setTypeCounts($filtered_expert_sets, $expert_cards_by_set, $type_label);
+        $expert_set_boost_counts = $setBoostCounts($filtered_expert_sets, $expert_cards_by_set);
+
         // combine
         $selected_villain_code = $filtered_villain_sets ? $filtered_villain_sets[0]->getCode() : null;
         // sum modulars + villain
@@ -1476,6 +1520,22 @@ class TeamController extends Controller
             // provide initial slots to the stories template so it can default correctly
             'slots' => ($filtered_modular_sets ? count($filtered_modular_sets) : 1),
             'selected_villain_code' => $selected_villain_code,
+            // standard/expert selection defaults for campaign view
+            'selected_standard_code' => 'standard',
+            'selected_expert_code' => '',
+            // provide standard/expert sets and computed stats so story template can render them
+            'filtered_standard_sets' => $filtered_standard_sets,
+            'standard_set_stats' => $standard_stats_by_set,
+            'standard_set_type_counts' => $standard_set_type_counts,
+            'standard_set_boost_counts' => $standard_set_boost_counts,
+            'standard_traits_by_set' => $standard_traits_by_set,
+            'standard_cards_by_set' => $standard_cards_by_set,
+            'filtered_expert_sets' => $filtered_expert_sets,
+            'expert_set_stats' => $expert_stats_by_set,
+            'expert_set_type_counts' => $expert_set_type_counts,
+            'expert_set_boost_counts' => $expert_set_boost_counts,
+            'expert_traits_by_set' => $expert_traits_by_set,
+            'expert_cards_by_set' => $expert_cards_by_set,
         ]);
     }
 
