@@ -229,7 +229,7 @@ class SearchController extends Controller
 	    return null;
 	}
 
-	private function getStatsAndData($filtered_modular_sets, $filtered_villain_sets, $cards)
+	private function getStatsAndData($filtered_modular_sets, $filtered_villain_sets, $cards, $includePermanent = true)
 	{
 	    // Factorise closures
 	    $getCardQuantity = function($card) {
@@ -241,7 +241,7 @@ class SearchController extends Controller
 	    $that = $this;
 	    static $availability = [];
 
-	    $cardsBySet = function($sets, $cards, $excludeTypes = []) use ($getCardType, $getCardQuantity, $that, &$availability) {
+		$cardsBySet = function($sets, $cards, $excludeTypes = []) use ($getCardType, $getCardQuantity, $that, &$availability, $includePermanent) {
 	        $excludeTypes = array_merge($excludeTypes, ['ally', 'support', 'upgrade', 'event']);
 	        $result = [];
 	        foreach ($sets as $set) {
@@ -256,7 +256,9 @@ class SearchController extends Controller
 						// Skip cards marked as hidden
 						if (!empty($cardinfo['hidden'])) continue;
 
-	                    // Ajout de la clé "available" seulement si le pack existe
+						// Skip permanent cards when requested
+						if (!$includePermanent && !empty($cardinfo['permanent'])) continue;
+						// Ajout de la clé "available" seulement si le pack existe
 	                    $pack = $card->getPack();
 	                    if ($pack) {
 	                        $pack_code = $pack->getCode();
@@ -420,9 +422,15 @@ class SearchController extends Controller
 		$filtered_expert_sets = $this->getFilteredSets($em, 'expert');
         $cards = $this->getDoctrine()->getRepository('AppBundle:Card')->findAll();
 
-		$data = $this->getStatsAndData($filtered_modular_sets, $filtered_villain_sets, $cards);
-		$data_standard = $this->getStatsAndData($filtered_standard_sets, $filtered_villain_sets, $cards);
-		$data_expert = $this->getStatsAndData($filtered_expert_sets, $filtered_villain_sets, $cards);
+		// honor show_permanent query parameter (default true)
+		$showPermanentParam = $request->query->get('show_permanent');
+		$includePermanent = true;
+		if ($showPermanentParam !== null) {
+			$includePermanent = !($showPermanentParam === '0' || strtolower($showPermanentParam) === 'false');
+		}
+		$data = $this->getStatsAndData($filtered_modular_sets, $filtered_villain_sets, $cards, $includePermanent);
+		$data_standard = $this->getStatsAndData($filtered_standard_sets, $filtered_villain_sets, $cards, $includePermanent);
+		$data_expert = $this->getStatsAndData($filtered_expert_sets, $filtered_villain_sets, $cards, $includePermanent);
 
 		$selected_modular_code = $request->query->get('modular_set') ?: ($filtered_modular_sets ? $filtered_modular_sets[0]->getCode() : null);
 		$selected_standard_code = $request->query->get('standard_set') ?: ($filtered_standard_sets ? $filtered_standard_sets[0]->getCode() : null);

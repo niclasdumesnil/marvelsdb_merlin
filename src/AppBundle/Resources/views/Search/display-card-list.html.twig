@@ -12,7 +12,7 @@
     </thead>
     <tbody>
         {% for card in cards %}
-        <tr>
+        <tr data-permanent="{{ card.permanent|default(false) ? '1' : '0' }}">
             <td>
                 {% include 'AppBundle:Search:card-name-with-link.html.twig' with { QtyColor: false } %}
             </td>
