@@ -1270,6 +1270,8 @@ class TeamController extends Controller
                         $type_name = strtolower($getCardType($card));
                         if (in_array($type_name, $excludeTypes)) continue;
                         $cardinfo = $that->get('cards_data')->getCardInfo($card, false, true);
+                        // Skip cards marked as hidden
+                        if (!empty($cardinfo['hidden'])) continue;
                         $pack = $card->getPack();
                         if ($pack) {
                             $pack_code = $pack->getCode();

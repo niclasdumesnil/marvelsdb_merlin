@@ -251,7 +251,10 @@ class SearchController extends Controller
 	                if ($card->getCardset() && $card->getCardset()->getCode() === $set_code) {
 	                    $type_name = strtolower($getCardType($card));
 	                    if (in_array($type_name, $excludeTypes)) continue;
-	                    $cardinfo = $that->get('cards_data')->getCardInfo($card, false, true);
+
+						$cardinfo = $that->get('cards_data')->getCardInfo($card, false, true);
+						// Skip cards marked as hidden
+						if (!empty($cardinfo['hidden'])) continue;
 
 	                    // Ajout de la clé "available" seulement si le pack existe
 	                    $pack = $card->getPack();
