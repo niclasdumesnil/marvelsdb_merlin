@@ -36,6 +36,32 @@
     .qty-btn-group { display: flex; border-radius: 4px; overflow: hidden; border: 1px solid #ccc; flex-shrink: 0; margin-left: auto; }
     .qty-btn { padding: 4px 10px; font-size: 0.8rem; border: none; border-right: 1px solid #ccc; background: #f8f9fa; color: #333; cursor: pointer; font-weight: 600; transition: 0.2s; }
     .qty-btn.active { background: #3498db; color: white; border-color: #3498db; }
+    /* Compact owner select to match qty buttons height & increase font
+       Use stronger selector and !important to override Bootstrap form-control */
+    .owner-select, select.owner-select.form-control {
+        padding: 0 8px !important;
+        font-size: 1.1rem !important; /* increased font without changing height */
+        height: 26px !important; /* keep compact height */
+        line-height: 26px !important; /* center text vertically */
+        border-radius: 4px !important;
+        display: inline-block !important;
+        vertical-align: middle !important;
+        box-sizing: border-box !important;
+        max-height: 26px !important;
+        overflow: hidden !important;
+        /* hide native caret to avoid duplicate arrows */
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        /* SVG caret on the right */
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'><path fill='%23333' d='M7 10l5 5 5-5z'/></svg>") !important;
+        background-repeat: no-repeat !important;
+        background-position: right 8px center !important;
+        background-size: 12px 12px !important;
+        padding-right: 34px !important; /* space for the caret */
+    }
     
     #floating-card-preview { position: fixed; pointer-events: none; z-index: 10000; display: none; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px; width: 300px; border: 1px solid #ddd; }
     #auto-save-indicator { position: fixed; bottom: 30px; right: 30px; padding: 12px 24px; border-radius: 50px; background: #2c3e50; color: white; font-weight: 600; display: none; z-index: 9999; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
