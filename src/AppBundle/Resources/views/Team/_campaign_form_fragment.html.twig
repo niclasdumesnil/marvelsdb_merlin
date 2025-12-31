@@ -23,9 +23,9 @@
     .scenario-select-custom { background: #3e4f5f; color: white; border: 1px solid #555; border-radius: 6px; padding: 5px 10px; flex-grow: 1; outline: none; }
     .scenario-content { border: 1px solid #e0e6ed; border-top: none; border-radius: 0 0 12px 12px; padding: 2rem; background: #fff; }
     
-    .card-row { display: flex; align-items: center; gap: 15px; background: #fff; border-bottom: 1px solid #eee; padding: 8px 0; }
-    .card-img-container { width: 65px; flex-shrink: 0; display: flex; justify-content: center; }
-    .card-thumbnail { width: 100%; border-radius: 4px; background: #eee; }
+    .campaign-ui .card-row { display: flex; align-items: center; gap: 15px; background: #fff; border-bottom: 1px solid #eee; padding: 8px 0; }
+    .campaign-ui .card-img-container { width: 65px; flex-shrink: 0; display: flex; justify-content: center; }
+    .campaign-ui .card-thumbnail { width: 100%; border-radius: 4px; background: #eee; }
     
     /* Séparateur Comics */
     .deck-divider-container { margin: 30px 0; position: relative; display: flex; align-items: center; justify-content: center; }
@@ -403,12 +403,12 @@
             return `
             <div class="col-md-6">
                 <div class="card-row">
-                    <div class="card-link d-flex align-items-center" data-code="${c.code}" style="flex:1; gap:12px; min-width:0; cursor:help;">
-                        <div class="card-img-container">
-                            <img src="/bundles/cards/${c.code}.jpg" class="card-thumbnail" onerror="this.onerror=null; this.src='/bundles/cards/missing.jpg';">
-                        </div>
-                        <span style="font-size:0.85rem; font-weight:700; color:#333; overflow:hidden; text-overflow:ellipsis;">${c.name}</span>
-                    </div>
+                    <a href="${def ? def.url : '#'}" class="card card-tip card-link ${def && def.faction_code ? 'fg-' + def.faction_code : ''} d-flex align-items-center" data-code="${c.code}" data-toggle="modal" data-remote="false" data-target="#cardModal" style="flex:1; gap:12px; min-width:0; cursor:help;">
+                                <div class="card-img-container">
+                                    <img src="/bundles/cards/${c.code}.jpg" class="card-thumbnail" onerror="this.onerror=null; this.src='/bundles/cards/missing.jpg';">
+                                </div>
+                                <span style="font-size:0.85rem; font-weight:700; color:#333; overflow:hidden; text-overflow:ellipsis;">${c.name}</span>
+                            </a>
                     <div style="display:flex; align-items:center; gap:8px;">
                         ${ownerSelect}
                         <div class="qty-btn-group">
@@ -466,15 +466,15 @@
             return `
             <div class="col-md-6">
                 <div class="card-row">
-                    <div class="card-link d-flex align-items-center" data-code="${c.code}" style="flex:1; gap:12px; min-width:0; cursor:help;">
-                        <div class="card-img-container">
-                            <img src="/bundles/cards/${c.code}.jpg" class="card-thumbnail" onerror="this.onerror=null; this.src='/bundles/cards/missing.jpg';">
-                        </div>
-                        <div style="overflow:hidden; text-overflow:ellipsis;">
-                            <span style="font-size:0.85rem; font-weight:700; color:#333;">${c.name}</span><br>
-                            <small class="text-muted">${c.code}</small>
-                        </div>
-                    </div>
+                    <a href="${c.url || '#'}" class="card card-tip card-link ${c.faction_code ? 'fg-' + c.faction_code : ''} d-flex align-items-center" data-code="${c.code}" data-toggle="modal" data-remote="false" data-target="#cardModal" style="flex:1; gap:12px; min-width:0; cursor:help;">
+                            <div class="card-img-container">
+                                <img src="/bundles/cards/${c.code}.jpg" class="card-thumbnail" onerror="this.onerror=null; this.src='/bundles/cards/missing.jpg';">
+                            </div>
+                            <div style="overflow:hidden; text-overflow:ellipsis;">
+                                <span style="font-size:0.85rem; font-weight:700; color:#333;">${c.name}</span><br>
+                                <small class="text-muted">${c.code}</small>
+                            </div>
+                        </a>
                     <div class="qty-btn-group">
                         ${Array.from({length: limit + 1}, (_, i) => 
                             `<button type="button" class="qty-btn ${curQty == i ? 'active' : ''}" onclick="window.modC_${rId}('${c.code}', ${i}, '${c.name.replace(/'/g, "\\'")}')">${i}</button>`
@@ -491,6 +491,8 @@
         const pTitle = document.getElementById('preview-title');
         const pContent = document.getElementById('preview-content');
         form.querySelectorAll('.card-link').forEach(link => {
+            // If element already has qTip/card-tip behavior (used by decks), skip floating preview
+            if (link.classList && link.classList.contains('card-tip')) return;
             link.onmouseenter = function(e) {
                 const code = this.getAttribute('data-code');
                 const c = all ? all.find(x => x.code === code) : null;
