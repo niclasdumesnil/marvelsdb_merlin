@@ -62,6 +62,19 @@
         background-size: 12px 12px !important;
         padding-right: 34px !important; /* space for the caret */
     }
+    /* Faction filter: selected (active) buttons use a dark grey */
+    .campaign-ui .btn-outline-secondary.active,
+    .campaign-ui .btn-outline-secondary.active:focus,
+    .campaign-ui #faction-filters-{{ campaignlist.getId() }} .btn.active,
+    .campaign-ui #faction-filters-{{ campaignlist.getId() }} .btn.active:focus {
+        background-color: #2f3542 !important;
+        color: #ffffff !important;
+        border-color: #2f3542 !important;
+        box-shadow: none !important;
+    }
+    .campaign-ui #faction-filters-{{ campaignlist.getId() }} .btn {
+        transition: background-color 0.12s ease, color 0.12s ease;
+    }
     
     #floating-card-preview { position: fixed; pointer-events: none; z-index: 10000; display: none; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px; width: 300px; border: 1px solid #ddd; }
     #auto-save-indicator { position: fixed; bottom: 30px; right: 30px; padding: 12px 24px; border-radius: 50px; background: #2c3e50; color: white; font-weight: 600; display: none; z-index: 9999; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
@@ -298,6 +311,7 @@
         <div class="ui-card" style="margin-top:2rem;">
             <div class="section-header">Search & Add Cards</div>
             
+            <div id="faction-filters-{{ campaignlist.getId() }}" style="margin-bottom:6px; display:flex; gap:6px; flex-wrap:wrap;"></div>
             <div class="search-wrapper mb-3">
                 <input type="text" id="search-card-{{ campaignlist.getId() }}" class="form-control" placeholder="Search cards by name or code...">
                 <span id="clear-search-{{ campaignlist.getId() }}" class="search-clear">&times;</span>
@@ -404,6 +418,12 @@
         mine = Array.isArray(v) ? v : [];
     } catch(e) { mine = []; }
 
+    // faction filter state (empty = all). Use a Set to allow multi-selection.
+    let currentFactions = new Set();
+
+    // render faction buttons container; will be populated after cards fetched
+    const factionContainer = form.querySelector('#faction-filters-{{ campaignlist.getId() }}');
+
     sClear.onclick = () => {
         sIn.value = '';
         sClear.style.display = 'none';
@@ -478,13 +498,114 @@
         sClear.style.display = q.length > 0 ? 'block' : 'none';
         if (q.length < 2) { res.innerHTML = ''; return; }
         if (!all) {
-            fetch('/api/public/cards/').then(r => r.json()).then(data => { all = data; performFilter(q); draw(); });
+            try {
+                if (window.app && app.data && Array.isArray(app.data.cards) && app.data.cards.length) {
+                    all = app.data.cards;
+                    console.log('DEBUG: using app.data.cards (sample 5):', all.slice(0,5));
+                    buildFactionButtons();
+                    performFilter(q);
+                    draw();
+                    return;
+                }
+            } catch(e) { /* ignore access errors */ }
+            fetch('/api/public/cards/').then(r => r.json()).then(data => {
+                all = data;
+                console.log('DEBUG: fetched /api/public/cards/ (sample 5):', Array.isArray(all) ? all.slice(0,5) : all);
+                buildFactionButtons();
+                performFilter(q);
+                draw();
+            });
         } else performFilter(q);
     };
 
+    // After fetching all cards, populate faction buttons
+    function buildFactionButtons() {
+        if (!all || !factionContainer) return;
+        let factions = Array.from(new Set(all.map(c => c.faction_code).filter(Boolean))).sort();
+        // fallback to a sensible set if API doesn't provide faction_code values
+        if (!factions || factions.length === 0) {
+            factions = ['hero','villain','encounter','campaign','basic','support'];
+        }
+        console.log('DEBUG: derived factions:', factions);
+        // add a small debug indicator for quick visual verification
+        try {
+            var dbg = document.getElementById('faction-debug-{{ campaignlist.getId() }}');
+            if (!dbg) {
+                dbg = document.createElement('div'); dbg.id = 'faction-debug-{{ campaignlist.getId() }}'; dbg.style.fontSize = '0.75rem'; dbg.style.color = '#666'; dbg.style.marginBottom = '6px'; factionContainer.parentNode.insertBefore(dbg, factionContainer.nextSibling);
+            }
+            dbg.textContent = 'Factions: ' + factions.join(', ');
+        } catch(e) { /* ignore debug rendering errors */ }
+        // always include 'all' first
+        factionContainer.innerHTML = '';
+        const btnAll = document.createElement('button');
+        btnAll.type = 'button';
+        btnAll.className = 'btn btn-sm btn-outline-secondary';
+        btnAll.textContent = 'All';
+        btnAll.dataset.faction = '';
+        if (currentFactions.size === 0) btnAll.classList.add('active');
+        btnAll.onclick = () => { currentFactions.clear(); updateFactionButtons(); if (sIn.value.length>=2) performFilter(sIn.value.toLowerCase()); };
+        factionContainer.appendChild(btnAll);
+        factions.forEach(f => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'btn btn-sm btn-outline-secondary';
+            b.textContent = (f.charAt(0).toUpperCase() + f.slice(1));
+            b.dataset.faction = f;
+            b.onclick = () => {
+                if (currentFactions.has(f)) currentFactions.delete(f); else currentFactions.add(f);
+                updateFactionButtons();
+                if (sIn.value.length>=2) performFilter(sIn.value.toLowerCase());
+            };
+            factionContainer.appendChild(b);
+        });
+        function updateFactionButtons(){
+            Array.from(factionContainer.querySelectorAll('button')).forEach(b => {
+                const df = (b.dataset.faction || '');
+                if (df === '' && currentFactions.size === 0) b.classList.add('active');
+                else if (df !== '' && currentFactions.has(df)) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+            // update debug display if present
+            try {
+                var dbg = document.getElementById('faction-debug-{{ campaignlist.getId() }}');
+                if (dbg) {
+                    const arr = Array.from(currentFactions);
+                    dbg.textContent = 'Factions: ' + (arr.length ? arr.join(', ') : 'All');
+                }
+            } catch(e) { /* ignore */ }
+        }
+    }
+
     function performFilter(q) {
         if (!q) return;
-        const hits = all.filter(c => (c.name && c.name.toLowerCase().indexOf(q) !== -1) || (c.code && c.code.toLowerCase().indexOf(q) !== -1)).slice(0, 10);
+        // base filter by name/code
+        let hits = all.filter(c => (c.name && c.name.toLowerCase().indexOf(q) !== -1) || (c.code && c.code.toLowerCase().indexOf(q) !== -1));
+        // apply faction filter if any selected (multi-select)
+        if (currentFactions && currentFactions.size > 0) {
+            hits = hits.filter(c => currentFactions.has((c.faction_code || '')));
+        }
+        // deduplicate by duplicate-group: prefer parent (duplicate_of_code) if present
+        const seen = new Set();
+        const unique = [];
+        for (let i = 0; i < hits.length; i++) {
+            const c = hits[i];
+            if (!c || !c.code) continue;
+            // determine group key: if this card points to a parent via duplicate_of_code, use that as key
+            const groupKey = (c.duplicate_of_code || c.duplicate_of || '') || c.code;
+            // if we have a parent code, try to find the parent card object to display instead
+            let representative = c;
+            if (groupKey && groupKey !== c.code) {
+                const parent = all.find(x => x.code === groupKey);
+                if (parent) representative = parent;
+            }
+            const repKey = representative.code || groupKey;
+            if (seen.has(repKey)) continue;
+            seen.add(repKey);
+            unique.push(representative);
+            if (unique.length >= 20) break;
+        }
+        hits = unique;
+        // build results
         res.innerHTML = hits.map(c => {
             const current = mine.find(x => x.code === c.code);
             const curQty = current ? current.qty : 0;
@@ -538,7 +659,18 @@
         });
     }
 
-    fetch('/api/public/cards/').then(r => r.json()).then(data => { all = data; draw(); });
+    (function initAll(){
+        try {
+            if (window.app && app.data && Array.isArray(app.data.cards) && app.data.cards.length) {
+                all = app.data.cards;
+                console.log('DEBUG: init using app.data.cards (sample 5):', all.slice(0,5));
+                if (typeof buildFactionButtons === 'function') buildFactionButtons();
+                draw();
+                return;
+            }
+        } catch(e) { /* ignore */ }
+        fetch('/api/public/cards/').then(r => r.json()).then(data => { all = data; console.log('DEBUG: fetched /api/public/cards/ (sample 5):', Array.isArray(all) ? all.slice(0,5) : all); if (typeof buildFactionButtons === 'function') buildFactionButtons(); draw(); });
+    })();
 
     let t;
     const stat = document.getElementById('auto-save-indicator');
