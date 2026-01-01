@@ -138,10 +138,137 @@
         display:inline-block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
     }
 
-    /* Responsive: revert fixed layout on small screens so table can wrap naturally */
+    /* Responsive: revert fixed layout on medium/small screens so table can wrap or scroll
+       - remove fixed widths on cells and allow wrapping of name/pack
+       - keep horizontal scrolling available via .table-responsive when content still overflows */
+    @media (max-width: 992px) {
+        #results-card-{{ campaignlist.getId() }} .table,
+        #list-card-{{ campaignlist.getId() }} .table { table-layout: auto; }
+
+        /* Clear explicit widths set earlier so cells can reflow */
+        #results-card-{{ campaignlist.getId() }} .table th,
+        #results-card-{{ campaignlist.getId() }} .table td,
+        #list-card-{{ campaignlist.getId() }} .table th,
+        #list-card-{{ campaignlist.getId() }} .table td {
+            width: auto !important;
+            max-width: none !important;
+        }
+
+        /* Allow card names and pack names to wrap on small screens */
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(2) a.card-link,
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(2) a.card-link {
+            white-space: normal !important; display:block; overflow:visible; text-overflow:clip;
+        }
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(7),
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(7) {
+            white-space: normal !important; word-break: break-word; overflow:visible;
+        }
+
+        /* Ensure the responsive wrapper allows horizontal scroll on very small screens */
+        #results-card-{{ campaignlist.getId() }} .table-responsive,
+        #list-card-{{ campaignlist.getId() }} .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
+    /* Removed stacked rows behavior — prefer table wrapping/scrolling on small screens.
+       Stacked card blocks were reverted after user feedback. If you want stacked rows
+       re-enabled, we can reintroduce them behind a feature flag or at a different breakpoint. */
+
+    /* Tablet — landscape: keep table format but reduce name column and control sizes */
+    @media (max-width: 1280px) {
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(2),
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(2) {
+            width: 220px !important; min-width: 140px !important;
+        }
+        .campaign-ui a.card-link { font-size: 1.35rem !important; }
+        .qty-btn { padding: 3px 6px; min-width: 28px; font-size: 0.82rem; }
+        .owner-select, select.owner-select.form-control { font-size: 1rem !important; height: 24px !important; line-height:24px !important; }
+        /* Tablet landscape: hide Pack column and clamp Traits to avoid multi-line wrapping */
+        #results-card-{{ campaignlist.getId() }} .table th:nth-child(7),
+        #list-card-{{ campaignlist.getId() }} .table th:nth-child(7),
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(7),
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(7) {
+            display: none !important;
+        }
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(6),
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(6) {
+            max-width: 140px !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+        }
+        /* Slightly reduce icon/owner width to gain space */
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(3),
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(3) { width: 60px !important; max-width:60px !important; }
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(8) select,
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(8) select { width:120px !important; }
+    }
+
+    /* Tablet — portrait and small tablets: allow wrapping but prevent awkward multi-line Pack/Traits
+       and keep controls compact. Fall back to horizontal scroll if needed. */
     @media (max-width: 768px) {
         #results-card-{{ campaignlist.getId() }} .table,
         #list-card-{{ campaignlist.getId() }} .table { table-layout: auto; }
+
+        /* Reduce title size to fit more content on narrow tablets */
+        .campaign-ui a.card-link { font-size: 1.15rem !important; }
+
+        /* Keep icons centered and compact */
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(3),
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(3) { text-align: center; }
+
+        /* Prevent Pack and Traits from expanding rows excessively — clamp and ellipsis */
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(6),
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(6),
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(7),
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(7) {
+            white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; max-width: 140px !important;
+        }
+
+        /* Hide lower-priority columns on narrow tablets to avoid awkward multi-line rows */
+        #results-card-{{ campaignlist.getId() }} .table th:nth-child(6),
+        #list-card-{{ campaignlist.getId() }} .table th:nth-child(6),
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(6),
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(6),
+        #results-card-{{ campaignlist.getId() }} .table th:nth-child(7),
+        #list-card-{{ campaignlist.getId() }} .table th:nth-child(7),
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(7),
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(7) {
+            display: none !important;
+        }
+
+        /* Make qty and owner controls compact so they don't force large row heights */
+        .qty-btn { padding: 3px 6px; min-width: 26px; font-size: 0.8rem; }
+        .owner-select, select.owner-select.form-control { font-size: 0.95rem !important; height: 24px !important; line-height:24px !important; }
+
+        /* Ensure the responsive wrapper allows horizontal scroll when narrow */
+        #results-card-{{ campaignlist.getId() }} .table-responsive,
+        #list-card-{{ campaignlist.getId() }} .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    }
+
+    /* Narrow phones / very small tablets: hide Type as well and make Name take remaining space */
+    @media (max-width: 600px) {
+        #results-card-{{ campaignlist.getId() }} .table th:nth-child(5),
+        #list-card-{{ campaignlist.getId() }} .table th:nth-child(5),
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(5),
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(5) {
+            display: none !important;
+        }
+        /* Make name column more flexible and clamp long pack/type/traits if still present */
+        #results-card-{{ campaignlist.getId() }} .table td:nth-child(2) a.card-link,
+        #list-card-{{ campaignlist.getId() }} .table td:nth-child(2) a.card-link {
+            white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; max-width: 100%; display: inline-block;
+        }
+        /* Keep owner and qty controls compact */
+        .owner-select, select.owner-select.form-control { width: 110px !important; }
+        .qty-btn-group { transform: scale(0.95); }
+    }
+
+    /* Mobile: keep compact fonts and allow horizontal scrolling; stacking was intentionally removed */
+    @media (max-width: 480px) {
+        .campaign-ui a.card-link { font-size: 1.05rem !important; }
+        .qty-btn { padding: 2px 6px; min-width: 24px; font-size: 0.78rem; }
+        .owner-select, select.owner-select.form-control { font-size: 0.9rem !important; height: 22px !important; line-height:22px !important; }
+        #results-card-{{ campaignlist.getId() }} .table td, #list-card-{{ campaignlist.getId() }} .table td { vertical-align: middle; }
     }
 </style>
 
@@ -235,21 +362,21 @@
                         <div id="tracks-container-{{ campaignlist.getId() }}"></div>
                         <script>
                         (function(){
-                            try {
-                                var raw = {{ camp.getTracks() ? camp.getTracks()|json_encode|raw : 'null' }};
-                                var container = document.getElementById('tracks-container-{{ campaignlist.getId() }}');
-                                if (!raw || !container) return;
-                                var tracks = typeof raw === 'string' ? JSON.parse(raw) : raw;
-                                if (!Array.isArray(tracks) || tracks.length === 0) return;
-                                tracks.forEach(function(t){
-                                    var wrap = document.createElement('div'); wrap.className = 'mb-3';
-                                    var titleDiv = document.createElement('div'); titleDiv.className = 'small';
-                                    var strong = document.createElement('strong'); strong.textContent = t.title || '';
-                                    titleDiv.appendChild(strong);
-                                    var txt = document.createElement('div'); txt.className = 'small text-muted'; txt.style.whiteSpace = 'pre-wrap'; txt.innerHTML = t.text || '';
-                                    wrap.appendChild(titleDiv); wrap.appendChild(txt); container.appendChild(wrap);
-                                });
-                            } catch(e) { /* ignore */ }
+                            return `
+                                <tr>
+                                    <td data-label="Quantity" style="width:110px;">${qtyButtons}</td>
+                                    <td data-label="Name">
+                                        ${factionCircle}
+                                        <a href="#" class="card-link card card-tip" data-code="${c.code}" style="font-weight:700; color:#2c3e50;">${c.name}</a>
+                                        <div style="font-size:0.75rem; color:#888; margin-left:18px;">${c.code}</div>
+                                    </td>
+                                    <td data-label="Icons">${iconsCol}</td>
+                                    <td data-label="Cost">${cost}</td>
+                                    <td data-label="Type">${typeName}</td>
+                                    <td data-label="Traits">${traits}</td>
+                                    <td data-label="Pack" style="vertical-align:middle; width:140px;">${packName}</td>
+                                    <td data-label="Owner">Team</td>
+                                </tr>`;
                         })();
                         </script>
                     {% endif %}
@@ -534,18 +661,18 @@
 
             return `
                 <tr>
-                    <td style="vertical-align:middle; width:110px;">${qtyButtons}</td>
-                    <td style="vertical-align:middle; min-width:260px;">
+                    <td data-label="Quantity" style="vertical-align:middle; width:110px;">${qtyButtons}</td>
+                    <td data-label="Name" style="vertical-align:middle; min-width:260px;">
                         ${factionCircle}
                         <a href="${def ? def.url : '#'}" class="card-link card card-tip" data-code="${c.code}" style="font-weight:700; color:#2c3e50;">${displayName}</a>
                         <div style="font-size:0.75rem; color:#888; margin-left:18px;">${c.code}</div>
                     </td>
-                    <td style="vertical-align:middle; width:80px;">${def && def.icons ? def.icons : ''}</td>
-                    <td style="vertical-align:middle; width:60px;">${def && (def.cost!==undefined) ? def.cost : ''}</td>
-                    <td style="vertical-align:middle; width:100px;">${def && def.type_name ? def.type_name : (def && def.type ? def.type : '')}</td>
-                    <td style="vertical-align:middle;">${def && def.traits ? def.traits : ''}</td>
-                    <td style="vertical-align:middle; width:140px;">${packName}</td>
-                    <td style="vertical-align:middle; width:160px;">${ownerSelect}</td>
+                    <td data-label="Icons" style="vertical-align:middle; width:80px;">${def && def.icons ? def.icons : ''}</td>
+                    <td data-label="Cost" style="vertical-align:middle; width:60px;">${def && (def.cost!==undefined) ? def.cost : ''}</td>
+                    <td data-label="Type" style="vertical-align:middle; width:100px;">${def && def.type_name ? def.type_name : (def && def.type ? def.type : '')}</td>
+                    <td data-label="Traits" style="vertical-align:middle;">${def && def.traits ? def.traits : ''}</td>
+                    <td data-label="Pack" style="vertical-align:middle; width:140px;">${packName}</td>
+                    <td data-label="Owner" style="vertical-align:middle; width:160px;">${ownerSelect}</td>
                 </tr>`;
         }).join('');
 
