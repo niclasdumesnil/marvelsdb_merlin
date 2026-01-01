@@ -62,9 +62,7 @@
                     </option>
                 {% endfor %}
             </select>
-                <div style="margin-top:8px;">
-                <button id="show-permanent-btn" type="button" class="btn btn-sm btn-outline-secondary" data-show="1" style="padding:6px 10px;">Show Permanent</button>
-            </div>
+                {# Show Permanent button moved into the banner above the tabs #}
         </div>
         <div>
             <div style="font-weight:bold; margin-bottom:6px;">Modular slots</div>
@@ -134,6 +132,11 @@
     </div>
 
     <div style="margin-top: 32px;">
+        <div class="story-banner" style="display:flex; align-items:center; justify-content:flex-start; background:#f5f7fa; padding:8px 12px; border-radius:6px; margin-bottom:12px;">
+            <div>
+                <button id="show-permanent-btn" type="button" class="btn btn-sm btn-outline-secondary" data-show="1" style="padding:6px 10px;">Show Permanent</button>
+            </div>
+        </div>
         <div style="display: flex; gap: 8px; align-items:center;">
             <button id="tab-villain" type="button" class="tab-btn"
                 style="padding: 8px 14px; border-radius: 6px; border: none; background: #eee; color: #222; font-weight: bold; cursor:pointer;">
