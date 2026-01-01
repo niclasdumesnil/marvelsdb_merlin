@@ -1,0 +1,270 @@
+{% extends 'AppBundle::layout.html.twig' %}
+
+{% block body %}
+    <style>
+        .scenarios-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .scenario-card { background: #fff; border-radius: 14px; padding: 18px; box-shadow: 0 6px 18px rgba(48,63,92,0.08); border: 1px solid rgba(0,0,0,0.03); overflow: hidden; }
+        .scenario-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px }
+        .badge-difficulty { padding:6px 10px; border-radius:14px; font-weight:700; font-size:12px }
+        .difficulty-positive { background: linear-gradient(90deg,#ffecec,#ffd6d6); color:#b32a2a; }
+        .difficulty-negative { background: linear-gradient(90deg,#e6ffef,#d8fff0); color:#0f8a3f; }
+        .difficulty-zero { background: linear-gradient(90deg,#f3f4f6,#f7f7f7); color:#6b7280; }
+        .muted { color:#9aa3b2; font-size:12px; text-transform:uppercase; letter-spacing:1px }
+        .scenario-title { font-size:20px; margin:6px 0 12px; font-weight:800; color:#0f1724 }
+        .pill { display:inline-block; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px; margin-right:8px }
+        .pill-villain { background: #f3e8ff; color:#6b21a8; border:1px solid rgba(107,33,168,0.08) }
+        .pill-modular { background: #fff4e6; color:#b45309; border:1px solid rgba(180,83,9,0.08) }
+        .pill-creator-blue { background:#eef6ff; color:#0b5ed7; border:1px solid rgba(11,94,215,0.08) }
+        .pill-creator-default { background:#000; color:#fff; border:1px solid rgba(255,255,255,0.06) }
+        .briefing { background:#f7fbff; border-radius:12px; padding:14px; color:#475569; margin:12px 0 }
+        .modular-list { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+        .modular-item { background:#fff; border-radius:999px; padding:8px 12px; border:1px solid rgba(43,103,213,0.08); color:#224dbb; font-weight:700; font-size:12px }
+        .card-footer { display:flex; justify-content:space-between; align-items:center; margin-top:14px; color:#9aa3b2; font-size:13px }
+    </style>
+
+    <div class="container main">
+        <h1>Scenario combination</h1>
+
+        <div style="margin:12px 0 20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            <input id="filter-all" placeholder="Search name, text, villain or modulars" style="padding:8px; width:420px;" />
+            <div id="difficulty-buttons" style="display:flex; gap:8px; align-items:center;">
+                <!-- buttons injected by JS -->
+            </div>
+            <div style="margin-left:auto">
+                <button id="clear-filters" type="button" style="padding:6px 10px;">Clear filters</button>
+            </div>
+        </div>
+        <script>
+            // expose pack names map to client for villain name filtering
+            window._packNames = {{ pack_names|default({})|json_encode()|raw }};
+            window._packNamesArray = Object.keys(window._packNames || {}).map(function(k){ return (window._packNames[k] || '').toString().toLowerCase(); });
+        </script>
+
+        {% if scenarios is empty %}
+            <p>Aucun scénario trouvé.</p>
+        {% else %}
+            <div class="scenarios-grid">
+                {% for s in scenarios %}
+                    {# add data attributes to enable client-side filtering #}
+                    {% set diff = s.getDifficulty() is not null ? s.getDifficulty() : 0 %}
+                    {% set vcode = s.getVillainSetCode() %}
+                    {% set modulars = scenario_mods[s.getId()]|default([]) %}
+                    {% set raw_text = s.getText() is defined and s.getText() ? s.getText()|striptags|lower : '' %}
+                    {% set title_l = (s.getTitle() ?: s.getCode())|lower %}
+                    {% set modulars_join = (modulars is iterable) ? (modulars|join(',')) : (modulars is defined ? modulars : '') %}
+                    <article class="scenario-card" data-title="{{ title_l }}" data-text="{{ raw_text }}" data-villain="{{ (vcode is defined and vcode) ? vcode|lower : '' }}" data-villain-name="{{ (vcode is defined and vcode) ? (pack_names[vcode]|default('')|lower) : '' }}" data-modulars="{{ modulars_join|lower }}" data-difficulty="{{ diff }}">
+                        <div class="scenario-header">
+                            <div class="left">
+                                {% set diff = s.getDifficulty() is not null ? s.getDifficulty() : 0 %}
+                                {% set diff_class = diff > 0 ? 'difficulty-positive' : (diff < 0 ? 'difficulty-negative' : 'difficulty-zero') %}
+                                {% set diff_display = diff > 0 ? ('+' ~ diff) : diff %}
+                                <span class="badge-difficulty {{ diff_class }}">Difficulty {{ diff_display }}</span>
+                            </div>
+                            <div class="right">
+                                {% set creatorTop = s.getCreator() %}
+                                {% set isDefaultCreator = (creatorTop|lower == 'default') %}
+                                <span class="pill {{ isDefaultCreator ? 'pill-creator-default' : 'pill-creator-blue' }}">{{ creatorTop ?: '—' }}</span>
+                            </div>
+                        </div>
+
+                        {% set original_title = s.getTitle() ?: s.getCode() %}
+                        {% set display_title = original_title|lower == 'default modular' ? (original_title|lower) : original_title %}
+                        <h2 class="scenario-title">{{ display_title }}</h2>
+
+                        <div class="meta">
+                            {% set vcode = s.getVillainSetCode() %}
+                            {% if vcode %}
+                                <span class="pill pill-villain">{{ pack_names[vcode]|default(vcode) }}</span>
+                            {% endif %}
+                            {# creator moved to header top-right #}
+                        </div>
+
+                        {% if s.getText() %}
+                            <div class="briefing">{{ s.getText()|raw }}</div>
+                        {% else %}
+                            <div class="briefing">Aucun briefing tactique disponible.</div>
+                        {% endif %}
+
+                        {% set modulars = scenario_mods[s.getId()]|default([]) %}
+                        {% if modulars %}
+                            <div class="modular-list">
+                                {% if modulars is iterable %}
+                                        {% for code in modulars %}
+                                            {% set mname = pack_names[code]|default(code) %}
+                                            {% if mname|lower != 'default modular' %}
+                                                <span class="modular-item pill-modular">{{ mname }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                {% else %}
+                                    {% for code in modulars|split(',') %}
+                                        {% set c = code|trim %}
+                                        {% if c %}
+                                            {% set mname = pack_names[c]|default(c) %}
+                                            {% if mname|lower != 'default modular' %}
+                                                <span class="modular-item pill-modular">{{ mname }}</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        <div class="card-footer">
+                            {# Build link to Stories page with villain_set and modular_set (first modular) #}
+                            {% set first_mod = null %}
+                            {% if modulars %}
+                                {% if modulars is iterable %}
+                                    {% set first_mod = (modulars|first) %}
+                                {% else %}
+                                    {% set first_mod = (modulars|split(',')|map('trim')|first) %}
+                                {% endif %}
+                            {% endif %}
+                            {% set query = {} %}
+                            {% if vcode is defined and vcode %}
+                                {% set query = query|merge({'villain_set': vcode}) %}
+                            {% endif %}
+                            {# include per-slot modular_set_N params and a modulars count param so Stories initializes correctly #}
+                            {% set nb = s.getNbmodular() is not null ? s.getNbmodular() : (s.nbmodular is defined ? s.nbmodular : 0) %}
+                            {% if modulars is defined and modulars is iterable %}
+                                {% for code in modulars %}
+                                    {% set idx = loop.index0 %}
+                                    {% set query = query|merge({('modular_set_' ~ idx): code}) %}
+                                {% endfor %}
+                                {% if modulars|length > 0 %}
+                                    {% set query = query|merge({'modulars': modulars|length}) %}
+                                {% endif %}
+                            {% else %}
+                                {# fallback: include first modular if present and send count from nb field #}
+                                {% if first_mod %}
+                                    {% set query = query|merge({'modular_set_0': first_mod}) %}
+                                {% endif %}
+                                {% if nb %}
+                                    {% set query = query|merge({'modulars': nb}) %}
+                                {% endif %}
+                            {% endif %}
+                            <div><a href="{{ path('Stories', query) }}">View statistics</a></div>
+                            <div>&rsaquo;</div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        (function(){
+            function normalize(s){
+                if (!s) return '';
+                try {
+                    return s.toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+                } catch(e) {
+                    return s.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                }
+            }
+
+            const searchInput = document.getElementById('filter-all');
+            const diffContainer = document.getElementById('difficulty-buttons');
+            let activeDiff = 'all';
+
+            function applyFilters(){
+                const q = normalize(searchInput && searchInput.value);
+
+                document.querySelectorAll('.scenario-card').forEach(function(card){
+                    const title = normalize(card.getAttribute('data-title'));
+                    const text = normalize(card.getAttribute('data-text'));
+                    const villainCodeRaw = card.getAttribute('data-villain') || '';
+                    const villain = normalize(villainCodeRaw);
+                    const villainName = normalize(card.getAttribute('data-villain-name') || '');
+                    const modulars = normalize(card.getAttribute('data-modulars'));
+                    const modularCodesRaw = (card.getAttribute('data-modulars') || '').toString().split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+                    const diff = parseFloat(card.getAttribute('data-difficulty')||0);
+
+                    let visible = true;
+                    if (q) {
+                        // match across title, text, villain code, villain name and modulars
+                        var perCardMatched = false;
+                        if (title.indexOf(q) !== -1 || text.indexOf(q) !== -1 || modulars.indexOf(q) !== -1 || villain.indexOf(q) !== -1 || villainName.indexOf(q) !== -1) {
+                            perCardMatched = true;
+                        }
+                        // also check modular codes' display names (pack_names mapping) for this card
+                        if (!perCardMatched && modularCodesRaw.length > 0) {
+                            for (var mi = 0; mi < modularCodesRaw.length; mi++) {
+                                var code = modularCodesRaw[mi];
+                                try {
+                                    var pname = normalize((window._packNames && window._packNames[code]) ? window._packNames[code] : '');
+                                    if (pname.indexOf(q) !== -1) { perCardMatched = true; break; }
+                                } catch(e){}
+                            }
+                        }
+                        if (!perCardMatched) visible = false;
+                    }
+                    if (activeDiff !== 'all') {
+                        // numeric comparison
+                        const wanted = parseFloat(activeDiff);
+                        if (isNaN(wanted) || diff !== wanted) visible = false;
+                    }
+
+                    card.style.display = visible ? '' : 'none';
+                });
+            }
+
+            function pack_name_contains(q) {
+                if (!q) return false;
+                try {
+                    var qn = normalize(q);
+                    var map = window._packNames || {};
+                    for (var code in map) {
+                        if (!map.hasOwnProperty(code)) continue;
+                        var name = normalize(map[code] || '');
+                        if (name.indexOf(qn) !== -1) return true;
+                        if (code.toString().toLowerCase().indexOf(qn) !== -1) return true;
+                    }
+                } catch(e){}
+                return false;
+            }
+            // wire the single search input
+            if (searchInput) searchInput.addEventListener('input', applyFilters);
+
+            // build difficulty buttons dynamically from data-difficulty values present on the page
+            (function(){
+                if (!diffContainer) return;
+                const diffs = new Set();
+                document.querySelectorAll('.scenario-card').forEach(function(card){
+                    var d = card.getAttribute('data-difficulty');
+                    if (d !== null && d !== undefined) diffs.add(parseFloat(d));
+                });
+                // convert to sorted array
+                const diffArr = Array.from(diffs).sort(function(a,b){return a-b;});
+                // create 'All' button
+                var btnAll = document.createElement('button'); btnAll.type='button'; btnAll.textContent='All'; btnAll.className='diff-btn'; btnAll.setAttribute('data-diff','all'); btnAll.style.padding='6px 10px'; btnAll.style.marginRight='6px';
+                diffContainer.appendChild(btnAll);
+                // create one button per difficulty
+                diffArr.forEach(function(d){
+                    var b = document.createElement('button'); b.type='button';
+                    b.textContent = (d>0?('+'+d):(''+d));
+                    b.className = 'diff-btn';
+                    b.setAttribute('data-diff', String(d));
+                    b.style.padding='6px 10px';
+                    b.style.marginRight='6px';
+                    diffContainer.appendChild(b);
+                });
+
+                const created = Array.from(diffContainer.querySelectorAll('.diff-btn'));
+                created.forEach(function(btn){ btn.style.opacity = btn.getAttribute('data-diff')==='all' ? '1.0' : '0.6'; btn.addEventListener('click', function(){ activeDiff = btn.getAttribute('data-diff') || 'all'; created.forEach(b=>b.style.opacity='0.6'); btn.style.opacity='1.0'; applyFilters(); }); });
+            })();
+
+            var clearBtn = document.getElementById('clear-filters');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function(){
+                    if (searchInput) searchInput.value = '';
+                    activeDiff = 'all';
+                    document.querySelectorAll('#difficulty-buttons .diff-btn').forEach(function(b){ b.style.opacity = b.getAttribute('data-diff')==='all' ? '1.0' : '0.6'; });
+                    applyFilters();
+                });
+            }
+        })();
+    </script>
+{% endblock %}

@@ -19,7 +19,7 @@
                 (function(){
                     try {
                         var ref = document.referrer || '';
-                        if (ref && (ref.indexOf('/view/') !== -1 || ref.indexOf('/edit/') !== -1 || ref.indexOf('/campaign/') !== -1)) {
+                        if (ref && (ref.indexOf('/view/') !== -1 || ref.indexOf('/edit/') !== -1 || ref.indexOf('/campaign/') !== -1 || ref.indexOf('/scenario') !== -1)) {
                             var btn = document.getElementById('stories-back-btn');
                             if (btn) btn.style.display = '';
                         }
@@ -90,11 +90,17 @@
                     <div style="color:#666; font-size:0.95rem;">Value passed by the campaign page if provided, otherwise default.</div>
                 </div>
                 {# render all available modular selects but mark them with data-index so JS can show/hide per requested count #}
+                {% set selected_modular_codes = selected_modular_codes|default([]) %}
                 {% for i in 0..(filtered_modular_sets|length - 1) %}
                     <div style="margin-bottom:6px;" class="modular-select" data-index="{{ i }}">
                         <select id="modular-sets-{{ i }}" name="modular_set_{{ i }}" style="width: 100%;">
+                            {% set current_selected = selected_modular_codes[i] is defined ? selected_modular_codes[i] : null %}
                             {% for set in filtered_modular_sets %}
-                                <option value="{{ set.code }}" {% if set.code == (filtered_modular_sets[i].code) %}selected{% endif %}>{{ set.name }}</option>
+                                {% if current_selected is not null %}
+                                    <option value="{{ set.code }}" {% if set.code == current_selected %}selected{% endif %}>{{ set.name }}</option>
+                                {% else %}
+                                    <option value="{{ set.code }}" {% if set.code == filtered_modular_sets[i].code %}selected{% endif %}>{{ set.name }}</option>
+                                {% endif %}
                             {% endfor %}
                         </select>
                     </div>

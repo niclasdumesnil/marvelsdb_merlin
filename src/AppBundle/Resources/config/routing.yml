@@ -19,6 +19,10 @@ app_team:
     resource: "@AppBundle/Resources/config/routing/routing_team.yml"
     prefix: /team
 
+app_scenario:
+    resource: "@AppBundle/Resources/config/routing/routing_scenario.yml"
+    prefix: /scenario
+
 
 # Provide a non-localized route name for templates/controllers that expect 'team_index'
 team_index:

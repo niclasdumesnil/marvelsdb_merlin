@@ -300,4 +300,72 @@ class DefaultController extends Controller
 		"publisher_name" => $this->container->getParameter('publisher_name'),
 		), $response);
 	}
+
+	public function scenarioIndexAction(\Symfony\Component\HttpFoundation\Request $request)
+	{
+		$response = new Response();
+		$response->setPublic();
+		$response->setMaxAge($this->container->getParameter('cache_expiration'));
+
+		$em = $this->getDoctrine()->getManager();
+		$scenarios = $em->getRepository('AppBundle:Scenario')->findAll();
+
+		// collect set codes used by scenarios (villain and modular) to fetch names
+		$codes = [];
+		// also normalize modular codes per scenario (ensure array)
+		$scenario_mods = [];
+		foreach ($scenarios as $s) {
+			$v = $s->getVillainSetCode();
+			if ($v) $codes[] = $v;
+
+			$mods_raw = $s->getModularSetCodes();
+			$mods = [];
+			if ($mods_raw) {
+				if (is_array($mods_raw)) {
+					$mods = $mods_raw;
+				} else {
+					// try JSON decode
+					$decoded = json_decode($mods_raw, true);
+					if (is_array($decoded)) {
+						$mods = $decoded;
+					} else {
+						// fallback: comma separated
+						$parts = array_map('trim', explode(',', $mods_raw));
+						$mods = array_filter($parts, function($x){ return $x !== ''; });
+					}
+				}
+			}
+			$scenario_mods[$s->getId()] = $mods;
+			foreach ($mods as $m) { if ($m) $codes[] = $m; }
+		}
+		$codes = array_values(array_unique($codes));
+
+		$packNames = [];
+		if (count($codes) > 0) {
+			$packs = $em->getRepository('AppBundle:Pack')->findBy(['code' => $codes]);
+			foreach ($packs as $p) {
+				$codeKey = $p->getCode();
+				$packNames[$codeKey] = $p->getName();
+				$packNames[strtolower($codeKey)] = $p->getName();
+			}
+		}
+
+		// Try to resolve remaining codes via Cardset (modular sets are cardsets)
+		$missing = array_filter($codes, function($c) use ($packNames) { return !isset($packNames[$c]) && !isset($packNames[strtolower($c)]); });
+		if (count($missing) > 0) {
+			$cardsets = $em->getRepository('AppBundle:Cardset')->findBy(['code' => $missing]);
+			foreach ($cardsets as $cs) {
+				$ck = $cs->getCode();
+				$packNames[$ck] = $cs->getName();
+				$packNames[strtolower($ck)] = $cs->getName();
+			}
+		}
+
+		return $this->render('AppBundle:Scenario:scenario.index.html.twig', array(
+			"pagetitle" => "Scénarios",
+			'scenarios' => $scenarios,
+			'pack_names' => $packNames,
+			'scenario_mods' => $scenario_mods,
+		), $response);
+	}
 }

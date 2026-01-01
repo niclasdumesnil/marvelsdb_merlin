@@ -1,0 +1,5 @@
+scenario_index:
+    path: /
+    methods: [GET]
+    defaults:
+        _controller: AppBundle:Default:scenarioIndex

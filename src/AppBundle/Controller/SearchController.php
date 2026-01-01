@@ -432,7 +432,28 @@ class SearchController extends Controller
 		$data_standard = $this->getStatsAndData($filtered_standard_sets, $filtered_villain_sets, $cards, $includePermanent);
 		$data_expert = $this->getStatsAndData($filtered_expert_sets, $filtered_villain_sets, $cards, $includePermanent);
 
-		$selected_modular_code = $request->query->get('modular_set') ?: ($filtered_modular_sets ? $filtered_modular_sets[0]->getCode() : null);
+		// Support multiple modular slots via modular_set_0, modular_set_1, ... and legacy modular_set
+		$selected_modular_codes = [];
+		$max_modular = is_array($filtered_modular_sets) ? count($filtered_modular_sets) : 0;
+		for ($i = 0; $i < $max_modular; $i++) {
+			$param = $request->query->get('modular_set_' . $i);
+			if ($param !== null && $param !== '') {
+				$selected_modular_codes[$i] = $param;
+			}
+		}
+		// fallback to single "modular_set" param for older links
+		if (empty($selected_modular_codes)) {
+			$single = $request->query->get('modular_set');
+			if ($single) $selected_modular_codes[0] = $single;
+		}
+
+		// Determine requested slots: prefer explicit 'modulars', then 'nbmodular', then count of provided modular_set_i
+		$requested_slots = $request->query->get('modulars');
+		if ($requested_slots === null) $requested_slots = $request->query->get('nbmodular');
+		if ($requested_slots === null) $requested_slots = count($selected_modular_codes) ?: null;
+
+		// normalize selected_modular_code for legacy single-select usage (panels)
+		$selected_modular_code = isset($selected_modular_codes[0]) ? $selected_modular_codes[0] : ($filtered_modular_sets ? $filtered_modular_sets[0]->getCode() : null);
 		$selected_standard_code = $request->query->get('standard_set') ?: ($filtered_standard_sets ? $filtered_standard_sets[0]->getCode() : null);
 		$selected_expert_code = $request->query->get('expert_set') ?: ($filtered_expert_sets ? $filtered_expert_sets[0]->getCode() : null);
         $selected_villain_code = $request->query->get('villain_set') ?: $filtered_villain_sets[0]->getCode();
@@ -530,6 +551,9 @@ class SearchController extends Controller
 			'selected_standard_code' => $selected_standard_code,
 			'selected_expert_code' => $selected_expert_code,
             'selected_villain_code' => $selected_villain_code,
+			// per-slot modular selections and initial slots count
+			'selected_modular_codes' => $selected_modular_codes,
+			'slots' => $requested_slots,
         ], $response);
     } 
 
