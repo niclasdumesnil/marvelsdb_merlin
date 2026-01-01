@@ -179,6 +179,24 @@ class ImportStdCommand extends ContainerAwareCommand
 		$this->loadCollection('Cardsettype');
 		$output->writeln("Done.");
 
+		// scenarios (fanmade)
+		$output->writeln("Importing Scenarios...");
+		$scenariosFileInfo = $this->getFileInfo($path, 'scenario.json');
+		$imported = $this->importScenariosJsonFile($scenariosFileInfo);
+		if(count($imported)) {
+			if ($this->output) $this->output->writeln("Imported/Updated scenarios count: " . count($imported));
+			foreach($imported as $sc) {
+				try { $this->output->writeln(" - " . ($sc->getCode() ? $sc->getCode() : $sc->getTitle())); } catch(\Exception $e) {}
+			}
+			$question = new ConfirmationQuestion("Do you confirm? (Y/n) ", true);
+			if(!$helper->ask($input, $output, $question)) {
+				die();
+			}
+		}
+		$this->em->flush();
+		$this->loadCollection('Scenario');
+		$output->writeln("Done.");
+
 		$output->writeln("Importing CardsetTypes fanmade...");
 		$cardsettypesFileInfo = $this->getFileInfo($path, 'settypes_fanmade.json');
 		$imported = $this->importCardsettypesJsonFile($cardsettypesFileInfo);
@@ -392,8 +410,11 @@ class ImportStdCommand extends ContainerAwareCommand
 		$result = [];
 
 		$list = $this->getDataFromFile($fileinfo);
+		if ($this->output) $this->output->writeln("Read ".(is_array($list)?count($list):0)." scenario entries from {$fileinfo->getPathname()}");
+
 		foreach($list as $data)
 		{
+			if ($this->output) $this->output->writeln("Processing scenario: " . (isset($data['title']) ? $data['title'] : (isset($data['villain_set_code']) ? $data['villain_set_code'] : '(no id)')));
 			$faction = $this->getEntityFromData('AppBundle\\Entity\\Faction', $data, [
 					'code',
 					'name',
@@ -518,16 +539,43 @@ class ImportStdCommand extends ContainerAwareCommand
 		$list = $this->getDataFromFile($fileinfo);
 		foreach($list as $data)
 		{
-			$type = $this->getEntityFromData('AppBundle\\Entity\\Scenario', $data, [
-				'code',
-				'name'
-			], [
-				'campaign_code'
-			], []);
-			if($type) {
-				$result[] = $type;
-				$this->em->persist($type);
+			// Build a stable code for scenario: villainSetCode + slug(title)
+			$villain = isset($data['villain_set_code']) ? $data['villain_set_code'] : null;
+			$title = isset($data['title']) ? $data['title'] : null;
+			$slug = '';
+			if ($title) {
+				$slug = preg_replace('/[^a-z0-9]+/','-',strtolower(trim(iconv('UTF-8','ASCII//TRANSLIT',$title))));
+				$slug = trim($slug, '-');
 			}
+			$code = $villain ? ($villain.($slug?'-'.$slug:'')) : ($slug?:null);
+
+			// Ensure unique code if collision
+			$baseCode = $code;
+			$counter = 1;
+			while ($code && $this->em->getRepository('AppBundle:Scenario')->findOneBy(['code' => $code])) {
+				$code = $baseCode . '-' . $counter;
+				$counter++;
+			}
+
+			$scenario = null;
+			if ($code) {
+				$scenario = $this->em->getRepository('AppBundle:Scenario')->findOneBy(['code' => $code]);
+			}
+			if (!$scenario) {
+				$scenario = new \AppBundle\Entity\Scenario();
+				if ($code) $scenario->setCode($code);
+			}
+
+			if (isset($data['villain_set_code'])) $scenario->setVillainSetCode($data['villain_set_code']);
+			if (isset($data['title'])) $scenario->setTitle($data['title']);
+			if (isset($data['nbmodular'])) $scenario->setNbmodular($data['nbmodular']);
+			if (isset($data['modular_set_codes'])) $scenario->setModularSetCodes(json_encode($data['modular_set_codes']));
+			if (isset($data['difficulty'])) $scenario->setDifficulty($data['difficulty']);
+			if (array_key_exists('text', $data)) $scenario->setText($data['text']);
+			if (isset($data['creator'])) $scenario->setCreator($data['creator']);
+
+			$result[] = $scenario;
+			$this->em->persist($scenario);
 		}
 
 		return $result;

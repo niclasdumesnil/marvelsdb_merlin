@@ -1,0 +1,43 @@
+AppBundle\Entity\Scenario:
+  type: entity
+  table: scenario
+  id:
+    id:
+      type: integer
+      generator:
+        strategy: AUTO
+  fields:
+    code:
+      type: string
+      length: 255
+      nullable: false
+    villainSetCode:
+      column: villain_set_code
+      type: string
+      length: 255
+      nullable: true
+    title:
+      type: string
+      length: 255
+      nullable: true
+    nbmodular:
+      type: integer
+      nullable: true
+    modularSetCodes:
+      column: modular_set_codes
+      type: text
+      nullable: true
+    difficulty:
+      type: integer
+      nullable: true
+    text:
+      type: text
+      nullable: true
+    creator:
+      type: string
+      length: 255
+      nullable: true
+    dateCreation:
+      column: date_creation
+      type: datetime
+      nullable: false
