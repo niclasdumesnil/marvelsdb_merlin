@@ -35,9 +35,9 @@
 
     /* Qty buttons: slight rounding on the whole block; buttons stay flush */
     /* keep group sized to its contents so no empty rounded area appears */
-    .qty-btn-group { display: inline-flex; gap: 0; flex-shrink: 0; border-radius: 6px; overflow: hidden; border: 1px solid #d0d6dc; vertical-align:middle; }
-    /* Uniform button sizing regardless of count (slightly smaller) */
-    .qty-btn { padding: 4px 8px; font-size: 0.86rem; border: none; background: #f6f7f8; color: #333; cursor: pointer; font-weight: 600; border-radius: 0; min-width:30px; text-align:center; }
+    .qty-btn-group { display: inline-flex; gap: 0; flex-shrink: 0; border-radius: 6px; overflow: hidden; border: 1px solid #d0d6dc; vertical-align:middle; max-width: 88px; }
+    /* More compact quantity buttons */
+    .qty-btn { padding: 3px 5px; font-size: 0.85rem; border: none; background: #f6f7f8; color: #333; cursor: pointer; font-weight: 600; border-radius: 3px; min-width:18px; height:26px; line-height:16px; text-align:center; }
     .qty-btn + .qty-btn { margin-left: 0; }
     .qty-btn.active { background: #2f80ed; color: white; }
 
@@ -183,7 +183,7 @@
             width: 220px !important; min-width: 140px !important;
         }
         .campaign-ui a.card-link { font-size: 1.35rem !important; }
-        .qty-btn { padding: 3px 6px; min-width: 28px; font-size: 0.82rem; }
+        .qty-btn { padding: 3px 5px; min-width: 18px; font-size: 0.85rem; height:26px; line-height:16px; border-radius:3px; }
         .owner-select, select.owner-select.form-control { font-size: 1rem !important; height: 24px !important; line-height:24px !important; }
         /* Tablet landscape: hide Pack column and clamp Traits to avoid multi-line wrapping */
         #results-card-{{ campaignlist.getId() }} .table th:nth-child(7),
@@ -237,7 +237,7 @@
         }
 
         /* Make qty and owner controls compact so they don't force large row heights */
-        .qty-btn { padding: 3px 6px; min-width: 26px; font-size: 0.8rem; }
+        .qty-btn { padding: 2px 5px; min-width: 16px; font-size: 0.8rem; height:24px; line-height:14px; }
         .owner-select, select.owner-select.form-control { font-size: 0.95rem !important; height: 24px !important; line-height:24px !important; }
 
         /* Ensure the responsive wrapper allows horizontal scroll when narrow */
@@ -266,7 +266,7 @@
     /* Mobile: keep compact fonts and allow horizontal scrolling; stacking was intentionally removed */
     @media (max-width: 480px) {
         .campaign-ui a.card-link { font-size: 1.05rem !important; }
-        .qty-btn { padding: 2px 6px; min-width: 24px; font-size: 0.78rem; }
+        .qty-btn { padding: 2px 4px; min-width: 14px; font-size: 0.78rem; height:22px; line-height:13px; }
         .owner-select, select.owner-select.form-control { font-size: 0.9rem !important; height: 22px !important; line-height:22px !important; }
         #results-card-{{ campaignlist.getId() }} .table td, #list-card-{{ campaignlist.getId() }} .table td { vertical-align: middle; }
     }
@@ -616,6 +616,23 @@
     // render faction buttons container; will be populated after cards fetched
     const factionContainer = form.querySelector('#faction-filters-{{ campaignlist.getId() }}');
 
+    // Render resource icons for a card-like object (used in modal and tables)
+    function renderIcons(card) {
+        if (!card) return '';
+        let s = '';
+        try {
+            const rp = card.resource_physical || card.resource_physical === 0 ? card.resource_physical : (card.resource_physical || 0);
+            const rm = card.resource_mental || card.resource_mental === 0 ? card.resource_mental : (card.resource_mental || 0);
+            const re = card.resource_energy || card.resource_energy === 0 ? card.resource_energy : (card.resource_energy || 0);
+            const rw = card.resource_wild || card.resource_wild === 0 ? card.resource_wild : (card.resource_wild || 0);
+            if (rp) s += Array(rp+1).join('<span title="Physical" class="icon icon-physical color-physical" style="margin:0 2px; display:inline-block;"></span>');
+            if (rm) s += Array(rm+1).join('<span title="Mental" class="icon icon-mental color-mental" style="margin:0 2px; display:inline-block;"></span>');
+            if (re) s += Array(re+1).join('<span title="Energy" class="icon icon-energy color-energy" style="margin:0 2px; display:inline-block;"></span>');
+            if (rw) s += Array(rw+1).join('<span title="Wild" class="icon icon-wild color-wild" style="margin:0 2px; display:inline-block;"></span>');
+        } catch(e) { s = ''; }
+        return s;
+    }
+
     sClear.onclick = () => {
         sIn.value = '';
         sClear.style.display = 'none';
@@ -667,7 +684,7 @@
                         <a href="${def ? def.url : '#'}" class="card-link card card-tip" data-code="${c.code}" style="font-weight:700; color:#2c3e50;">${displayName}</a>
                         <div style="font-size:0.75rem; color:#888; margin-left:18px;">${c.code}</div>
                     </td>
-                    <td data-label="Icons" style="vertical-align:middle; width:80px;">${def && def.icons ? def.icons : ''}</td>
+                    <td data-label="Icons" style="vertical-align:middle; width:80px;">${renderIcons(def || {})}</td>
                     <td data-label="Cost" style="vertical-align:middle; width:60px;">${def && (def.cost!==undefined) ? def.cost : ''}</td>
                     <td data-label="Type" style="vertical-align:middle; width:100px;">${def && def.type_name ? def.type_name : (def && def.type ? def.type : '')}</td>
                     <td data-label="Traits" style="vertical-align:middle;">${def && def.traits ? def.traits : ''}</td>
@@ -830,7 +847,7 @@
             // faction circle before name (use same fa-circle + fg-<faction> markup used elsewhere)
             const factionCircle = faction ? `<span class="fa fa-circle fg-${faction}" title="${faction}" style="display:inline-block;width:10px;height:10px;line-height:10px;margin-right:8px;"></span>` : '';
             // icons column should show card resource icons (if present)
-            const iconsCol = c.icons || '';
+            const iconsCol = renderIcons(c);
             const qtyArr = [];
             for (let i = 0; i <= limit; i++) {
                 const activeCls = (curQty == i) ? ' active' : '';
