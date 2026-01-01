@@ -271,7 +271,7 @@
                                     {# Prefer explicit image from campaign_defs or camp.getImage(), fallback to code-based filename #}
                                     {% set campaign_img_name = (campaign_defs[camp.getId()] is defined and campaign_defs[camp.getId()].image is defined) ? campaign_defs[camp.getId()].image : ((camp.getImage() is defined and camp.getImage()) ? camp.getImage() : ((camp.getCode() is defined ? camp.getCode() : camp.getId()) ~ '.jpg')) %}
                                     <div style="flex:0 0 auto;">
-                                        <img src="{{ asset('bundles/campaigns/' ~ campaign_img_name) }}" alt="{{ camp.getName() }}" crossorigin="anonymous" style="max-height:140px; max-width:280px; border-radius:6px; object-fit:cover;" />
+                                        <img src="{{ asset('bundles/campaigns/' ~ campaign_img_name) }}" alt="{{ camp.getName() }}" crossorigin="anonymous" onerror="this.onerror=null;this.src='https://via.placeholder.com/280x140?text=No+Image';" style="max-height:140px; max-width:280px; border-radius:6px; object-fit:cover;" />
                                     </div>
                                     <div style="flex:1 1 auto;">
                                         <h3 style="margin-top:0; margin-bottom:0.25rem; display:inline-block;">{{ camp.getName() }}</h3>

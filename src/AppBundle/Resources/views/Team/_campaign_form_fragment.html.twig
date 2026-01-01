@@ -33,9 +33,19 @@
     .deck-divider-badge { position: relative; z-index: 2; background: #2c3e50; color: #fff; padding: 6px 25px; font-weight: 900; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; transform: skew(-15deg); border-left: 4px solid #e74c3c; box-shadow: 4px 4px 0 rgba(0,0,0,0.1); }
     .deck-divider-text { transform: skew(15deg); display: inline-block; }
 
-    .qty-btn-group { display: flex; border-radius: 4px; overflow: hidden; border: 1px solid #ccc; flex-shrink: 0; margin-left: auto; }
-    .qty-btn { padding: 4px 10px; font-size: 0.8rem; border: none; border-right: 1px solid #ccc; background: #f8f9fa; color: #333; cursor: pointer; font-weight: 600; transition: 0.2s; }
-    .qty-btn.active { background: #3498db; color: white; border-color: #3498db; }
+    /* Qty buttons: slight rounding on the whole block; buttons stay flush */
+    /* keep group sized to its contents so no empty rounded area appears */
+    .qty-btn-group { display: inline-flex; gap: 0; flex-shrink: 0; border-radius: 6px; overflow: hidden; border: 1px solid #d0d6dc; vertical-align:middle; }
+    /* Uniform button sizing regardless of count (slightly smaller) */
+    .qty-btn { padding: 4px 8px; font-size: 0.86rem; border: none; background: #f6f7f8; color: #333; cursor: pointer; font-weight: 600; border-radius: 0; min-width:30px; text-align:center; }
+    .qty-btn + .qty-btn { margin-left: 0; }
+    .qty-btn.active { background: #2f80ed; color: white; }
+
+    /* Larger card name across this component; override below for the campaign list table to keep columns aligned */
+    .campaign-ui a.card-link { font-size: 1.5rem !important; font-weight:700 !important; color: #2c3e50 !important; }
+    /* Reduce the name font-size inside the Active Campaign Deck table so both tables keep similar column widths */
+    #list-card-{{ campaignlist.getId() }} a.card-link { font-size: 1.5rem !important; font-weight:700 !important; }
+    .qty-btn.disabled { opacity: 0.45; cursor: not-allowed; }
     /* Compact owner select to match qty buttons height & increase font
        Use stronger selector and !important to override Bootstrap form-control */
     .owner-select, select.owner-select.form-control {
@@ -78,6 +88,61 @@
     
     #floating-card-preview { position: fixed; pointer-events: none; z-index: 10000; display: none; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 15px; width: 300px; border: 1px solid #ddd; }
     #auto-save-indicator { position: fixed; bottom: 30px; right: 30px; padding: 12px 24px; border-radius: 50px; background: #2c3e50; color: white; font-weight: 600; display: none; z-index: 9999; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+
+    /* Force consistent column widths for results and campaign list tables so columns align
+       Use fixed layout and explicit widths that match the table markup used in JS renderers */
+    #results-card-{{ campaignlist.getId() }} .table,
+    #list-card-{{ campaignlist.getId() }} .table {
+        table-layout: fixed;
+        width: 100%;
+    }
+    /* Column widths: 1=Quantity, 2=Name, 3=Icons, 4=Cost, 5=Type, 6=Traits (flex), 7=Pack, 8=Owner */
+    #results-card-{{ campaignlist.getId() }} .table th:nth-child(1),
+    #list-card-{{ campaignlist.getId() }} .table th:nth-child(1),
+    #results-card-{{ campaignlist.getId() }} .table td:nth-child(1),
+    #list-card-{{ campaignlist.getId() }} .table td:nth-child(1) { width:110px; max-width:110px; }
+
+    #results-card-{{ campaignlist.getId() }} .table th:nth-child(2),
+    #list-card-{{ campaignlist.getId() }} .table th:nth-child(2),
+    #results-card-{{ campaignlist.getId() }} .table td:nth-child(2),
+    #list-card-{{ campaignlist.getId() }} .table td:nth-child(2) { width:260px; min-width:160px; }
+
+    #results-card-{{ campaignlist.getId() }} .table th:nth-child(3),
+    #list-card-{{ campaignlist.getId() }} .table th:nth-child(3),
+    #results-card-{{ campaignlist.getId() }} .table td:nth-child(3),
+    #list-card-{{ campaignlist.getId() }} .table td:nth-child(3) { width:80px; max-width:80px; }
+
+    #results-card-{{ campaignlist.getId() }} .table th:nth-child(4),
+    #list-card-{{ campaignlist.getId() }} .table th:nth-child(4),
+    #results-card-{{ campaignlist.getId() }} .table td:nth-child(4),
+    #list-card-{{ campaignlist.getId() }} .table td:nth-child(4) { width:60px; max-width:60px; }
+
+    #results-card-{{ campaignlist.getId() }} .table th:nth-child(5),
+    #list-card-{{ campaignlist.getId() }} .table th:nth-child(5),
+    #results-card-{{ campaignlist.getId() }} .table td:nth-child(5),
+    #list-card-{{ campaignlist.getId() }} .table td:nth-child(5) { width:100px; max-width:100px; }
+
+    #results-card-{{ campaignlist.getId() }} .table th:nth-child(7),
+    #list-card-{{ campaignlist.getId() }} .table th:nth-child(7),
+    #results-card-{{ campaignlist.getId() }} .table td:nth-child(7),
+    #list-card-{{ campaignlist.getId() }} .table td:nth-child(7) { width:140px; max-width:140px; }
+
+    #results-card-{{ campaignlist.getId() }} .table th:nth-child(8),
+    #list-card-{{ campaignlist.getId() }} .table th:nth-child(8),
+    #results-card-{{ campaignlist.getId() }} .table td:nth-child(8),
+    #list-card-{{ campaignlist.getId() }} .table td:nth-child(8) { width:160px; max-width:160px; }
+
+    /* Make name links truncate with ellipsis when too long, keep consistent visual height */
+    #results-card-{{ campaignlist.getId() }} .table td:nth-child(2) a.card-link,
+    #list-card-{{ campaignlist.getId() }} .table td:nth-child(2) a.card-link {
+        display:inline-block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
+    }
+
+    /* Responsive: revert fixed layout on small screens so table can wrap naturally */
+    @media (max-width: 768px) {
+        #results-card-{{ campaignlist.getId() }} .table,
+        #list-card-{{ campaignlist.getId() }} .table { table-layout: auto; }
+    }
 </style>
 
 {% set camp = campaignlist.getCampaign() %}
@@ -263,7 +328,7 @@
                     <div style="display:flex; gap:25px; align-items:flex-start; margin-bottom:20px;">
                         {% if scenario.image is defined and scenario.image %}
                             <div style="flex: 0 0 220px; max-width: 220px;">
-                                <img src="{{ scenario.image|slice(0,4) == 'http' ? scenario.image : asset('bundles/campaigns/' ~ scenario.image) }}" style="width:100%; border-radius:10px; box-shadow:0 6px 12px rgba(0,0,0,0.1);" alt="Image">
+                                <img src="{{ scenario.image|slice(0,4) == 'http' ? scenario.image : asset('bundles/campaigns/' ~ scenario.image) }}" onerror="this.onerror=null;this.src='https://via.placeholder.com/280x140?text=No+Image';" style="width:100%; border-radius:10px; box-shadow:0 6px 12px rgba(0,0,0,0.1);" alt="Image">
                             </div>
                         {% endif %}
                         <div style="flex:1;">
@@ -432,12 +497,19 @@
     };
 
     function draw() {
-        list.innerHTML = mine.map(c => {
+        // Render the campaign card list as a decklist-style table (qty, thumb+name, icons, cost, type, traits, pack, owner)
+        if (!mine || mine.length === 0) {
+            list.innerHTML = '<div class="text-muted">No cards in campaign.</div>';
+            jIn.value = JSON.stringify(mine);
+            attachHoverPreview();
+            return;
+        }
+        const rows = mine.map(c => {
             const def = all ? all.find(x => x.code === c.code) : null;
             const limit = def ? (parseInt(def.deck_limit) || 1) : 1;
             const owner = c.owner || 'Team';
             // build owner select
-            let ownerSelect = `<select class="form-control owner-select" data-code="${c.code}" onchange="window.setOwner_${rId}('${c.code}', this.value)" style="width:140px; margin-left:8px;">`;
+            let ownerSelect = `<select class="form-control owner-select" data-code="${c.code}" onchange="window.setOwner_${rId}('${c.code}', this.value)" style="width:140px;">`;
             ownerSelect += `<option value="Team"${owner==='Team' ? ' selected' : ''}>Team</option>`;
             players.forEach((p, idx) => {
                 const val = 'Player ' + (idx+1);
@@ -446,26 +518,38 @@
             });
             ownerSelect += `</select>`;
 
+            // Render quantity buttons only up to the card's deck_limit (hide others)
+            const qtyArr = [];
+            for (let i = 0; i <= limit; i++) {
+                const activeCls = (c.qty == i) ? ' active' : '';
+                qtyArr.push(`<button type="button" class="qty-btn${activeCls}" onclick="window.modC_${rId}('${c.code}', ${i})">${i}</button>`);
+            }
+            const qtyButtons = `<div class="qty-btn-group qty-count-${Math.min(limit,4)}">${qtyArr.join('')}</div>`;
+
+            const packName = (def && def.pack_name) ? def.pack_name : (def && def.pack_code ? def.pack_code : '');
+            const faction = def ? (def.faction_code || def.faction || '') : (c.faction_code || c.faction || '');
+            const factionCircle = faction ? `<span class="fa fa-circle fg-${faction}" title="${faction}" style="display:inline-block;width:10px;height:10px;line-height:10px;margin-right:8px;"></span>` : '';
+
+            const displayName = def && def.name ? def.name : (c.name || '');
+
             return `
-            <div class="col-md-6">
-                <div class="card-row">
-                    <a href="${def ? def.url : '#'}" class="card card-tip card-link ${def && def.faction_code ? 'fg-' + def.faction_code : ''} d-flex align-items-center" data-code="${c.code}" data-toggle="modal" data-remote="false" data-target="#cardModal" style="flex:1; gap:12px; min-width:0; cursor:help;">
-                                <div class="card-img-container">
-                                    <img src="/bundles/cards/${c.code}.jpg" class="card-thumbnail" onerror="this.onerror=null; this.src='/bundles/cards/missing.jpg';">
-                                </div>
-                                <span style="font-size:0.85rem; font-weight:700; color:#333; overflow:hidden; text-overflow:ellipsis;">${c.name}</span>
-                            </a>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        ${ownerSelect}
-                        <div class="qty-btn-group">
-                            ${Array.from({length: limit + 1}, (_, i) => 
-                                `<button type="button" class="qty-btn ${c.qty == i ? 'active' : ''}" onclick="window.modC_${rId}('${c.code}', ${i})">${i}</button>`
-                            ).join('')}
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+                <tr>
+                    <td style="vertical-align:middle; width:110px;">${qtyButtons}</td>
+                    <td style="vertical-align:middle; min-width:260px;">
+                        ${factionCircle}
+                        <a href="${def ? def.url : '#'}" class="card-link card card-tip" data-code="${c.code}" style="font-weight:700; color:#2c3e50;">${displayName}</a>
+                        <div style="font-size:0.75rem; color:#888; margin-left:18px;">${c.code}</div>
+                    </td>
+                    <td style="vertical-align:middle; width:80px;">${def && def.icons ? def.icons : ''}</td>
+                    <td style="vertical-align:middle; width:60px;">${def && (def.cost!==undefined) ? def.cost : ''}</td>
+                    <td style="vertical-align:middle; width:100px;">${def && def.type_name ? def.type_name : (def && def.type ? def.type : '')}</td>
+                    <td style="vertical-align:middle;">${def && def.traits ? def.traits : ''}</td>
+                    <td style="vertical-align:middle; width:140px;">${packName}</td>
+                    <td style="vertical-align:middle; width:160px;">${ownerSelect}</td>
+                </tr>`;
         }).join('');
+
+        list.innerHTML = `<div class="table-responsive"><table class="table table-sm table-hover" style="margin-bottom:0;"><thead><tr><th style="width:110px;">Quantity</th><th>Name</th><th>Icons</th><th>Cost</th><th>Type</th><th>Traits</th><th>Pack</th><th>Owner</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         jIn.value = JSON.stringify(mine);
         attachHoverPreview();
     }
@@ -605,31 +689,48 @@
             if (unique.length >= 20) break;
         }
         hits = unique;
-        // build results
-        res.innerHTML = hits.map(c => {
+        // build results: render a table like the campaign list so layout is consistent
+        if (!hits || hits.length === 0) {
+            res.innerHTML = '<div class="text-muted">No results.</div>';
+            attachHoverPreview();
+            return;
+        }
+        const rows = hits.map(c => {
             const current = mine.find(x => x.code === c.code);
             const curQty = current ? current.qty : 0;
             const limit = parseInt(c.deck_limit) || 1;
+            const faction = c.faction_code || c.faction || '';
+            // faction circle before name (use same fa-circle + fg-<faction> markup used elsewhere)
+            const factionCircle = faction ? `<span class="fa fa-circle fg-${faction}" title="${faction}" style="display:inline-block;width:10px;height:10px;line-height:10px;margin-right:8px;"></span>` : '';
+            // icons column should show card resource icons (if present)
+            const iconsCol = c.icons || '';
+            const qtyArr = [];
+            for (let i = 0; i <= limit; i++) {
+                const activeCls = (curQty == i) ? ' active' : '';
+                qtyArr.push(`<button type="button" class="qty-btn${activeCls}" onclick="window.modC_${rId}('${c.code}', ${i})">${i}</button>`);
+            }
+            const qtyButtons = `<div class="qty-btn-group">${qtyArr.join('')}</div>`;
+            const packName = (c.pack_name) ? c.pack_name : (c.pack_code ? c.pack_code : '');
+            const cost = (c.cost !== undefined && c.cost !== null) ? c.cost : '';
+            const typeName = c.type_name || '';
+            const traits = c.traits || '';
             return `
-            <div class="col-md-6">
-                <div class="card-row">
-                    <a href="${c.url || '#'}" class="card card-tip card-link ${c.faction_code ? 'fg-' + c.faction_code : ''} d-flex align-items-center" data-code="${c.code}" data-toggle="modal" data-remote="false" data-target="#cardModal" style="flex:1; gap:12px; min-width:0; cursor:help;">
-                            <div class="card-img-container">
-                                <img src="/bundles/cards/${c.code}.jpg" class="card-thumbnail" onerror="this.onerror=null; this.src='/bundles/cards/missing.jpg';">
-                            </div>
-                            <div style="overflow:hidden; text-overflow:ellipsis;">
-                                <span style="font-size:0.85rem; font-weight:700; color:#333;">${c.name}</span><br>
-                                <small class="text-muted">${c.code}</small>
-                            </div>
-                        </a>
-                    <div class="qty-btn-group">
-                        ${Array.from({length: limit + 1}, (_, i) => 
-                            `<button type="button" class="qty-btn ${curQty == i ? 'active' : ''}" onclick="window.modC_${rId}('${c.code}', ${i}, '${c.name.replace(/'/g, "\\'")}')">${i}</button>`
-                        ).join('')}
-                    </div>
-                </div>
-            </div>`;
+                <tr>
+                    <td style="width:110px;">${qtyButtons}</td>
+                    <td>
+                        ${factionCircle}
+                        <a href="#" class="card-link card card-tip" data-code="${c.code}" style="font-weight:700; color:#2c3e50;">${c.name}</a>
+                        <div style="font-size:0.75rem; color:#888; margin-left:18px;">${c.code}</div>
+                    </td>
+                    <td>${iconsCol}</td>
+                    <td>${cost}</td>
+                    <td>${typeName}</td>
+                    <td>${traits}</td>
+                    <td style="vertical-align:middle; width:140px;">${packName}</td>
+                    <td>Team</td>
+                </tr>`;
         }).join('');
+        res.innerHTML = `<div class="table-responsive"><table class="table table-sm table-hover" style="margin-bottom:0;"><thead><tr><th style="width:110px;">Quantity</th><th>Name</th><th>Icons</th><th>Cost</th><th>Type</th><th>Traits</th><th>Pack</th><th>Owner</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         attachHoverPreview();
     }
 
@@ -637,9 +738,9 @@
         const preview = document.getElementById('floating-card-preview');
         const pTitle = document.getElementById('preview-title');
         const pContent = document.getElementById('preview-content');
+        // attach to existing .card-link elements (backwards compatible)
         form.querySelectorAll('.card-link').forEach(link => {
-            // If element already has qTip/card-tip behavior (used by decks), skip floating preview
-            if (link.classList && link.classList.contains('card-tip')) return;
+            // allow preview for all .card-link elements (including ones with card-tip)
             link.onmouseenter = function(e) {
                 const code = this.getAttribute('data-code');
                 const c = all ? all.find(x => x.code === code) : null;
@@ -657,6 +758,41 @@
             };
             link.onmouseleave = function() { preview.style.display = 'none'; };
         });
+
+        // Event delegation: ensure hover works for dynamically replaced/added links
+        if (!form._previewDelegated) {
+            form._previewDelegated = true;
+            // attach to document as well to cover elements rendered outside the form
+            if (!window._previewDelegated) {
+                window._previewDelegated = true;
+                document.addEventListener('mouseover', function(e) {
+                        const el = e.target.closest && e.target.closest('.card-link');
+                        if (!el) return;
+                    const code = el.getAttribute('data-code');
+                    const c = all ? all.find(x => x.code === code) : null;
+                    pTitle.textContent = c ? c.name : code;
+                    let html = "";
+                    if (c && c.text) html += `<div style="font-size:0.8rem; line-height:1.4; color:#444; white-space:pre-wrap; margin-bottom:12px;">${c.text}</div>`;
+                    html += `<img src="/bundles/cards/${code}.jpg" style="width:100%; border-radius:6px; margin-bottom:12px;" onerror="this.onerror=null; this.src='/bundles/cards/missing.jpg';">`;
+                    if (c && c.pack_name) html += `<div style="font-size:0.75rem; color:#888;">${c.pack_name}</div>`;
+                    pContent.innerHTML = html;
+                    preview.style.display = 'block';
+                });
+                document.addEventListener('mousemove', function(e) {
+                    const el = e.target.closest && e.target.closest('.card-link');
+                    if (el) {
+                        preview.style.left = (e.clientX + 20) + 'px';
+                        preview.style.top = (e.clientY - 150) + 'px';
+                    }
+                });
+                document.addEventListener('mouseout', function(e) {
+                    const related = e.relatedTarget;
+                    if (!related || !related.closest || !related.closest('.card-link')) {
+                        preview.style.display = 'none';
+                    }
+                });
+            }
+        }
     }
 
     (function initAll(){
@@ -708,6 +844,7 @@ document.addEventListener('DOMContentLoaded', function(){
             if (s.image) {
                 var img = block.querySelector('img');
                 if (img) {
+                    img.onerror = function(){ this.onerror=null; this.src='https://via.placeholder.com/280x140?text=No+Image'; };
                     img.src = (s.image.slice && s.image.slice(0,4) == 'http') ? s.image : ('/bundles/campaigns/' + s.image);
                 }
             }
