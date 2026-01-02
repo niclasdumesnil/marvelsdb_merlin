@@ -547,14 +547,18 @@ class SearchController extends Controller
             'combined_boost_counts' => $combined_boost_counts,
             'combined_traits' => $combined_traits,
             'combined_set_name' => $combined_set_name,
-            'selected_modular_code' => $selected_modular_code,
+			'selected_modular_code' => $selected_modular_code,
 			'selected_standard_code' => $selected_standard_code,
 			'selected_expert_code' => $selected_expert_code,
-            'selected_villain_code' => $selected_villain_code,
-			// per-slot modular selections and initial slots count
+			'selected_villain_code' => $selected_villain_code,
+			// per-slot modular selections
 			'selected_modular_codes' => $selected_modular_codes,
-			'slots' => $requested_slots,
-        ], $response);
+			// only pass explicit slots when a value was requested (avoid overriding Twig default behavior)
+		], $response);
+		// if a specific slots value was requested, include it via a secondary render param to avoid null overwrites
+		if ($requested_slots !== null) {
+			$response->headers->set('X-Requested-Slots', (string)$requested_slots);
+		}
     } 
 
     public function processAction(Request $request)

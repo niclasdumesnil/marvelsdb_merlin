@@ -19,7 +19,7 @@
                 (function(){
                     try {
                         var ref = document.referrer || '';
-                        if (ref && (ref.indexOf('/view/') !== -1 || ref.indexOf('/edit/') !== -1 || ref.indexOf('/campaign/') !== -1 || ref.indexOf('/scenario') !== -1)) {
+                        if (ref && (ref.indexOf('/campaign/') !== -1 || ref.indexOf('/scenario') !== -1)) {
                             var btn = document.getElementById('stories-back-btn');
                             if (btn) btn.style.display = '';
                         }
@@ -48,6 +48,14 @@
                 traits: combined_traits,
                 set_name: combined_set_name
             } %}
+        </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+        <div class="story-banner" style="display:flex; align-items:center; justify-content:flex-start; background:#f5f7fa; padding:8px 12px; border-radius:6px;">
+            <div>
+                <button id="randomize-btn" type="button" class="btn btn-sm btn-outline-secondary" style="padding:6px 10px;">Randomize</button>
+            </div>
         </div>
     </div>
 
@@ -144,9 +152,17 @@
             </div>
         </div>
         <div style="display: flex; gap: 8px; align-items:center;">
+            {% set current_villain_name = '' %}
+            {% if filtered_villain_sets is defined %}
+                {% for s in filtered_villain_sets %}
+                    {% if s.code == selected_villain_code %}
+                        {% set current_villain_name = s.name %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
             <button id="tab-villain" type="button" class="tab-btn"
                 style="padding: 8px 14px; border-radius: 6px; border: none; background: #eee; color: #222; font-weight: bold; cursor:pointer;">
-                Villain
+                {{ current_villain_name|default('Villain') }}
             </button>
             <button id="tab-standard" type="button" class="tab-btn"
                 style="padding: 8px 14px; border-radius: 6px; border: none; background: #eee; color: #222; font-weight: bold; cursor:pointer;">
@@ -158,9 +174,16 @@
             </button>
             {# Global tab removed per request: aggregation handled via 'Modular' selects and default behavior #}
             {% for i in 0..(filtered_modular_sets|length - 1) %}
+                {% set current_code = (selected_modular_codes[i] is defined and selected_modular_codes[i]) ? selected_modular_codes[i] : filtered_modular_sets[i].code %}
+                {% set current_name = '' %}
+                {% for s in filtered_modular_sets %}
+                    {% if s.code == current_code %}
+                        {% set current_name = s.name %}
+                    {% endif %}
+                {% endfor %}
                 <button id="tab-modular-{{ i }}" type="button" class="tab-modular-btn tab-btn" data-index="{{ i }}"
                     style="padding: 8px 14px; border-radius: 6px; border: none; background: #eee; color: #222; font-weight: bold; cursor:pointer;">
-                    Modular {{ i+1 }}
+                    {{ current_name|default('Modular ' ~ (i+1)) }}
                 </button>
             {% endfor %}
         </div>

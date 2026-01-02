@@ -82,6 +82,40 @@ function updatePanels(tab, index) {
     }
 }
 
+function updateTabLabels() {
+    try {
+        // villain
+        const villainSel = document.getElementById('villain-sets');
+        const villainBtn = document.getElementById('tab-villain');
+        if (villainSel && villainBtn) {
+            const opt = villainSel.options[villainSel.selectedIndex];
+            villainBtn.textContent = opt ? opt.text : 'Villain';
+        }
+        // standard
+        const standardSel = document.getElementById('standard-sets');
+        const standardBtn = document.getElementById('tab-standard');
+        if (standardSel && standardBtn) {
+            const opt = standardSel.options[standardSel.selectedIndex];
+            standardBtn.textContent = opt && opt.text.trim() !== '' ? opt.text : 'Standard';
+        }
+        // expert
+        const expertSel = document.getElementById('expert-sets');
+        const expertBtn = document.getElementById('tab-expert');
+        if (expertSel && expertBtn) {
+            const opt = expertSel.options[expertSel.selectedIndex];
+            expertBtn.textContent = opt && opt.text.trim() !== '' ? opt.text : 'Expert';
+        }
+        // modulars
+        document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){
+            const idx = sel.id.replace('modular-sets-','');
+            const btn = document.getElementById('tab-modular-' + idx);
+            if (!btn) return;
+            const opt = sel.options[sel.selectedIndex];
+            btn.textContent = opt && opt.text ? opt.text : ('Modular ' + (parseInt(idx,10)+1));
+        });
+    } catch(e) { console.warn('updateTabLabels error', e); }
+}
+
 function getActiveTab() { return activeTab; }
 
 function updateCombinedStatsPanel() {
@@ -194,11 +228,11 @@ document.addEventListener('DOMContentLoaded', function() {
     })();
 
     // bind modular selects
-    document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){ sel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); }); });
+    document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){ sel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); updateTabLabels(); }); });
 
     // bind standard/expert selects to update panels when changed
-    const standardSel = document.getElementById('standard-sets'); if (standardSel) standardSel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); });
-    const expertSel = document.getElementById('expert-sets'); if (expertSel) expertSel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); });
+    const standardSel = document.getElementById('standard-sets'); if (standardSel) standardSel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); updateTabLabels(); });
+    const expertSel = document.getElementById('expert-sets'); if (expertSel) expertSel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); updateTabLabels(); });
 
 
     // handle number of modulars input (if present)
@@ -225,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
         applyNumModulars();
     }
 
-    const vsel = document.getElementById('villain-sets'); if (vsel) vsel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); });
+    const vsel = document.getElementById('villain-sets'); if (vsel) vsel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); updateTabLabels(); });
 
     // bind show permanent toggle
     const spbtn = document.getElementById('show-permanent-btn');
@@ -241,10 +275,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // bind randomize button (trigger only)
+    const rndBtn = document.getElementById('randomize-btn');
+    if (rndBtn) {
+        rndBtn.addEventListener('click', function(){
+            try {
+                // villain
+                const vsel = document.getElementById('villain-sets');
+                if (vsel && vsel.options.length > 0) vsel.selectedIndex = Math.floor(Math.random() * vsel.options.length);
+                // modulars (only visible selects)
+                document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){
+                    const wrapper = sel.closest ? sel.closest('.modular-select') : null;
+                    if (wrapper && window.getComputedStyle(wrapper).display === 'none') return;
+                    if (sel.options.length > 0) sel.selectedIndex = Math.floor(Math.random() * sel.options.length);
+                });
+                // standard & expert
+                const ssel = document.getElementById('standard-sets'); if (ssel && ssel.options.length > 0) ssel.selectedIndex = Math.floor(Math.random() * ssel.options.length);
+                const esel = document.getElementById('expert-sets'); if (esel && esel.options.length > 0) esel.selectedIndex = Math.floor(Math.random() * esel.options.length);
+
+                // refresh UI
+                updateTabLabels();
+                updatePanels(getActiveTab(), activeModularIndex);
+                updateCombinedStatsPanel();
+            } catch(e){ console.warn('randomize error', e); }
+        });
+    }
+
 
 
     // default to modular 0
     setTab('modular', 0);
+    updateTabLabels();
     updateCombinedStatsPanel();
 });
 
