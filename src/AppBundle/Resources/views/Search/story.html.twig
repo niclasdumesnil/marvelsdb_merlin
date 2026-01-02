@@ -47,7 +47,9 @@
         {# debug attributes: server-side rendered selected villain code and scenario default for quick inspection #}
         {% set debug_vcode = selected_villain_code is defined ? selected_villain_code : '' %}
         {% set debug_default_val = (default_modulars_map[debug_vcode|lower] is defined) ? default_modulars_map[debug_vcode|lower] : '' %}
-        <div id="combined-stats-panel" data-modular-codes="{{ _modcodes }}" data-default-modulars="{{ default_modulars_map|default({})|json_encode|e('html_attr') }}">
+        {# determine if the page was invoked by campaign/scenario/team or explicit modular params #}
+        {% set caller_provided_slots = (app.request.query.get('from_campaign') is not null and app.request.query.get('from_campaign') == '1') or (app.request.query.get('from_scenario') is not null and app.request.query.get('from_scenario') == '1') or (app.request.query.get('from_team') is not null and app.request.query.get('from_team') == '1') or (app.request.query.get('modulars') is not null) or (app.request.query.get('nbmodular') is not null) or (app.request.query.get('modular_set') is not null) %}
+        <div id="combined-stats-panel" data-modular-codes="{{ _modcodes }}" data-default-modulars="{{ default_modulars_map|default({})|json_encode|e('html_attr') }}" data-caller-provided="{{ caller_provided_slots ? '1' : '0' }}">
             {% include 'AppBundle:Search:set_stats.html.twig' with {
                 stats: combined_stats,
                 color: '#111',

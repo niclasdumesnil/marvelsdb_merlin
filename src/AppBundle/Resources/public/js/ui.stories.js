@@ -265,6 +265,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             function updateDefaultFromScenario() {
                 try {
+                    const panel = document.getElementById('combined-stats-panel');
+                    if (panel && panel.dataset && panel.dataset.callerProvided === '1') return; // respect caller-provided values
                     const vsel = document.getElementById('villain-sets');
                     const vcode = vsel ? (vsel.value || '') : '';
                     const normalized = (vcode || '').toLowerCase();
@@ -278,6 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             // expose for other handlers
             window.updateDefaultFromScenario = updateDefaultFromScenario;
+            try { if (window.updateDefaultFromScenario) window.updateDefaultFromScenario(); } catch(e) {}
         } catch(e){}
     })();
     // bind villain tab
