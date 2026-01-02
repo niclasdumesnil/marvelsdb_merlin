@@ -7,6 +7,8 @@
 
 <style>
     #show-permanent-btn.active { background-color: #2f3542; color: #fff; border-color: #2f3542; }
+    .fm-badge { background: #d0eaff; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size:0.78rem; vertical-align: middle; margin-left:8px; display:inline-block; }
+    .creator-badge { background: #000; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size:0.78rem; vertical-align: middle; margin-left:8px; display:inline-block; }
 </style>
 
 {% set show_spoilers = true %}
@@ -19,9 +21,13 @@
                 (function(){
                     try {
                         var ref = document.referrer || '';
-                        if (ref && (ref.indexOf('/campaign/') !== -1 || ref.indexOf('/scenario') !== -1)) {
-                            var btn = document.getElementById('stories-back-btn');
-                            if (btn) btn.style.display = '';
+                        var qs = window.location.search || '';
+                        var fromParam = /from_campaign=1|from_scenario=1|from_team=1/.test(qs);
+                        // show back button when referrer looks like a team/campaign/scenario page or when explicit param present
+                        if (fromParam) {
+                            var btn = document.getElementById('stories-back-btn'); if (btn) btn.style.display = '';
+                        } else if (ref && (ref.indexOf('/campaign') !== -1 || ref.indexOf('/scenario') !== -1 || ref.indexOf('/team/') !== -1)) {
+                            var btn2 = document.getElementById('stories-back-btn'); if (btn2) btn2.style.display = '';
                         }
                     } catch(e){}
                 })();
@@ -51,25 +57,62 @@
         </div>
     </div>
 
+    {# server-side: allow campaign/scenario/team to signal we should hide randomize via query param for robust behavior #}
+    {% set hide_randomize = (app.request.query.get('from_campaign') is not null and app.request.query.get('from_campaign') == '1') or (app.request.query.get('from_scenario') is not null and app.request.query.get('from_scenario') == '1') or (app.request.query.get('from_team') is not null and app.request.query.get('from_team') == '1') %}
     <div style="margin-bottom:12px;">
-        <div class="story-banner" style="display:flex; align-items:center; justify-content:flex-start; background:#f5f7fa; padding:8px 12px; border-radius:6px;">
+        <div id="randomize-banner" class="story-banner" style="display:{{ hide_randomize ? 'none' : 'flex' }}; align-items:center; justify-content:flex-start; background:#f5f7fa; padding:8px 12px; border-radius:6px; gap:12px;">
             <div>
                 <button id="randomize-btn" type="button" class="btn btn-sm btn-outline-secondary" style="padding:6px 10px;">Randomize</button>
             </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <input id="randomize-exclude-std-exp" type="checkbox" checked />
+                    <label for="randomize-exclude-std-exp" style="margin:0; font-size:0.95rem; color:#333;">Exclude Standard/Expert</label>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <input id="randomize-exclude-fm-villain" type="checkbox" checked />
+                    <label for="randomize-exclude-fm-villain" style="margin:0; font-size:0.95rem; color:#333;">Exclude Fanmade Villain</label>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <input id="randomize-exclude-fm-modular" type="checkbox" checked />
+                    <label for="randomize-exclude-fm-modular" style="margin:0; font-size:0.95rem; color:#333;">Exclude Fanmade Modulars</label>
+                </div>
+            </div>
         </div>
     </div>
+    <script>
+        (function(){
+            try {
+                // JS fallback: hide banner when referrer looks like campaign/scenario/team (covers cases without query param)
+                var ref = document.referrer || '';
+                var banner = document.getElementById('randomize-banner');
+                if (banner && ref && (ref.indexOf('/campaign') !== -1 || ref.indexOf('/scenario') !== -1 || ref.indexOf('/team/') !== -1)) {
+                    banner.style.display = 'none';
+                }
+            } catch(e){}
+        })();
+    </script>
 
     <div style="display: flex; align-items: flex-start; gap: 32px; margin-bottom: 18px;">
         <div>
             <div style="font-weight:bold; margin-bottom:6px;">Villain</div>
-            <select id="villain-sets" name="villain_set" style="width: 100%;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <select id="villain-sets" name="villain_set" style="width: 100%;">
                 {% for set in filtered_villain_sets %}
-                    <option value="{{ set.code }}"
+                    {% if villain_fanmade_map is defined and (villain_fanmade_map[set.code] is defined) %}
+                        {% set is_fm = villain_fanmade_map[set.code] %}
+                        {% else %}
+                        {% set is_fm = (set.pack is defined and set.pack.creator is defined and (set.pack.creator is not empty and set.pack.creator is not null and set.pack.creator|lower != 'ffg')) ? 1 : 0 %}
+                    {% endif %}
+                    <option value="{{ set.code }}" data-fanmade="{{ is_fm }}" data-creator="{{ set.pack.creator|default('') }}"
                         {% if set.code == selected_villain_code %}selected{% endif %}>
                         {{ set.name }}
                     </option>
                 {% endfor %}
-            </select>
+                </select>
+                <span id="badge-villain-sets" class="fm-badge" style="display:none;">FM</span>
+                <span id="badge-villain-creator" class="creator-badge" style="display:none;">FFG</span>
+            </div>
                 {# Show Permanent button moved into the banner above the tabs #}
         </div>
         <div>
@@ -101,16 +144,25 @@
                 {% set selected_modular_codes = selected_modular_codes|default([]) %}
                 {% for i in 0..(filtered_modular_sets|length - 1) %}
                     <div style="margin-bottom:6px;" class="modular-select" data-index="{{ i }}">
-                        <select id="modular-sets-{{ i }}" name="modular_set_{{ i }}" style="width: 100%;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <select id="modular-sets-{{ i }}" name="modular_set_{{ i }}" style="width: 100%;">
                             {% set current_selected = selected_modular_codes[i] is defined ? selected_modular_codes[i] : null %}
                             {% for set in filtered_modular_sets %}
-                                {% if current_selected is not null %}
-                                    <option value="{{ set.code }}" {% if set.code == current_selected %}selected{% endif %}>{{ set.name }}</option>
+                                {% if modular_fanmade_map is defined and (modular_fanmade_map[set.code] is defined) %}
+                                    {% set is_fm = modular_fanmade_map[set.code] %}
                                 {% else %}
-                                    <option value="{{ set.code }}" {% if set.code == filtered_modular_sets[i].code %}selected{% endif %}>{{ set.name }}</option>
+                                    {% set is_fm = (set.pack is defined and set.pack.creator is defined and (set.pack.creator is not empty and set.pack.creator is not null and set.pack.creator|lower != 'ffg')) ? 1 : 0 %}
+                                {% endif %}
+                                {% if current_selected is not null %}
+                                    <option value="{{ set.code }}" data-fanmade="{{ is_fm }}" data-creator="{{ set.pack.creator|default('') }}" {% if set.code == current_selected %}selected{% endif %}>{{ set.name }}</option>
+                                {% else %}
+                                    <option value="{{ set.code }}" data-fanmade="{{ is_fm }}" data-creator="{{ set.pack.creator|default('') }}" {% if set.code == filtered_modular_sets[i].code %}selected{% endif %}>{{ set.name }}</option>
                                 {% endif %}
                             {% endfor %}
-                        </select>
+                            </select>
+                            <span id="badge-modular-sets-{{ i }}" class="fm-badge" style="display:none;">FM</span>
+                            <span id="badge-modular-creator-{{ i }}" class="creator-badge" style="display:none;">FFG</span>
+                        </div>
                     </div>
                 {% endfor %}
             {% else %}
@@ -119,28 +171,46 @@
         </div>
         <div>
             <div style="font-weight:bold; margin-bottom:6px;">Standard modular</div>
-            <select id="standard-sets" name="standard_set" style="width: 100%;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <select id="standard-sets" name="standard_set" style="width: 100%;">
                 <option value="" {% if selected_standard_code is empty %}selected{% endif %}>none</option>
                 {% if filtered_standard_sets is defined and filtered_standard_sets|length > 0 %}
                     {% for set in filtered_standard_sets %}
-                        <option value="{{ set.code }}" {% if set.code == selected_standard_code %}selected{% endif %}>{{ set.name }}</option>
+                        {% if standard_fanmade_map is defined and (standard_fanmade_map[set.code] is defined) %}
+                            {% set is_fm = standard_fanmade_map[set.code] %}
+                        {% else %}
+                            {% set is_fm = (set.pack is defined and set.pack.creator is defined and (set.pack.creator is not empty and set.pack.creator is not null and set.pack.creator|lower != 'ffg')) ? 1 : 0 %}
+                        {% endif %}
+                        <option value="{{ set.code }}" data-fanmade="{{ is_fm }}" data-creator="{{ set.pack.creator|default('') }}" {% if set.code == selected_standard_code %}selected{% endif %}>{{ set.name }}</option>
                     {% endfor %}
                 {% else %}
                     <option value="">No standard sets</option>
                 {% endif %}
-            </select>
+                </select>
+                <span id="badge-standard-sets" class="fm-badge" style="display:none;">FM</span>
+                <span id="badge-standard-creator" class="creator-badge" style="display:none;">FFG</span>
+            </div>
             <div style="height:6px;"></div>
             <div style="font-weight:bold; margin-bottom:6px;">Expert modular</div>
-            <select id="expert-sets" name="expert_set" style="width: 100%;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <select id="expert-sets" name="expert_set" style="width: 100%;">
                 <option value="" {% if selected_expert_code is empty %}selected{% endif %}>none</option>
                 {% if filtered_expert_sets is defined and filtered_expert_sets|length > 0 %}
                     {% for set in filtered_expert_sets %}
-                        <option value="{{ set.code }}" {% if set.code == selected_expert_code %}selected{% endif %}>{{ set.name }}</option>
+                        {% if expert_fanmade_map is defined and (expert_fanmade_map[set.code] is defined) %}
+                            {% set is_fm = expert_fanmade_map[set.code] %}
+                        {% else %}
+                            {% set is_fm = (set.pack is defined and set.pack.creator is defined and (set.pack.creator is not empty and set.pack.creator is not null and set.pack.creator|lower != 'ffg')) ? 1 : 0 %}
+                        {% endif %}
+                        <option value="{{ set.code }}" data-fanmade="{{ is_fm }}" data-creator="{{ set.pack.creator|default('') }}" {% if set.code == selected_expert_code %}selected{% endif %}>{{ set.name }}</option>
                     {% endfor %}
                 {% else %}
                     <option value="">No expert sets</option>
                 {% endif %}
-            </select>
+                </select>
+                <span id="badge-expert-sets" class="fm-badge" style="display:none;">FM</span>
+                <span id="badge-expert-creator" class="creator-badge" style="display:none;">FFG</span>
+            </div>
             
         </div>
     </div>

@@ -452,11 +452,40 @@ class SearchController extends Controller
 		if ($requested_slots === null) $requested_slots = $request->query->get('nbmodular');
 		if ($requested_slots === null) $requested_slots = count($selected_modular_codes) ?: null;
 
+		// If modular_set_* params were provided, restrict the available modular sets to only those codes (preserve provided order)
+		if (!empty($selected_modular_codes)) {
+			$new_mod_sets = [];
+			foreach ($selected_modular_codes as $code) {
+				$set = $this->getSetByCode($filtered_modular_sets, $code);
+				if ($set) $new_mod_sets[] = $set;
+			}
+			if (count($new_mod_sets) > 0) {
+				$filtered_modular_sets = $new_mod_sets;
+			}
+		}
+
 		// normalize selected_modular_code for legacy single-select usage (panels)
 		$selected_modular_code = isset($selected_modular_codes[0]) ? $selected_modular_codes[0] : ($filtered_modular_sets ? $filtered_modular_sets[0]->getCode() : null);
 		$selected_standard_code = $request->query->get('standard_set') ?: ($filtered_standard_sets ? $filtered_standard_sets[0]->getCode() : null);
 		$selected_expert_code = $request->query->get('expert_set') ?: ($filtered_expert_sets ? $filtered_expert_sets[0]->getCode() : null);
         $selected_villain_code = $request->query->get('villain_set') ?: $filtered_villain_sets[0]->getCode();
+
+		// If explicit villain/standard/expert set params were provided, restrict available sets to only those
+		$villain_param = $request->query->get('villain_set');
+		if ($villain_param) {
+			$vs = $this->getSetByCode($filtered_villain_sets, $villain_param);
+			if ($vs) $filtered_villain_sets = [$vs];
+		}
+		$standard_param = $request->query->get('standard_set');
+		if ($standard_param) {
+			$ss = $this->getSetByCode($filtered_standard_sets, $standard_param);
+			if ($ss) $filtered_standard_sets = [$ss];
+		}
+		$expert_param = $request->query->get('expert_set');
+		if ($expert_param) {
+			$es = $this->getSetByCode($filtered_expert_sets, $expert_param);
+			if ($es) $filtered_expert_sets = [$es];
+		}
 
 		$modular_stats = $data['modular_stats_by_set'][$selected_modular_code] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
 		$standard_stats = $data_standard['modular_stats_by_set'][$selected_standard_code] ?? ['differentCards'=>0,'totalCards'=>0,'totalBoost'=>0,'totalBoostStar'=>0,'averageBoost'=>'0.00'];
@@ -512,7 +541,28 @@ class SearchController extends Controller
 		$expert_name = $this->getSetByCode($filtered_expert_sets, $selected_expert_code) ? $this->getSetByCode($filtered_expert_sets, $selected_expert_code)->getName() : '';
         $villain_name = $this->getSetByCode($filtered_villain_sets, $selected_villain_code) ? $this->getSetByCode($filtered_villain_sets, $selected_villain_code)->getName() : '';
 		$combined_set_name = trim($modular_name . ' + ' . $standard_name . ' + ' . $expert_name . ' + ' . $villain_name, ' + ');
-
+		// build fanmade maps for sets by inspecting the pack creator of cards belonging to each set
+		$villain_fanmade_map = [];
+		foreach ($filtered_villain_sets as $s) { $villain_fanmade_map[$s->getCode()] = 0; }
+		$modular_fanmade_map = [];
+		foreach ($filtered_modular_sets as $s) { $modular_fanmade_map[$s->getCode()] = 0; }
+		$standard_fanmade_map = [];
+		foreach ($filtered_standard_sets as $s) { $standard_fanmade_map[$s->getCode()] = 0; }
+		$expert_fanmade_map = [];
+		foreach ($filtered_expert_sets as $s) { $expert_fanmade_map[$s->getCode()] = 0; }
+		foreach ($cards as $card) {
+			$cardset = $card->getCardset();
+			if (!$cardset) continue;
+			$code = $cardset->getCode();
+			$pack = $card->getPack();
+			$creator = $pack ? $pack->getCreator() : null;
+			// consider pack creator values different from 'ffg' (and non-empty) as fanmade
+			$isFanmade = ($creator !== null && $creator !== '' && strtolower($creator) !== 'ffg') ? 1 : 0;
+			if (isset($villain_fanmade_map[$code]) && $isFanmade) $villain_fanmade_map[$code] = 1;
+			if (isset($modular_fanmade_map[$code]) && $isFanmade) $modular_fanmade_map[$code] = 1;
+			if (isset($standard_fanmade_map[$code]) && $isFanmade) $standard_fanmade_map[$code] = 1;
+			if (isset($expert_fanmade_map[$code]) && $isFanmade) $expert_fanmade_map[$code] = 1;
+		}
         return $this->render('AppBundle:Search:story.html.twig', [
             "pagetitle" => "Stories",
             "pagedescription" => "Villains reference",
@@ -553,6 +603,11 @@ class SearchController extends Controller
 			'selected_villain_code' => $selected_villain_code,
 			// per-slot modular selections
 			'selected_modular_codes' => $selected_modular_codes,
+			// maps of set_code => fanmade flag computed server-side
+			'villain_fanmade_map' => $villain_fanmade_map,
+			'modular_fanmade_map' => $modular_fanmade_map,
+			'standard_fanmade_map' => $standard_fanmade_map,
+			'expert_fanmade_map' => $expert_fanmade_map,
 			// only pass explicit slots when a value was requested (avoid overriding Twig default behavior)
 		], $response);
 		// if a specific slots value was requested, include it via a secondary render param to avoid null overwrites

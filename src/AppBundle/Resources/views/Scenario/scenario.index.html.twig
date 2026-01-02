@@ -62,8 +62,10 @@
                             </div>
                             <div class="right">
                                 {% set creatorTop = s.getCreator() %}
-                                {% set isDefaultCreator = (creatorTop|lower == 'default') %}
-                                <span class="pill {{ isDefaultCreator ? 'pill-creator-default' : 'pill-creator-blue' }}">{{ creatorTop ?: '—' }}</span>
+                                {# Treat 'FFG' (or legacy 'default') as the default/official creator -> black badge #}
+                                {% set isDefaultCreator = (creatorTop is defined and (creatorTop|lower == 'default' or creatorTop|lower == 'ffg')) %}
+                                {% set creator_display = isDefaultCreator ? 'FFG' : (creatorTop ?: '—') %}
+                                <span class="pill {{ isDefaultCreator ? 'pill-creator-default' : 'pill-creator-blue' }}">{{ creator_display }}</span>
                             </div>
                         </div>
 

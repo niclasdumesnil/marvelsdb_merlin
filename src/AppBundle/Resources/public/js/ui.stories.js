@@ -113,7 +113,79 @@ function updateTabLabels() {
             const opt = sel.options[sel.selectedIndex];
             btn.textContent = opt && opt.text ? opt.text : ('Modular ' + (parseInt(idx,10)+1));
         });
+        // update FM badges to reflect selected options
+        try { updateFMBadges(); } catch(e) {}
     } catch(e) { console.warn('updateTabLabels error', e); }
+}
+
+function updateFMBadges() {
+    // villain
+    try {
+        const vsel = document.getElementById('villain-sets');
+        const vb = document.getElementById('badge-villain-sets');
+        const vb_creator = document.getElementById('badge-villain-creator');
+        if (vsel && vb) {
+            const opt = vsel.options[vsel.selectedIndex];
+            if (opt && opt.getAttribute('data-fanmade') === '1') { vb.style.display = ''; } else { vb.style.display = 'none'; }
+            try {
+                if (vb_creator) {
+                    const creator = opt ? (opt.getAttribute('data-creator') || '').toLowerCase() : '';
+                    if (creator === 'ffg') { vb_creator.style.display = ''; } else { vb_creator.style.display = 'none'; }
+                }
+            } catch(e){}
+        }
+    } catch(e){}
+    // standard
+    try {
+        const ssel = document.getElementById('standard-sets');
+        const sb = document.getElementById('badge-standard-sets');
+        const sb_creator = document.getElementById('badge-standard-creator');
+        if (ssel && sb) {
+            const opt = ssel.options[ssel.selectedIndex];
+            if (opt && opt.getAttribute('data-fanmade') === '1') { sb.style.display = ''; } else { sb.style.display = 'none'; }
+            try {
+                if (sb_creator) {
+                    const creator = opt ? (opt.getAttribute('data-creator') || '').toLowerCase() : '';
+                    if (creator === 'ffg') { sb_creator.style.display = ''; } else { sb_creator.style.display = 'none'; }
+                }
+            } catch(e){}
+        }
+    } catch(e){}
+    // expert
+    try {
+        const esel = document.getElementById('expert-sets');
+        const eb = document.getElementById('badge-expert-sets');
+        const eb_creator = document.getElementById('badge-expert-creator');
+        if (esel && eb) {
+            const opt = esel.options[esel.selectedIndex];
+            if (opt && opt.getAttribute('data-fanmade') === '1') { eb.style.display = ''; } else { eb.style.display = 'none'; }
+            try {
+                if (eb_creator) {
+                    const creator = opt ? (opt.getAttribute('data-creator') || '').toLowerCase() : '';
+                    if (creator === 'ffg') { eb_creator.style.display = ''; } else { eb_creator.style.display = 'none'; }
+                }
+            } catch(e){}
+        }
+    } catch(e){}
+    // modulars
+    try {
+        document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){
+            const idx = sel.id.replace('modular-sets-','');
+            const b = document.getElementById('badge-modular-sets-' + idx);
+            const b_creator = document.getElementById('badge-modular-creator-' + idx);
+            if (!b) return;
+            const wrapper = sel.closest ? sel.closest('.modular-select') : null;
+            if (wrapper && window.getComputedStyle(wrapper).display === 'none') { b.style.display = 'none'; return; }
+            const opt = sel.options[sel.selectedIndex];
+            if (opt && opt.getAttribute('data-fanmade') === '1') { b.style.display = ''; } else { b.style.display = 'none'; }
+            try {
+                if (b_creator) {
+                    const creator = opt ? (opt.getAttribute('data-creator') || '').toLowerCase() : '';
+                    if (creator === 'ffg') { b_creator.style.display = ''; } else { b_creator.style.display = 'none'; }
+                }
+            } catch(e){}
+        });
+    } catch(e){}
 }
 
 function getActiveTab() { return activeTab; }
@@ -280,18 +352,36 @@ document.addEventListener('DOMContentLoaded', function() {
     if (rndBtn) {
         rndBtn.addEventListener('click', function(){
             try {
+                // helper: pick random option from select, optionally excluding fanmade
+                function pickRandomOption(sel, excludeFanmade){
+                    if (!sel) return;
+                    let opts = Array.prototype.slice.call(sel.options);
+                    if (excludeFanmade) opts = opts.filter(o => o.getAttribute('data-fanmade') !== '1');
+                    if (opts.length === 0) return;
+                    const pick = opts[Math.floor(Math.random() * opts.length)];
+                    sel.value = pick.value;
+                }
+
+                const excludeFanmadeVillain = document.getElementById('randomize-exclude-fm-villain');
+                const excludeFanmadeModular = document.getElementById('randomize-exclude-fm-modular');
+                const excludeStdExp = document.getElementById('randomize-exclude-std-exp');
+
                 // villain
                 const vsel = document.getElementById('villain-sets');
-                if (vsel && vsel.options.length > 0) vsel.selectedIndex = Math.floor(Math.random() * vsel.options.length);
+                pickRandomOption(vsel, excludeFanmadeVillain && excludeFanmadeVillain.checked);
+
                 // modulars (only visible selects)
                 document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){
                     const wrapper = sel.closest ? sel.closest('.modular-select') : null;
                     if (wrapper && window.getComputedStyle(wrapper).display === 'none') return;
-                    if (sel.options.length > 0) sel.selectedIndex = Math.floor(Math.random() * sel.options.length);
+                    pickRandomOption(sel, excludeFanmadeModular && excludeFanmadeModular.checked);
                 });
-                // standard & expert
-                const ssel = document.getElementById('standard-sets'); if (ssel && ssel.options.length > 0) ssel.selectedIndex = Math.floor(Math.random() * ssel.options.length);
-                const esel = document.getElementById('expert-sets'); if (esel && esel.options.length > 0) esel.selectedIndex = Math.floor(Math.random() * esel.options.length);
+
+                // standard & expert (skip if exclude option checked)
+                if (!(excludeStdExp && excludeStdExp.checked)) {
+                    const ssel = document.getElementById('standard-sets'); pickRandomOption(ssel, false);
+                    const esel = document.getElementById('expert-sets'); pickRandomOption(esel, false);
+                }
 
                 // refresh UI
                 updateTabLabels();
