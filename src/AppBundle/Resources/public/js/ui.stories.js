@@ -242,6 +242,44 @@ function refreshVisibleSetInfoPanels() {
 }
 document.addEventListener('DOMContentLoaded', function() {
     console.debug('ui.stories: DOMContentLoaded');
+    // Initialize num-modulars from data-default-slots if present and manage default hint visibility
+    (function(){
+        try {
+            const numInputLocal = document.getElementById('num-modulars');
+            let userTouchedNum = false;
+            if (numInputLocal && numInputLocal.dataset && numInputLocal.dataset.defaultSlots) {
+                // ensure JS-side value matches template-provided default
+                numInputLocal.value = numInputLocal.dataset.defaultSlots;
+            }
+            if (numInputLocal) {
+                numInputLocal.addEventListener('change', function(){ userTouchedNum = true; applyNumModulars(); });
+            }
+            // parse default_modulars_map exposed by template
+            let defaultModMap = {};
+            try {
+                const panel = document.getElementById('combined-stats-panel');
+                if (panel && panel.dataset && panel.dataset.defaultModulars) {
+                    defaultModMap = JSON.parse(panel.dataset.defaultModulars);
+                }
+            } catch(e) { }
+
+            function updateDefaultFromScenario() {
+                try {
+                    const vsel = document.getElementById('villain-sets');
+                    const vcode = vsel ? (vsel.value || '') : '';
+                    const normalized = (vcode || '').toLowerCase();
+                    const def = (defaultModMap && defaultModMap[normalized]) ? parseInt(defaultModMap[normalized],10) : null;
+                    const numEl = document.getElementById('num-modulars');
+                    if (numEl && def !== null && !userTouchedNum) {
+                        numEl.value = def;
+                        applyNumModulars();
+                    }
+                } catch(e) { }
+            }
+            // expose for other handlers
+            window.updateDefaultFromScenario = updateDefaultFromScenario;
+        } catch(e){}
+    })();
     // bind villain tab
     const tv = document.getElementById('tab-villain'); if (tv) tv.addEventListener('click', function(){ setTab('villain'); });
     // bind modular tab buttons
@@ -331,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
         applyNumModulars();
     }
 
-    const vsel = document.getElementById('villain-sets'); if (vsel) vsel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); updateTabLabels(); });
+    const vsel = document.getElementById('villain-sets'); if (vsel) vsel.addEventListener('change', function(){ updatePanels(getActiveTab(), activeModularIndex); updateCombinedStatsPanel(); updateTabLabels(); try { if (window.updateDefaultFromScenario) window.updateDefaultFromScenario(); } catch(e){} });
 
     // bind show permanent toggle
     const spbtn = document.getElementById('show-permanent-btn');
@@ -369,6 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // villain
                 const vsel = document.getElementById('villain-sets');
                 pickRandomOption(vsel, excludeFanmadeVillain && excludeFanmadeVillain.checked);
+                try { if (window.updateDefaultFromScenario) window.updateDefaultFromScenario(); } catch(e) {}
 
                 // modulars (only visible selects)
                 document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){

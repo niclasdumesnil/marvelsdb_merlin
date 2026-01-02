@@ -44,7 +44,10 @@
                 {% if loop.first %}{% set _modcodes = s.code %}{% else %}{% set _modcodes = _modcodes ~ ',' ~ s.code %}{% endif %}
             {% endfor %}
         {% endif %}
-        <div id="combined-stats-panel" data-modular-codes="{{ _modcodes }}">
+        {# debug attributes: server-side rendered selected villain code and scenario default for quick inspection #}
+        {% set debug_vcode = selected_villain_code is defined ? selected_villain_code : '' %}
+        {% set debug_default_val = (default_modulars_map[debug_vcode|lower] is defined) ? default_modulars_map[debug_vcode|lower] : '' %}
+        <div id="combined-stats-panel" data-modular-codes="{{ _modcodes }}" data-default-modulars="{{ default_modulars_map|default({})|json_encode|e('html_attr') }}">
             {% include 'AppBundle:Search:set_stats.html.twig' with {
                 stats: combined_stats,
                 color: '#111',
@@ -117,7 +120,7 @@
         </div>
         <div>
             <div style="font-weight:bold; margin-bottom:6px;">Modular slots</div>
-            {# number of slots: prefer query param 'modulars' sent by campaign page, otherwise default to 1 #}
+            {# number of slots: prefer query param 'modulars' sent by campaign page, otherwise use scenario default or default to 1 #}
             {% set requested_slots = app.request.query.get('modulars') %}
             {% set max_slots = (filtered_modular_sets is defined) ? filtered_modular_sets|length : 0 %}
             {# Controller can supply an explicit `slots` variable when appropriate (e.g. TeamController). #}
@@ -127,18 +130,21 @@
             {% elseif requested_slots is not null and (requested_slots + 0) > 0 %}
                 {% set slots = (requested_slots + 0) %}
             {% else %}
-                {# default to 1 when opened directly without explicit param or controller hint #}
-                {% set slots = 1 %}
+                {# default: prefer scenario-provided default modular count for selected villain, otherwise 1 #}
+                {% set default_mod_map = default_modulars_map|default({}) %}
+                {% set vcode = selected_villain_code is defined ? (selected_villain_code|lower) : '' %}
+                {% set slots = (default_mod_map[vcode] is defined and default_mod_map[vcode]) ? (default_mod_map[vcode] + 0) : 1 %}
             {% endif %}
             {% if max_slots > 0 and slots > max_slots %}
                 {% set slots = max_slots %}
             {% endif %}
-            {% if slots > 0 %}
+                    {% if slots > 0 %}
                 <div style="margin-top:6px; margin-bottom:12px; display:flex; gap:8px; align-items:center;">
                     <div style="display:flex; flex-direction:column;"><label style="font-weight:600;">Number of modulars</label>
-                        <input id="num-modulars" type="number" min="1" max="{{ filtered_modular_sets|length }}" value="{{ slots }}" style="width:100px; padding:4px;" />
+                        <input id="num-modulars" type="number" min="1" max="{{ filtered_modular_sets|length }}" value="{{ slots }}" data-default-slots="{{ slots }}" style="width:100px; padding:4px;" />
                     </div>
-                    <div style="color:#666; font-size:0.95rem;">Value passed by the campaign page if provided, otherwise default.</div>
+                    <div style="display:flex; flex-direction:column; color:#666; font-size:0.95rem;">
+                    </div>
                 </div>
                 {# render all available modular selects but mark them with data-index so JS can show/hide per requested count #}
                 {% set selected_modular_codes = selected_modular_codes|default([]) %}

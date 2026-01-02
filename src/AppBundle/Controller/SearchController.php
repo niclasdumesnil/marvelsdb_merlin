@@ -410,9 +410,10 @@ class SearchController extends Controller
 
 	public function storyAction(Request $request)
 	{
-        $response = new Response();
-        $response->setPublic();
-        $response->setMaxAge($this->container->getParameter('cache_expiration'));
+		$response = new Response();
+		// Mark story page response private to avoid stale public caches affecting dynamic scenario defaults
+		$response->setPrivate();
+		$response->setMaxAge(0);
 
         $em = $this->getDoctrine()->getManager();
 
@@ -563,6 +564,30 @@ class SearchController extends Controller
 			if (isset($standard_fanmade_map[$code]) && $isFanmade) $standard_fanmade_map[$code] = 1;
 			if (isset($expert_fanmade_map[$code]) && $isFanmade) $expert_fanmade_map[$code] = 1;
 		}
+
+		// Build default modulars map from external scenario definitions if available
+		$default_modulars_map = [];
+		try {
+			$projectDir = $this->getParameter('kernel.project_dir');
+			$candidate = realpath($projectDir . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'marvelsdb_fanmade_data' . DIRECTORY_SEPARATOR . 'scenario.json');
+			if ($candidate && file_exists($candidate)) {
+				$raw = file_get_contents($candidate);
+				$json = json_decode($raw, true);
+				if (is_array($json)) {
+					foreach ($json as $entry) {
+						if (!empty($entry['villain_set_code']) && !empty($entry['title']) && isset($entry['nbmodular'])) {
+								// Match titles like 'DEFAULT MODULAR' or 'DEFAULT MODULARS' (case-insensitive)
+								$titled = strtolower(trim($entry['title']));
+								if (preg_match('/^default modulars?\b/', $titled)) {
+									$default_modulars_map[strtolower($entry['villain_set_code'])] = intval($entry['nbmodular']);
+								}
+						}
+					}
+				}
+			}
+		} catch (\Exception $e) {
+			// ignore if file not present or invalid
+		}
         return $this->render('AppBundle:Search:story.html.twig', [
             "pagetitle" => "Stories",
             "pagedescription" => "Villains reference",
@@ -608,6 +633,8 @@ class SearchController extends Controller
 			'modular_fanmade_map' => $modular_fanmade_map,
 			'standard_fanmade_map' => $standard_fanmade_map,
 			'expert_fanmade_map' => $expert_fanmade_map,
+			// map of villain_code (lowercase) => default nbmodular when defined in scenario.json
+			'default_modulars_map' => isset($default_modulars_map) ? $default_modulars_map : [],
 			// only pass explicit slots when a value was requested (avoid overriding Twig default behavior)
 		], $response);
 		// if a specific slots value was requested, include it via a secondary render param to avoid null overwrites
