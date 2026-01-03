@@ -681,7 +681,7 @@
                     <td data-label="Quantity" style="vertical-align:middle; width:110px;">${qtyButtons}</td>
                     <td data-label="Name" style="vertical-align:middle; min-width:260px;">
                         ${factionCircle}
-                        <a href="${def ? def.url : '#'}" class="card-link card card-tip" data-code="${c.code}" style="font-weight:700; color:#2c3e50;">${displayName}</a>
+                        <a href="${def ? def.url : '#'}" class="card-link card-tip" data-code="${c.code}" style="font-weight:700; color:#2c3e50;">${displayName}</a>
                         <div style="font-size:0.75rem; color:#888; margin-left:18px;">${c.code}</div>
                     </td>
                     <td data-label="Icons" style="vertical-align:middle; width:80px;">${renderIcons(def || {})}</td>
@@ -863,7 +863,7 @@
                     <td style="width:110px;">${qtyButtons}</td>
                     <td>
                         ${factionCircle}
-                        <a href="#" class="card-link card card-tip" data-code="${c.code}" style="font-weight:700; color:#2c3e50;">${c.name}</a>
+                        <a href="#" class="card-link card-tip" data-code="${c.code}" style="font-weight:700; color:#2c3e50;">${c.name}</a>
                         <div style="font-size:0.75rem; color:#888; margin-left:18px;">${c.code}</div>
                     </td>
                     <td>${iconsCol}</td>
@@ -884,8 +884,12 @@
         const pContent = document.getElementById('preview-content');
         // attach to existing .card-link elements (backwards compatible)
         form.querySelectorAll('.card-link').forEach(link => {
-            // allow preview for all .card-link elements (including ones with card-tip)
+            // allow preview for all .card-link elements (except when qTip is attached or modal will open)
             link.onmouseenter = function(e) {
+                // If this link already has a qTip attached (data-hasqtip) or is marked as card-tip, skip our floating preview
+                if (link.getAttribute && (link.getAttribute('data-hasqtip') || link.classList.contains('card-tip'))) return;
+                // If this link will open a Bootstrap modal (via data-toggle/data-target), don't show the floating preview
+                if (link.getAttribute && (link.getAttribute('data-toggle') === 'modal' || (link.getAttribute('data-target') && link.getAttribute('data-target').indexOf('#cardModal') !== -1))) return;
                 const code = this.getAttribute('data-code');
                 const c = all ? all.find(x => x.code === code) : null;
                 pTitle.textContent = c ? c.name : code;
@@ -912,6 +916,12 @@
                 document.addEventListener('mouseover', function(e) {
                         const el = e.target.closest && e.target.closest('.card-link');
                         if (!el) return;
+                        if (el.classList && el.classList.contains('no-hover-preview')) return;
+                        // If qTip is attached on this element, skip our floating preview
+                        if (el.getAttribute && el.getAttribute('data-hasqtip')) return;
+                        if (el.classList && el.classList.contains('card-tip')) return;
+                        // avoid showing preview if any Bootstrap modal is open
+                        if (document.querySelector && document.querySelector('.modal.show')) return;
                     const code = el.getAttribute('data-code');
                     const c = all ? all.find(x => x.code === code) : null;
                     pTitle.textContent = c ? c.name : code;
@@ -935,9 +945,33 @@
                         preview.style.display = 'none';
                     }
                 });
+                // If a Bootstrap modal is opened elsewhere, ensure the floating preview is hidden
+                if (window.jQuery) {
+                    jQuery(document).on('show.bs.modal', function(e) { try { preview.style.display = 'none'; } catch(err) { /* ignore */ } });
+                }
             }
         }
     }
+
+    // Prevent Bootstrap modal from opening for links inside this campaign form:
+    // on capture phase, strip modal attributes from anchors so the global
+    // delegated Bootstrap handler won't trigger. This only affects this form.
+    try {
+        form.addEventListener('click', function(e) {
+            var a = e.target && e.target.closest && e.target.closest('a[data-toggle="modal"], a[data-target="#cardModal"], a.card');
+            if (!a) return;
+            try { a.removeAttribute('data-toggle'); } catch(_) {}
+            try { a.removeAttribute('data-target'); } catch(_) {}
+            // Prevent delegated body handlers (like app.card_modal bound to '.card') from firing
+            try {
+                if (a.classList && a.classList.contains('card')) {
+                    e.stopImmediatePropagation();
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            } catch(err) {}
+        }, true);
+    } catch(e) { /* ignore if form not available */ }
 
     (function initAll(){
         try {
