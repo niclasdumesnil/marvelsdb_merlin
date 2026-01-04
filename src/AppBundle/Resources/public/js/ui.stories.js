@@ -433,6 +433,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // bind randomize modulars button (only randomize modular selects, preserve number of visible slots)
+    const rndModBtn = document.getElementById('randomize-modulars-btn');
+    if (rndModBtn) {
+        rndModBtn.addEventListener('click', function(){
+            try {
+                function pickRandomOption(sel, excludeFanmade){
+                    if (!sel) return;
+                    let opts = Array.prototype.slice.call(sel.options);
+                    if (excludeFanmade) opts = opts.filter(o => o.getAttribute('data-fanmade') !== '1');
+                    if (opts.length === 0) return;
+                    const pick = opts[Math.floor(Math.random() * opts.length)];
+                    sel.value = pick.value;
+                }
+                const excludeFanmadeModular = document.getElementById('randomize-exclude-fm-modular');
+                // only operate on visible modular selects to preserve number of slots
+                document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){
+                    const wrapper = sel.closest ? sel.closest('.modular-select') : null;
+                    if (wrapper && window.getComputedStyle(wrapper).display === 'none') return;
+                    pickRandomOption(sel, excludeFanmadeModular && excludeFanmadeModular.checked);
+                });
+
+                // refresh UI
+                updateTabLabels();
+                updatePanels(getActiveTab(), activeModularIndex);
+                updateCombinedStatsPanel();
+            } catch(e){ console.warn('randomize-modulars error', e); }
+        });
+    }
+
 
 
     // default to modular 0
