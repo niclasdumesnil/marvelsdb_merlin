@@ -162,10 +162,15 @@
                                 {% else %}
                                     {% set is_fm = (set.pack is defined and set.pack.creator is defined and (set.pack.creator is not empty and set.pack.creator is not null and set.pack.creator|lower != 'ffg')) ? 1 : 0 %}
                                 {% endif %}
+                                {% set mc_minion = modular_set_type_counts[set.code]['Minion']|default(0) %}
+                                {% set mc_treachery = modular_set_type_counts[set.code]['Treachery']|default(0) %}
+                                {% set mc_attachment = modular_set_type_counts[set.code]['Attachment']|default(0) %}
+                                {% set mc_environment = modular_set_type_counts[set.code]['Environment']|default(0) %}
+                                {% set mc_sidescheme = modular_set_type_counts[set.code]['Side Scheme']|default(0) %}
                                 {% if current_selected is not null %}
-                                    <option value="{{ set.code }}" data-fanmade="{{ is_fm }}" data-creator="{{ set.pack.creator|default('') }}" {% if set.code == current_selected %}selected{% endif %}>{{ set.name }}</option>
+                                    <option value="{{ set.code }}" data-fanmade="{{ is_fm }}" data-creator="{{ set.pack.creator|default('') }}" data-count-minion="{{ mc_minion }}" data-count-treachery="{{ mc_treachery }}" data-count-attachment="{{ mc_attachment }}" data-count-environment="{{ mc_environment }}" data-count-side-scheme="{{ mc_sidescheme }}" {% if set.code == current_selected %}selected{% endif %}>{{ set.name }}</option>
                                 {% else %}
-                                    <option value="{{ set.code }}" data-fanmade="{{ is_fm }}" data-creator="{{ set.pack.creator|default('') }}" {% if set.code == filtered_modular_sets[i].code %}selected{% endif %}>{{ set.name }}</option>
+                                    <option value="{{ set.code }}" data-fanmade="{{ is_fm }}" data-creator="{{ set.pack.creator|default('') }}" data-count-minion="{{ mc_minion }}" data-count-treachery="{{ mc_treachery }}" data-count-attachment="{{ mc_attachment }}" data-count-environment="{{ mc_environment }}" data-count-side-scheme="{{ mc_sidescheme }}" {% if set.code == filtered_modular_sets[i].code %}selected{% endif %}>{{ set.name }}</option>
                                 {% endif %}
                             {% endfor %}
                             </select>
@@ -225,11 +230,38 @@
     </div>
 
     <div style="margin-top: 32px;">
-        <div class="story-banner" style="display:flex; align-items:center; justify-content:flex-start; background:#f5f7fa; padding:8px 12px; border-radius:6px; margin-bottom:12px;">
-            <div>
-                <button id="show-permanent-btn" type="button" class="btn btn-sm btn-outline-secondary" data-show="1" style="padding:6px 10px;">Show Permanent</button>
+        <div class="story-banner" style="display:flex; align-items:center; justify-content:flex-start; background:#f5f7fa; padding:8px 12px; border-radius:6px; margin-bottom:12px; gap:16px;">
+                <div>
+                    <button id="show-permanent-btn" type="button" class="btn btn-sm btn-outline-secondary" data-show="1" style="padding:6px 10px;">Show Permanent</button>
+                </div>
+                <div id="story-filter-counters" style="display:flex; align-items:center; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:6px; font-weight:600; color:#333;">
+                        <i class="fas fa-dragon" style="margin-right:4px;"></i>
+                        <span style="font-size:0.92rem;">Minion</span>
+                        <input class="story-type-counter" data-type="minion" type="number" min="0" value="0" style="width:64px; padding:4px;" />
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px; font-weight:600; color:#333;">
+                        <i class="fas fa-skull-crossbones" style="margin-right:4px;"></i>
+                        <span style="font-size:0.92rem;">Treachery</span>
+                        <input class="story-type-counter" data-type="treachery" type="number" min="0" value="0" style="width:64px; padding:4px;" />
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px; font-weight:600; color:#333;">
+                        <i class="fas fa-paperclip" style="margin-right:4px;"></i>
+                        <span style="font-size:0.92rem;">Attachment</span>
+                        <input class="story-type-counter" data-type="attachment" type="number" min="0" value="0" style="width:64px; padding:4px;" />
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px; font-weight:600; color:#333;">
+                        <i class="fas fa-tree" style="margin-right:4px;"></i>
+                        <span style="font-size:0.92rem;">Environment</span>
+                        <input class="story-type-counter" data-type="environment" type="number" min="0" value="0" style="width:64px; padding:4px;" />
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px; font-weight:600; color:#333;">
+                        <i class="fas fa-project-diagram" style="margin-right:4px;"></i>
+                        <span style="font-size:0.92rem;">Side Scheme</span>
+                        <input class="story-type-counter" data-type="side-scheme" type="number" min="0" value="0" style="width:64px; padding:4px;" />
+                    </div>
+                </div>
             </div>
-        </div>
         <div style="display: flex; gap: 8px; align-items:center;">
             {% set current_villain_name = '' %}
             {% if filtered_villain_sets is defined %}

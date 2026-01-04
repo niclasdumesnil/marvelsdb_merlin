@@ -468,5 +468,60 @@ document.addEventListener('DOMContentLoaded', function() {
     setTab('modular', 0);
     updateTabLabels();
     updateCombinedStatsPanel();
+    // ---- Story page: type counters filtering for modular sets ----
+    (function(){
+        try {
+            function getCounters() {
+                const out = {};
+                document.querySelectorAll('.story-type-counter').forEach(function(inp){
+                    const t = inp.getAttribute('data-type');
+                    out[t] = parseInt(inp.value, 10) || 0;
+                });
+                return out;
+            }
+
+            function filterModularOptions() {
+                const counters = getCounters();
+                // for each modular select, hide options that do not satisfy all counters
+                document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){
+                    let needChangeSelection = false;
+                    Array.prototype.slice.call(sel.options).forEach(function(opt){
+                        const c_minion = parseInt(opt.getAttribute('data-count-minion') || 0, 10);
+                        const c_treachery = parseInt(opt.getAttribute('data-count-treachery') || 0, 10);
+                        const c_attachment = parseInt(opt.getAttribute('data-count-attachment') || 0, 10);
+                        const c_environment = parseInt(opt.getAttribute('data-count-environment') || 0, 10);
+                        const c_side = parseInt(opt.getAttribute('data-count-side-scheme') || 0, 10);
+                        let hide = false;
+                        if ((counters['minion'] || 0) > 0 && c_minion < (counters['minion'] || 0)) hide = true;
+                        if ((counters['treachery'] || 0) > 0 && c_treachery < (counters['treachery'] || 0)) hide = true;
+                        if ((counters['attachment'] || 0) > 0 && c_attachment < (counters['attachment'] || 0)) hide = true;
+                        if ((counters['environment'] || 0) > 0 && c_environment < (counters['environment'] || 0)) hide = true;
+                        if ((counters['side-scheme'] || 0) > 0 && c_side < (counters['side-scheme'] || 0)) hide = true;
+                        // set hidden attr so option disappears from dropdown while keeping DOM
+                        try { opt.hidden = hide; } catch(e) { if (hide) opt.style.display = 'none'; else opt.style.display = ''; }
+                        // if current selection has been hidden, note to change
+                        if (opt.selected && hide) needChangeSelection = true;
+                    });
+                    if (needChangeSelection) {
+                        // pick first non-hidden option if available
+                        const visible = Array.prototype.slice.call(sel.options).find(function(o){ return !o.hidden && (o.style.display !== 'none'); });
+                        if (visible) sel.value = visible.value; else sel.value = '';
+                    }
+                });
+                // refresh UI after filtering
+                updateTabLabels();
+                updateCombinedStatsPanel();
+            }
+
+            // attach events to inputs
+            document.querySelectorAll('.story-type-counter').forEach(function(inp){
+                inp.addEventListener('input', function(){ filterModularOptions(); });
+                inp.addEventListener('change', function(){ filterModularOptions(); });
+            });
+
+            // initial pass (counters default to 0 so nothing hidden)
+            try { filterModularOptions(); } catch(e) {}
+        } catch(e) { console.warn('story counters init error', e); }
+    })();
 });
 
