@@ -233,6 +233,8 @@ function updateCombinedStatsPanel() {
     }).map(s => s.value).filter(Boolean);
     const modularParam = modularCodes.join(',');
     const panel = document.getElementById('combined-stats-panel');
+    // Debug: trace calls (finalParam logged later after computed)
+    try { console.debug('updateCombinedStatsPanel called (initial)', { villain: villainCode, modulars: modularParam }); } catch(e) {}
     const standardSel = document.getElementById('standard-sets');
     const expertSel = document.getElementById('expert-sets');
     const extra = [];
@@ -240,14 +242,316 @@ function updateCombinedStatsPanel() {
     if (expertSel && expertSel.value) extra.push(expertSel.value);
     const allMods = modularCodes.concat(extra);
     const finalParam = allMods.join(',');
+    // Now we can safely log details including finalParam
+    try { console.debug('updateCombinedStatsPanel details', { finalParam: finalParam, modularCount: allMods.length }); } catch(e) {}
     // include show_permanent flag if the control exists
     var showPermanentFlag = '1';
     try { var spbtn = document.getElementById('show-permanent-btn'); if (spbtn && (spbtn.getAttribute('data-show') === '0')) showPermanentFlag = '0'; } catch(e){}
-    fetch(`/combined-stats?modular=${encodeURIComponent(finalParam)}&villain=${villainCode}&show_permanent=${showPermanentFlag}`)
-        .then(response => response.text())
-        .then(html => {
-            if (panel) panel.innerHTML = html;
+    try {
+        // Aggregate stats from existing per-set panels in DOM to avoid server calls.
+        const panels = [];
+        function tryAdd(sel) {
+            // accept selector like '#id' or raw id
+            var id = (typeof sel === 'string' && sel.charAt(0) === '#') ? sel.slice(1) : sel;
+            var el = document.getElementById(id);
+            if (!el) return;
+            var stats = el.querySelector('.stats-flex-main');
+            if (stats) panels.push({el: el, stats: stats});
+        }
+        // villain specific
+        tryAdd('#villain-cards-' + villainCode);
+        tryAdd('#villain-infos-' + villainCode);
+        // modular / standard / expert panels
+        allMods.forEach(function(code){
+            tryAdd('#infos-modular-' + code);
+            tryAdd('#infos-standard-' + code);
+            tryAdd('#infos-expert-' + code);
+            tryAdd('#cards-modular-' + code);
+            tryAdd('#cards-standard-' + code);
+            tryAdd('#cards-expert-' + code);
         });
+
+        // Remove any server-rendered stats blocks inside the combined panel that are not our combined instance
+        try {
+            if (panel) {
+                Array.prototype.slice.call(panel.querySelectorAll('.stats-flex-main, .stats-flex-row')).forEach(function(n){
+                    if (!n.closest('.combined-stats-instance')) {
+                        try { n.parentNode && n.parentNode.removeChild(n); } catch(e){}
+                    }
+                });
+            }
+        } catch(e) {}
+
+        // fallback: if no panels found, keep server fetch as fallback (rare)
+        if (panels.length === 0) {
+            fetch(`/combined-stats?modular=${encodeURIComponent(finalParam)}&villain=${villainCode}&show_permanent=${showPermanentFlag}`)
+                .then(response => response.text())
+                .then(html => { if (panel) panel.innerHTML = html; });
+            return;
+        }
+
+        // Aggregate numeric values by parsing the .stats-values spans order used by the template
+        let agg = { totalCards:0, differentCards:0, totalBoost:0, totalBoostStar:0, avgWeightedSum:0 };
+        // collect traits from all panels
+        const traitsArr = [];
+        panels.forEach(function(p){
+            try {
+                const spans = p.stats.querySelectorAll('.stats-values span');
+                if (spans && spans.length >= 5) {
+                    const total = parseInt(spans[0].textContent.trim().replace(/[^0-9\-]/g,''),10) || 0;
+                    const diff = parseInt(spans[1].textContent.trim().replace(/[^0-9\-]/g,''),10) || 0;
+                    const boost = parseInt(spans[2].textContent.trim().replace(/[^0-9\-]/g,''),10) || 0;
+                    const stars = parseInt(spans[3].textContent.trim().replace(/[^0-9\-]/g,''),10) || 0;
+                    const avg = parseFloat(spans[4].textContent.trim().replace(/[^0-9\-\.]/g,'')) || 0;
+                    agg.totalCards += total;
+                    agg.differentCards += diff;
+                    agg.totalBoost += boost;
+                    agg.totalBoostStar += stars;
+                    agg.avgWeightedSum += avg * total;
+                }
+            } catch(e) { /* ignore per-panel parse errors */ }
+            try {
+                // collect header trait spans (if any) - template places traits in spans with margin-left style
+                const headerSpans = p.stats.querySelectorAll('div > span[style*="margin-left"]');
+                if (headerSpans && headerSpans.length > 1) {
+                    for (let i = 1; i < headerSpans.length; i++) {
+                        try {
+                            const txt = headerSpans[i].textContent || '';
+                            txt.split(',').map(s=>s.trim()).forEach(function(t){ if (t) traitsArr.push(t); });
+                        } catch(e) {}
+                    }
+                }
+            } catch(e) {}
+        });
+        const averageBoost = (agg.totalCards > 0) ? (agg.avgWeightedSum / agg.totalCards) : 0;
+
+        // Build a new template that includes only the stats blocks (no card lists)
+        const tplContainer = document.createElement('div');
+        tplContainer.className = 'combined-stats-instance';
+        try {
+            const statsMainClone = panels[0].stats.cloneNode(true);
+            // replace numeric values in cloned .stats-values while preserving any icon element
+            function setValuePreserveIcon(spanEl, val) {
+                if (!spanEl) return;
+                // find first element child (icon)
+                var firstEl = null;
+                for (var c = spanEl.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) { firstEl = c; break; } }
+                if (firstEl) {
+                    // find existing text node after the icon
+                    var found = false;
+                    for (var n = firstEl.nextSibling; n; n = n.nextSibling) { if (n.nodeType === 3) { n.nodeValue = ' ' + String(val); found = true; break; } }
+                    if (!found) firstEl.parentNode.insertBefore(document.createTextNode(' ' + String(val)), firstEl.nextSibling);
+                } else {
+                    spanEl.textContent = String(val);
+                }
+            }
+            const tspan = statsMainClone.querySelectorAll('.stats-values span');
+            if (tspan && tspan.length >= 5) {
+                setValuePreserveIcon(tspan[0], agg.totalCards);
+                setValuePreserveIcon(tspan[1], agg.differentCards);
+                setValuePreserveIcon(tspan[2], agg.totalBoost);
+                setValuePreserveIcon(tspan[3], agg.totalBoostStar);
+                setValuePreserveIcon(tspan[4], averageBoost.toFixed(2));
+            }
+            // set header name: preserve any first element child (icon) and update/add following text node
+            const setNameNode = statsMainClone.querySelector('div > span[style*="margin-left"]');
+            if (setNameNode) {
+                let iconEl = null;
+                for (let c = setNameNode.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) { iconEl = c; break; } }
+                if (iconEl) {
+                    let foundText = false;
+                    for (let n = iconEl.nextSibling; n; n = n.nextSibling) { if (n.nodeType === 3) { n.nodeValue = ' Combined sets'; foundText = true; break; } }
+                    if (!foundText) { iconEl.parentNode.insertBefore(document.createTextNode(' Combined sets'), iconEl.nextSibling); }
+                } else {
+                    setNameNode.textContent = 'Combined sets';
+                }
+            }
+            // ensure combined traits from all selected panels are shown (not only the first panel's traits)
+            try {
+                const uniqueTraits = Array.from(new Set(traitsArr));
+                if (uniqueTraits.length > 0) {
+                    const traitsText = uniqueTraits.join(', ');
+                    // try find an existing trait span in the clone (icon with fa-tags)
+                    const headerSpansClone = statsMainClone.querySelectorAll('div > span[style*="margin-left"]');
+                    let traitSpanClone = null;
+                    if (headerSpansClone && headerSpansClone.length > 1) {
+                        for (let i = 1; i < headerSpansClone.length; i++) {
+                            try { if (headerSpansClone[i].querySelector && headerSpansClone[i].querySelector('i.fas.fa-tags')) { traitSpanClone = headerSpansClone[i]; break; } } catch(e){}
+                        }
+                    }
+                    if (traitSpanClone) {
+                        // preserve icon element and update text
+                        const iconEl = traitSpanClone.querySelector && traitSpanClone.querySelector('i');
+                        traitSpanClone.textContent = '';
+                        if (iconEl) traitSpanClone.appendChild(iconEl);
+                        if (iconEl) traitSpanClone.appendChild(document.createTextNode(' ' + traitsText)); else traitSpanClone.textContent = traitsText;
+                    } else {
+                        // insert a new span after the set name
+                        const span = document.createElement('span'); span.setAttribute('style','margin-left: 18px; font-weight: normal;');
+                        span.innerHTML = '<i class="fas fa-tags" style="margin-right: 6px;"></i>' + traitsText;
+                        const setNameNode2 = statsMainClone.querySelector('div > span[style*="margin-left"]');
+                        if (setNameNode2 && setNameNode2.parentNode) setNameNode2.parentNode.insertBefore(span, setNameNode2.nextSibling);
+                        else { const headerDiv = statsMainClone.querySelector('div'); if (headerDiv) headerDiv.appendChild(span); }
+                    }
+                }
+            } catch(e) {}
+
+            tplContainer.appendChild(statsMainClone);
+
+            // build aggregated detailed stats (type + boost) from all panels
+            try {
+                const typeAgg = {};
+                const boostAgg = {};
+                panels.forEach(function(p){
+                    try {
+                        const typeRows = p.el.querySelectorAll('.stats-type > div');
+                        if (typeRows) {
+                            typeRows.forEach(function(r){
+                                const labelEl = r.querySelector('.stats-label');
+                                const countSpan = r.querySelector('span[style*="text-align: right"]');
+                                if (!labelEl || !countSpan) return;
+                                const label = labelEl.textContent.trim();
+                                const m = countSpan.textContent.match(/(\d+)\s*\//);
+                                const v = m ? parseInt(m[1],10) : (parseInt(countSpan.textContent,10)||0);
+                                typeAgg[label] = (typeAgg[label] || 0) + v;
+                            });
+                        }
+                        const boostRows = p.el.querySelectorAll('.stats-boost > div');
+                        if (boostRows) {
+                            boostRows.forEach(function(r){
+                                const labelEl = r.querySelector('span');
+                                const countSpan = r.querySelector('span[style*="text-align: right"]');
+                                if (!labelEl || !countSpan) return;
+                                // detect number of boost icons
+                                const icons = labelEl.querySelectorAll('.icon.icon-boost');
+                                var key = '0';
+                                if (icons && icons.length > 0) {
+                                    key = (icons.length >= 3) ? '3+' : String(icons.length);
+                                }
+                                const m = countSpan.textContent.match(/(\d+)\s*\//);
+                                const v = m ? parseInt(m[1],10) : (parseInt(countSpan.textContent,10)||0);
+                                boostAgg[key] = (boostAgg[key] || 0) + v;
+                            });
+                        }
+                    } catch(e) {}
+                });
+
+                // construct details container similar to template
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'stats-flex-row';
+                detailsDiv.style.display = 'flex';
+                detailsDiv.style.gap = '32px';
+                detailsDiv.style.marginBottom = '18px';
+                detailsDiv.style.flexWrap = 'wrap';
+
+                // types column
+                const typesCol = document.createElement('div'); typesCol.className = 'stats-type'; typesCol.style.flex = '1'; typesCol.style.minWidth = '260px';
+                const typesTitle = document.createElement('div'); typesTitle.style.fontWeight='bold'; typesTitle.style.marginBottom='8px'; typesTitle.style.display='flex'; typesTitle.style.alignItems='center'; typesTitle.innerHTML = '<i class="fas fa-tags" style="margin-right: 6px;"></i>Type';
+                typesCol.appendChild(typesTitle);
+                Object.keys(typeAgg).forEach(function(t){
+                    const count = typeAgg[t] || 0;
+                    const row = document.createElement('div'); row.style.display='flex'; row.style.alignItems='center'; row.style.marginBottom='6px';
+                    const labelSpan = document.createElement('span'); labelSpan.className='stats-label'; labelSpan.style.width='120px'; labelSpan.style.minWidth='80px'; labelSpan.style.display='inline-block'; labelSpan.textContent = t;
+                    const barWrapper = document.createElement('div'); barWrapper.className='stats-bar'; barWrapper.style.background='#fff'; barWrapper.style.borderRadius='4px'; barWrapper.style.height='18px'; barWrapper.style.flex='1'; barWrapper.style.margin='0 8px'; barWrapper.style.border='1px solid #ccc'; barWrapper.style.position='relative';
+                    const innerBar = document.createElement('div'); innerBar.style.background = statsMainClone.style.background || (statsMainClone.getAttribute('style')||'').match(/background:\s*([^;]+)/i)?.[1] || '#111'; innerBar.style.height='100%'; innerBar.style.width = (agg.totalCards>0?Math.floor(count/agg.totalCards*100):0) + '%'; innerBar.style.borderRadius='4px';
+                    const innerSpan = document.createElement('span'); innerSpan.style.position='absolute'; innerSpan.style.left='8px'; innerSpan.style.top='0'; innerSpan.style.color='#fff'; innerSpan.style.fontSize='1em'; innerSpan.style.lineHeight='18px'; innerSpan.textContent = count;
+                    barWrapper.appendChild(innerBar); barWrapper.appendChild(innerSpan);
+                    const rightSpan = document.createElement('span'); rightSpan.style.width='32px'; rightSpan.style.textAlign='right'; rightSpan.textContent = count + '/' + (agg.totalCards||0);
+                    row.appendChild(labelSpan); row.appendChild(barWrapper); row.appendChild(rightSpan);
+                    typesCol.appendChild(row);
+                });
+
+                // boosts column
+                const boostCol = document.createElement('div'); boostCol.className='stats-boost'; boostCol.style.flex='1'; boostCol.style.minWidth='180px';
+                const boostTitle = document.createElement('div'); boostTitle.style.fontWeight='bold'; boostTitle.style.marginBottom='8px'; boostTitle.style.display='flex'; boostTitle.style.alignItems='center'; boostTitle.innerHTML = '<i class="fas fa-rocket" style="margin-right: 6px;"></i>Boost';
+                boostCol.appendChild(boostTitle);
+                // sort keys so 0,1,2,3+
+                const boostKeys = Object.keys(boostAgg).sort(function(a,b){
+                    const va = a==='3+'?3:parseInt(a,10)||0; const vb = b==='3+'?3:parseInt(b,10)||0; return va-vb;
+                });
+                boostKeys.forEach(function(k){
+                    const count = boostAgg[k] || 0;
+                    const row = document.createElement('div'); row.style.display='flex'; row.style.alignItems='center'; row.style.marginBottom='6px';
+                    const labelSpan = document.createElement('span'); labelSpan.style.width='60px'; labelSpan.style.display='inline-block';
+                    if (k === '0') { labelSpan.innerHTML = ''; } else if (k === '3+') { labelSpan.innerHTML = '<i class="icon icon-boost" style="margin-right:-3px;"></i><i class="icon icon-boost" style="margin-right:-3px;"></i><i class="icon icon-boost" style="margin-right:-3px;"></i> +'; } else { let html=''; for(let i=0;i<parseInt(k,10);i++){ html += '<i class="icon icon-boost" style="margin-right:-3px;"></i>'; } labelSpan.innerHTML = html; }
+                    const barWrapper = document.createElement('div'); barWrapper.className='stats-bar'; barWrapper.style.background='#fff'; barWrapper.style.borderRadius='4px'; barWrapper.style.height='18px'; barWrapper.style.flex='1'; barWrapper.style.margin='0 8px'; barWrapper.style.border='1px solid #ccc'; barWrapper.style.position='relative';
+                    const innerBar = document.createElement('div'); innerBar.style.background = statsMainClone.style.background || (statsMainClone.getAttribute('style')||'').match(/background:\s*([^;]+)/i)?.[1] || '#111'; innerBar.style.height='100%'; innerBar.style.width = (agg.totalCards>0?Math.floor(count/agg.totalCards*100):0) + '%'; innerBar.style.borderRadius='4px';
+                    const innerSpan = document.createElement('span'); innerSpan.style.position='absolute'; innerSpan.style.left='8px'; innerSpan.style.top='0'; innerSpan.style.color='#fff'; innerSpan.style.fontSize='1em'; innerSpan.style.lineHeight='18px'; innerSpan.textContent = count;
+                    barWrapper.appendChild(innerBar); barWrapper.appendChild(innerSpan);
+                    const rightSpan = document.createElement('span'); rightSpan.style.width='32px'; rightSpan.style.textAlign='right'; rightSpan.textContent = count + '/' + (agg.totalCards||0);
+                    row.appendChild(labelSpan); row.appendChild(barWrapper); row.appendChild(rightSpan);
+                    boostCol.appendChild(row);
+                });
+
+                detailsDiv.appendChild(typesCol);
+                detailsDiv.appendChild(boostCol);
+                tplContainer.appendChild(detailsDiv);
+            } catch(e) {}
+        } catch(e) { /* ignore construction errors */ }
+
+                if (panel) {
+                    try {
+                        // if we already inserted an instance previously, replace the first and remove duplicates
+                        const existingInstances = panel.querySelectorAll('.combined-stats-instance');
+                        if (existingInstances && existingInstances.length > 0) {
+                            // replace first instance
+                            panel.replaceChild(tplContainer, existingInstances[0]);
+                            // remove any additional leftover instances
+                            for (let i = 1; i < existingInstances.length; i++) {
+                                try { existingInstances[i].parentNode && existingInstances[i].parentNode.removeChild(existingInstances[i]); } catch(e) {}
+                            }
+                        } else {
+                            // update existing main/details in-place to avoid flicker when possible
+                            const existingMain = panel.querySelector('.stats-flex-main');
+                            if (existingMain) {
+                                const existingSpans = existingMain.querySelectorAll('.stats-values span');
+                                if (existingSpans && existingSpans.length >= 5) {
+                                    function setValuePreserveIcon(spanEl, val) {
+                                        if (!spanEl) return;
+                                        var firstEl = null;
+                                        for (var c = spanEl.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) { firstEl = c; break; } }
+                                        if (firstEl) {
+                                            var found = false;
+                                            for (var n = firstEl.nextSibling; n; n = n.nextSibling) { if (n.nodeType === 3) { n.nodeValue = ' ' + String(val); found = true; break; } }
+                                            if (!found) firstEl.parentNode.insertBefore(document.createTextNode(' ' + String(val)), firstEl.nextSibling);
+                                        } else {
+                                            spanEl.textContent = String(val);
+                                        }
+                                    }
+                                    setValuePreserveIcon(existingSpans[0], agg.totalCards);
+                                    setValuePreserveIcon(existingSpans[1], agg.differentCards);
+                                    setValuePreserveIcon(existingSpans[2], agg.totalBoost);
+                                    setValuePreserveIcon(existingSpans[3], agg.totalBoostStar);
+                                    setValuePreserveIcon(existingSpans[4], averageBoost.toFixed(2));
+                                }
+                                const nameNode = existingMain.querySelector('div > span[style*="margin-left"]');
+                                if (nameNode) {
+                                    let iconEl = null;
+                                    for (let c = nameNode.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) { iconEl = c; break; } }
+                                    if (iconEl) {
+                                        let foundText = false;
+                                        for (let n = iconEl.nextSibling; n; n = n.nextSibling) { if (n.nodeType === 3) { n.nodeValue = ' Combined sets'; foundText = true; break; } }
+                                        if (!foundText) { iconEl.parentNode.insertBefore(document.createTextNode(' Combined sets'), iconEl.nextSibling); }
+                                    } else {
+                                        nameNode.textContent = 'Combined sets';
+                                    }
+                                }
+                            } else {
+                                panel.appendChild(statsMainClone);
+                            }
+                            const existingDetails = panel.querySelector('.stats-flex-row');
+                            if (existingDetails) {
+                                existingDetails.parentNode.replaceChild(detailsDiv, existingDetails);
+                            } else {
+                                panel.appendChild(detailsDiv);
+                            }
+                        }
+                    } catch(e) { try { panel.appendChild(tplContainer); } catch(err){} }
+                }
+    } catch(e) {
+        // fallback to server on unexpected error
+        try { fetch(`/combined-stats?modular=${encodeURIComponent(finalParam)}&villain=${villainCode}&show_permanent=${showPermanentFlag}`).then(r=>r.text()).then(html=>{ if (panel) panel.innerHTML = html; }); } catch(_) {}
+    }
 }
 
 function applyShowPermanentFilter() {
