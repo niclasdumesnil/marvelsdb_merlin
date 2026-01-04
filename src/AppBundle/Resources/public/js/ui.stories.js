@@ -330,6 +330,9 @@ function updateCombinedStatsPanel() {
         tplContainer.className = 'combined-stats-instance';
         try {
             const statsMainClone = panels[0].stats.cloneNode(true);
+            // preserve original color for inner bars, then force banner to black
+            const originalBg = statsMainClone.style.background || (statsMainClone.getAttribute('style')||'').match(/background:\s*([^;]+)/i)?.[1] || '#111';
+            try { statsMainClone.style.background = '#000'; statsMainClone.style.color = '#fff'; } catch(e) {}
             // replace numeric values in cloned .stats-values while preserving any icon element
             function setValuePreserveIcon(spanEl, val) {
                 if (!spanEl) return;
@@ -453,7 +456,7 @@ function updateCombinedStatsPanel() {
                     const row = document.createElement('div'); row.style.display='flex'; row.style.alignItems='center'; row.style.marginBottom='6px';
                     const labelSpan = document.createElement('span'); labelSpan.className='stats-label'; labelSpan.style.width='120px'; labelSpan.style.minWidth='80px'; labelSpan.style.display='inline-block'; labelSpan.textContent = t;
                     const barWrapper = document.createElement('div'); barWrapper.className='stats-bar'; barWrapper.style.background='#fff'; barWrapper.style.borderRadius='4px'; barWrapper.style.height='18px'; barWrapper.style.flex='1'; barWrapper.style.margin='0 8px'; barWrapper.style.border='1px solid #ccc'; barWrapper.style.position='relative';
-                    const innerBar = document.createElement('div'); innerBar.style.background = statsMainClone.style.background || (statsMainClone.getAttribute('style')||'').match(/background:\s*([^;]+)/i)?.[1] || '#111'; innerBar.style.height='100%'; innerBar.style.width = (agg.totalCards>0?Math.floor(count/agg.totalCards*100):0) + '%'; innerBar.style.borderRadius='4px';
+                    const innerBar = document.createElement('div'); innerBar.style.background = '#000'; innerBar.style.height='100%'; innerBar.style.width = (agg.totalCards>0?Math.floor(count/agg.totalCards*100):0) + '%'; innerBar.style.borderRadius='4px';
                     const innerSpan = document.createElement('span'); innerSpan.style.position='absolute'; innerSpan.style.left='8px'; innerSpan.style.top='0'; innerSpan.style.color='#fff'; innerSpan.style.fontSize='1em'; innerSpan.style.lineHeight='18px'; innerSpan.textContent = count;
                     barWrapper.appendChild(innerBar); barWrapper.appendChild(innerSpan);
                     const rightSpan = document.createElement('span'); rightSpan.style.width='32px'; rightSpan.style.textAlign='right'; rightSpan.textContent = count + '/' + (agg.totalCards||0);
@@ -475,7 +478,7 @@ function updateCombinedStatsPanel() {
                     const labelSpan = document.createElement('span'); labelSpan.style.width='60px'; labelSpan.style.display='inline-block';
                     if (k === '0') { labelSpan.innerHTML = ''; } else if (k === '3+') { labelSpan.innerHTML = '<i class="icon icon-boost" style="margin-right:-3px;"></i><i class="icon icon-boost" style="margin-right:-3px;"></i><i class="icon icon-boost" style="margin-right:-3px;"></i> +'; } else { let html=''; for(let i=0;i<parseInt(k,10);i++){ html += '<i class="icon icon-boost" style="margin-right:-3px;"></i>'; } labelSpan.innerHTML = html; }
                     const barWrapper = document.createElement('div'); barWrapper.className='stats-bar'; barWrapper.style.background='#fff'; barWrapper.style.borderRadius='4px'; barWrapper.style.height='18px'; barWrapper.style.flex='1'; barWrapper.style.margin='0 8px'; barWrapper.style.border='1px solid #ccc'; barWrapper.style.position='relative';
-                    const innerBar = document.createElement('div'); innerBar.style.background = statsMainClone.style.background || (statsMainClone.getAttribute('style')||'').match(/background:\s*([^;]+)/i)?.[1] || '#111'; innerBar.style.height='100%'; innerBar.style.width = (agg.totalCards>0?Math.floor(count/agg.totalCards*100):0) + '%'; innerBar.style.borderRadius='4px';
+                    const innerBar = document.createElement('div'); innerBar.style.background = '#000'; innerBar.style.height='100%'; innerBar.style.width = (agg.totalCards>0?Math.floor(count/agg.totalCards*100):0) + '%'; innerBar.style.borderRadius='4px';
                     const innerSpan = document.createElement('span'); innerSpan.style.position='absolute'; innerSpan.style.left='8px'; innerSpan.style.top='0'; innerSpan.style.color='#fff'; innerSpan.style.fontSize='1em'; innerSpan.style.lineHeight='18px'; innerSpan.textContent = count;
                     barWrapper.appendChild(innerBar); barWrapper.appendChild(innerSpan);
                     const rightSpan = document.createElement('span'); rightSpan.style.width='32px'; rightSpan.style.textAlign='right'; rightSpan.textContent = count + '/' + (agg.totalCards||0);
@@ -504,6 +507,7 @@ function updateCombinedStatsPanel() {
                             // update existing main/details in-place to avoid flicker when possible
                             const existingMain = panel.querySelector('.stats-flex-main');
                             if (existingMain) {
+                                try { existingMain.style.background = '#000'; existingMain.style.color = '#fff'; } catch(e) {}
                                 const existingSpans = existingMain.querySelectorAll('.stats-values span');
                                 if (existingSpans && existingSpans.length >= 5) {
                                     function setValuePreserveIcon(spanEl, val) {
