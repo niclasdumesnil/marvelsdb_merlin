@@ -508,6 +508,38 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (visible) sel.value = visible.value; else sel.value = '';
                     }
                 });
+                // after filtering options, mark any type-counter that has no matching set
+                try {
+                    document.querySelectorAll('.story-type-counter').forEach(function(inp){
+                        const t = inp.getAttribute('data-type');
+                        const req = parseInt((counters[t] || 0), 10) || 0;
+                        // clear state by default
+                        inp.classList.remove('no-match');
+                        if (!t || req <= 0) {
+                            try { inp.removeAttribute('title'); } catch(e){}
+                            return;
+                        }
+                        let found = false;
+                        // check across all visible modular selects' visible options
+                        document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel2){
+                            const wrapper = sel2.closest ? sel2.closest('.modular-select') : null;
+                            if (wrapper && window.getComputedStyle(wrapper).display === 'none') return;
+                            Array.prototype.slice.call(sel2.options).forEach(function(opt){
+                                if (opt.hidden || opt.style.display === 'none') return;
+                                const attr = opt.getAttribute('data-count-' + t) || '0';
+                                const c = parseInt(attr, 10) || 0;
+                                if (c >= req) found = true;
+                            });
+                        });
+                        if (!found) {
+                            inp.classList.add('no-match');
+                            try { inp.setAttribute('title', 'No set matches the requested minimum for ' + t); } catch(e){}
+                        } else {
+                            try { inp.removeAttribute('title'); } catch(e){}
+                        }
+                    });
+                } catch(e) { console.warn('story-type no-match check error', e); }
+
                 // refresh UI after filtering
                 updateTabLabels();
                 updateCombinedStatsPanel();
