@@ -1,5 +1,22 @@
 let activeTab = 'modular';
 let activeModularIndex = 0;
+let modularsWarnTimeout = null;
+
+function showModularsWarning(msg) {
+    try {
+        const el = document.getElementById('modulars-warning');
+        if (!el) return;
+        if (msg === null || msg === '') {
+            el.style.display = 'none';
+            if (modularsWarnTimeout) { clearTimeout(modularsWarnTimeout); modularsWarnTimeout = null; }
+            return;
+        }
+        el.textContent = msg || 'Not enough modulars available to satisfy filters';
+        el.style.display = '';
+        if (modularsWarnTimeout) clearTimeout(modularsWarnTimeout);
+        modularsWarnTimeout = setTimeout(function(){ try { el.style.display = 'none'; } catch(e){} modularsWarnTimeout = null; }, 5000);
+    } catch(e) { console.warn('showModularsWarning error', e); }
+}
 
 function setTab(tab, index) {
     const modularContent = document.getElementById('tab-modular-content');
@@ -49,6 +66,19 @@ function setTab(tab, index) {
         const btn = document.getElementById('tab-expert');
         if (btn) { btn.style.background = '#6f2a9eff'; btn.style.color = '#fff'; }
         updatePanels('expert');
+    }
+
+    // Clear filters button
+    const clearBtn = document.getElementById('clear-story-filters-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function(){
+            try {
+                document.querySelectorAll('.story-type-counter').forEach(function(inp){ inp.value = '0'; inp.classList.remove('no-match'); try{ inp.dispatchEvent(new Event('input')); inp.dispatchEvent(new Event('change')); }catch(e){} });
+                try { if (window.filterStoryCounters) window.filterStoryCounters(); } catch(e) {}
+                updateTabLabels();
+                updateCombinedStatsPanel();
+            } catch(e) { console.warn('clear filters error', e); }
+        });
     }
 }
 
@@ -393,11 +423,25 @@ document.addEventListener('DOMContentLoaded', function() {
     if (rndBtn) {
         rndBtn.addEventListener('click', function(){
             try {
-                // helper: pick random option from select, optionally excluding fanmade
+                // helper: pick random option from select, respecting visibility, fanmade exclusion and type counters
                 function pickRandomOption(sel, excludeFanmade){
                     if (!sel) return;
-                    let opts = Array.prototype.slice.call(sel.options);
-                    if (excludeFanmade) opts = opts.filter(o => o.getAttribute('data-fanmade') !== '1');
+                    // build counters from current inputs
+                    const counters = (window.getStoryCounters && typeof window.getStoryCounters === 'function') ? window.getStoryCounters() : (function(){ const o={}; document.querySelectorAll('.story-type-counter').forEach(i=>{ o[i.getAttribute('data-type')] = parseInt(i.value,10)||0; }); return o; })();
+                    let opts = Array.prototype.slice.call(sel.options).filter(function(o){
+                        // skip hidden/invisible options
+                        if (o.hidden || (o.style && o.style.display === 'none')) return false;
+                        if (excludeFanmade && o.getAttribute('data-fanmade') === '1') return false;
+                        // ensure option meets all counters
+                        for (const t in counters) {
+                            const req = parseInt(counters[t] || 0, 10) || 0;
+                            if (req <= 0) continue;
+                            const attr = o.getAttribute('data-count-' + t) || '0';
+                            const c = parseInt(attr, 10) || 0;
+                            if (c < req) return false;
+                        }
+                        return true;
+                    });
                     if (opts.length === 0) return;
                     const pick = opts[Math.floor(Math.random() * opts.length)];
                     sel.value = pick.value;
@@ -412,12 +456,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 pickRandomOption(vsel, excludeFanmadeVillain && excludeFanmadeVillain.checked);
                 try { if (window.updateDefaultFromScenario) window.updateDefaultFromScenario(); } catch(e) {}
 
-                // modulars (only visible selects)
-                document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){
-                    const wrapper = sel.closest ? sel.closest('.modular-select') : null;
-                    if (wrapper && window.getComputedStyle(wrapper).display === 'none') return;
-                    pickRandomOption(sel, excludeFanmadeModular && excludeFanmadeModular.checked);
-                });
+                // modulars (only visible selects) - pick unique modulars when multiple slots
+                (function(){
+                    try {
+                        const visibleSelects = Array.prototype.slice.call(document.querySelectorAll('[id^="modular-sets-"]')).filter(function(sel){
+                            const wrapper = sel.closest ? sel.closest('.modular-select') : null;
+                            return !(wrapper && window.getComputedStyle(wrapper).display === 'none');
+                        });
+                        if (visibleSelects.length === 0) return;
+                        // build pool of eligible modular codes
+                        const counters = (window.getStoryCounters && typeof window.getStoryCounters === 'function') ? window.getStoryCounters() : (function(){ const o={}; document.querySelectorAll('.story-type-counter').forEach(i=>{ o[i.getAttribute('data-type')] = parseInt(i.value,10)||0; }); return o; })();
+                        const poolMap = {};
+                        visibleSelects.forEach(function(sel){ Array.prototype.slice.call(sel.options).forEach(function(o){
+                            if (o.hidden || (o.style && o.style.display === 'none')) return;
+                            if (excludeFanmadeModular && o.getAttribute('data-fanmade') === '1') return;
+                            // ensure it meets counters
+                            let ok = true;
+                            for (const t in counters) {
+                                const req = parseInt(counters[t] || 0, 10) || 0;
+                                if (req <= 0) continue;
+                                const attr = o.getAttribute('data-count-' + t) || '0';
+                                const c = parseInt(attr, 10) || 0;
+                                if (c < req) { ok = false; break; }
+                            }
+                            if (ok) poolMap[o.value] = o.value;
+                        }); });
+                        const pool = Object.keys(poolMap);
+                        if (pool.length === 0) {
+                            // nothing eligible
+                            visibleSelects.forEach(function(sel){ sel.value = ''; });
+                            showModularsWarning('Not enough modulars available to satisfy filters');
+                            return;
+                        }
+                        // shuffle pool
+                        for (let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const tmp=pool[i]; pool[i]=pool[j]; pool[j]=tmp; }
+                        if (pool.length >= visibleSelects.length) {
+                            for (let i=0;i<visibleSelects.length;i++) { visibleSelects[i].value = pool[i]; }
+                            showModularsWarning('');
+                        } else {
+                            // assign unique values for as many as possible, clear remaining
+                            for (let i=0;i<pool.length;i++) { visibleSelects[i].value = pool[i]; }
+                            for (let i=pool.length;i<visibleSelects.length;i++) { visibleSelects[i].value = ''; }
+                            showModularsWarning('Not enough modulars available to satisfy filters');
+                        }
+                    } catch(e) { console.warn('unique modular randomize error', e); }
+                })();
 
                 // standard & expert (skip if exclude option checked)
                 if (!(excludeStdExp && excludeStdExp.checked)) {
@@ -440,19 +523,65 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 function pickRandomOption(sel, excludeFanmade){
                     if (!sel) return;
-                    let opts = Array.prototype.slice.call(sel.options);
-                    if (excludeFanmade) opts = opts.filter(o => o.getAttribute('data-fanmade') !== '1');
+                    const counters = (window.getStoryCounters && typeof window.getStoryCounters === 'function') ? window.getStoryCounters() : (function(){ const o={}; document.querySelectorAll('.story-type-counter').forEach(i=>{ o[i.getAttribute('data-type')] = parseInt(i.value,10)||0; }); return o; })();
+                    let opts = Array.prototype.slice.call(sel.options).filter(function(o){
+                        if (o.hidden || (o.style && o.style.display === 'none')) return false;
+                        if (excludeFanmade && o.getAttribute('data-fanmade') === '1') return false;
+                        for (const t in counters) {
+                            const req = parseInt(counters[t] || 0, 10) || 0;
+                            if (req <= 0) continue;
+                            const attr = o.getAttribute('data-count-' + t) || '0';
+                            const c = parseInt(attr, 10) || 0;
+                            if (c < req) return false;
+                        }
+                        return true;
+                    });
                     if (opts.length === 0) return;
                     const pick = opts[Math.floor(Math.random() * opts.length)];
                     sel.value = pick.value;
                 }
                 const excludeFanmadeModular = document.getElementById('randomize-exclude-fm-modular');
                 // only operate on visible modular selects to preserve number of slots
-                document.querySelectorAll('[id^="modular-sets-"]').forEach(function(sel){
-                    const wrapper = sel.closest ? sel.closest('.modular-select') : null;
-                    if (wrapper && window.getComputedStyle(wrapper).display === 'none') return;
-                    pickRandomOption(sel, excludeFanmadeModular && excludeFanmadeModular.checked);
-                });
+                (function(){
+                    try {
+                        const visibleSelects = Array.prototype.slice.call(document.querySelectorAll('[id^="modular-sets-"]')).filter(function(sel){
+                            const wrapper = sel.closest ? sel.closest('.modular-select') : null;
+                            return !(wrapper && window.getComputedStyle(wrapper).display === 'none');
+                        });
+                        if (visibleSelects.length === 0) return;
+                        const counters = (window.getStoryCounters && typeof window.getStoryCounters === 'function') ? window.getStoryCounters() : (function(){ const o={}; document.querySelectorAll('.story-type-counter').forEach(i=>{ o[i.getAttribute('data-type')] = parseInt(i.value,10)||0; }); return o; })();
+                        const poolMap = {};
+                        visibleSelects.forEach(function(sel){ Array.prototype.slice.call(sel.options).forEach(function(o){
+                            if (o.hidden || (o.style && o.style.display === 'none')) return;
+                            if (excludeFanmadeModular && o.getAttribute('data-fanmade') === '1') return;
+                            let ok = true;
+                            for (const t in counters) {
+                                const req = parseInt(counters[t] || 0, 10) || 0;
+                                if (req <= 0) continue;
+                                const attr = o.getAttribute('data-count-' + t) || '0';
+                                const c = parseInt(attr, 10) || 0;
+                                if (c < req) { ok = false; break; }
+                            }
+                            if (ok) poolMap[o.value] = o.value;
+                        }); });
+                        const pool = Object.keys(poolMap);
+                        if (pool.length === 0) {
+                            visibleSelects.forEach(function(sel){ sel.value = ''; });
+                            showModularsWarning('Not enough modulars available to satisfy filters');
+                            return;
+                        }
+                        // shuffle pool
+                        for (let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const tmp=pool[i]; pool[i]=pool[j]; pool[j]=tmp; }
+                        if (pool.length >= visibleSelects.length) {
+                            for (let i=0;i<visibleSelects.length;i++) { visibleSelects[i].value = pool[i]; }
+                            showModularsWarning('');
+                        } else {
+                            for (let i=0;i<pool.length;i++) { visibleSelects[i].value = pool[i]; }
+                            for (let i=pool.length;i<visibleSelects.length;i++) { visibleSelects[i].value = ''; }
+                            showModularsWarning('Not enough modulars available to satisfy filters');
+                        }
+                    } catch(e) { console.warn('unique modular randomize-modulars error', e); }
+                })();
 
                 // refresh UI
                 updateTabLabels();
@@ -550,6 +679,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 inp.addEventListener('input', function(){ filterModularOptions(); });
                 inp.addEventListener('change', function(){ filterModularOptions(); });
             });
+
+            // expose counters/filter for external handlers (randomize/clear)
+            try { window.getStoryCounters = getCounters; window.filterStoryCounters = filterModularOptions; } catch(e){}
 
             // initial pass (counters default to 0 so nothing hidden)
             try { filterModularOptions(); } catch(e) {}

@@ -144,6 +144,8 @@
                                     {% set query = query|merge({'modulars': nb}) %}
                                 {% endif %}
                             {% endif %}
+                            {# mark that this link originates from a scenario so Stories can adjust UI #}
+                            {% set query = query|merge({'from_scenario': '1'}) %}
                             <div><a href="{{ path('Stories', query) }}">View statistics</a></div>
                             <div>&rsaquo;</div>
                         </div>

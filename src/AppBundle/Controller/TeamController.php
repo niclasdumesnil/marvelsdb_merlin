@@ -1538,6 +1538,8 @@ class TeamController extends Controller
             'expert_set_boost_counts' => $expert_set_boost_counts,
             'expert_traits_by_set' => $expert_traits_by_set,
             'expert_cards_by_set' => $expert_cards_by_set,
+            // indicate this rendering originates from a campaign/team context so Stories can hide randomize controls
+            'hide_randomize' => true,
         ]);
     }
 

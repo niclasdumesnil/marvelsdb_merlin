@@ -27,8 +27,10 @@
                         // show back button when referrer looks like a team/campaign/scenario page or when explicit param present
                         if (fromParam) {
                             var btn = document.getElementById('stories-back-btn'); if (btn) btn.style.display = '';
+                                try { var spb = document.getElementById('show-permanent-banner'); if (spb) spb.style.display = 'none'; } catch(e){}
                         } else if (ref && (ref.indexOf('/campaign') !== -1 || ref.indexOf('/scenario') !== -1 || ref.indexOf('/team/') !== -1)) {
                             var btn2 = document.getElementById('stories-back-btn'); if (btn2) btn2.style.display = '';
+                                try { var spb2 = document.getElementById('show-permanent-banner'); if (spb2) spb2.style.display = 'none'; } catch(e){}
                         }
                     } catch(e){}
                 })();
@@ -63,8 +65,10 @@
         </div>
     </div>
 
-    {# server-side: allow campaign/scenario/team to signal we should hide randomize via query param for robust behavior #}
-    {% set hide_randomize = (app.request.query.get('from_campaign') is not null and app.request.query.get('from_campaign') == '1') or (app.request.query.get('from_scenario') is not null and app.request.query.get('from_scenario') == '1') or (app.request.query.get('from_team') is not null and app.request.query.get('from_team') == '1') %}
+    {# server-side: allow campaign/scenario/team or caller-provided modular params to signal we should hide randomize via query param for robust behavior #}
+        {% if hide_randomize is not defined %}
+            {% set hide_randomize = caller_provided_slots or (app.request.query.get('from_campaign') is not null and app.request.query.get('from_campaign') == '1') or (app.request.query.get('from_scenario') is not null and app.request.query.get('from_scenario') == '1') or (app.request.query.get('from_team') is not null and app.request.query.get('from_team') == '1') %}
+        {% endif %}
     <div style="margin-bottom:12px;">
         <div id="randomize-banner" class="story-banner" style="display:{{ hide_randomize ? 'none' : 'flex' }}; align-items:center; justify-content:flex-start; background:#f5f7fa; padding:8px 12px; border-radius:6px; gap:12px;">
             <div>
@@ -180,6 +184,17 @@
                         </div>
                     </div>
                 {% endfor %}
+                <div id="modulars-warning" style="display:none; color:#d9534f; font-weight:600; margin-top:8px;">Not enough modulars available to satisfy filters</div>
+                <script>
+                    (function(){
+                        try {
+                            var ref = document.referrer || '';
+                            if (ref && (ref.indexOf('/campaign') !== -1 || ref.indexOf('/scenario') !== -1 || ref.indexOf('/team/') !== -1)) {
+                                var spb = document.getElementById('show-permanent-banner'); if (spb) spb.style.display = 'none';
+                            }
+                        } catch(e){}
+                    })();
+                </script>
             {% else %}
                 <div style="color:#777;">No modular sets available</div>
             {% endif %}
@@ -231,7 +246,7 @@
     </div>
 
     <div style="margin-top: 32px;">
-        <div class="story-banner" style="display:flex; align-items:center; justify-content:flex-start; background:#f5f7fa; padding:8px 12px; border-radius:6px; margin-bottom:12px; gap:16px;">
+        <div id="show-permanent-banner" class="story-banner" style="display:{{ hide_randomize ? 'none' : 'flex' }}; align-items:center; justify-content:flex-start; background:#f5f7fa; padding:8px 12px; border-radius:6px; margin-bottom:12px; gap:16px;">
                 <div>
                     <button id="show-permanent-btn" type="button" class="btn btn-sm btn-outline-secondary" data-show="1" style="padding:6px 10px;">Show Permanent</button>
                 </div>
@@ -262,6 +277,9 @@
                         <span style="font-size:0.92rem;">Side Scheme</span>
                         <input class="story-type-counter" data-type="side-scheme" type="number" min="0" value="0" style="width:64px; padding:4px;" />
                     </div>
+                </div>
+                <div style="margin-left:auto;">
+                    <button id="clear-story-filters-btn" type="button" class="btn btn-sm btn-outline-secondary" style="padding:6px 10px;">Clear filters</button>
                 </div>
             </div>
         <div style="display: flex; gap: 8px; align-items:center;">
