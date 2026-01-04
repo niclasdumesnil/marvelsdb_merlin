@@ -1224,10 +1224,24 @@ class TeamController extends Controller
         $filtered_modular_sets = [];
         foreach ($scenarioModulars as $m) {
             $mcode = is_array($m) ? ($m['code'] ?? null) : (is_string($m) ? $m : null);
+            $mname = is_array($m) ? ($m['name'] ?? null) : null;
+            $set = null;
             if ($mcode) {
+                // try direct code match
                 $set = $cardsetRepo->findOneBy(['code' => $mcode]);
-                if ($set) $filtered_modular_sets[] = $set;
+                // try common alternate code variant (underscore -> dash)
+                if (!$set) {
+                    $alt = str_replace('_', '-', $mcode);
+                    if ($alt !== $mcode) {
+                        $set = $cardsetRepo->findOneBy(['code' => $alt]);
+                    }
+                }
             }
+            // fallback: try match by name when provided (useful for older campaign defs)
+            if (!$set && $mname) {
+                $set = $cardsetRepo->findOneBy(['name' => $mname]);
+            }
+            if ($set) $filtered_modular_sets[] = $set;
         }
 
         // determine villain set: prefer query param, else try scenario code as set code, else use first villain set
