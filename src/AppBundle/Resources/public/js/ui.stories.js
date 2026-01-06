@@ -569,13 +569,52 @@ function applyShowPermanentFilter() {
     refreshVisibleSetInfoPanels();
 }
 
-function refreshVisibleSetInfoPanels() {
+function refreshVisibleSetInfoPanels(force) {
+    // Debounce rapid calls
+    try {
+        if (!window._refreshVisiblePanelsTimer) window._refreshVisiblePanelsTimer = null;
+        if (window._refreshVisiblePanelsTimer) { clearTimeout(window._refreshVisiblePanelsTimer); }
+        window._refreshVisiblePanelsTimer = setTimeout(function(){ window._refreshVisiblePanelsTimer = null; }, 50);
+    } catch(e){}
+    force = !!force;
     // For each visible infos-* panel, fetch stats for that set (pass show_permanent)
     var spFlag = '1'; try { var spb = document.getElementById('show-permanent-btn'); if (spb && spb.getAttribute('data-show') === '0') spFlag = '0'; } catch(e){}
+    // ensure a simple in-memory cache to avoid repeated fetches during the same page session
+    try { if (!window.storyInfoCache) window.storyInfoCache = {}; } catch(e) { window.storyInfoCache = {}; }
+
     // villain panels (villain-cards-<code>) -> fetch with villain=code and modular empty
-    document.querySelectorAll('.villain-cards-panel').forEach(function(panel){ if (panel.style.display === 'none') return; var code = panel.id.replace('villain-cards-',''); fetch(`/combined-stats?villain=${encodeURIComponent(code)}&show_permanent=${spFlag}`).then(r=>r.text()).then(html=>{ try{ var container = panel; var tmp = document.createElement('div'); tmp.innerHTML = html; var stats = tmp.querySelector('.stats-flex-main'); if (stats) { var existing = container.querySelector('.stats-flex-main'); if (existing) existing.parentNode.replaceChild(stats, existing); } }catch(e){} }); });
+    document.querySelectorAll('.villain-cards-panel').forEach(function(panel){
+        try {
+            if (panel.style.display === 'none') return;
+            var code = panel.id.replace('villain-cards-','');
+            var cacheKey = 'villain:' + code;
+            if (!force && window.storyInfoCache[cacheKey]) {
+                try { var tmp = document.createElement('div'); tmp.innerHTML = window.storyInfoCache[cacheKey]; var stats = tmp.querySelector('.stats-flex-main'); if (stats) { var existing = panel.querySelector('.stats-flex-main'); if (existing) existing.parentNode.replaceChild(stats, existing); } } catch(e) {}
+                return;
+            }
+            fetch(`/combined-stats?villain=${encodeURIComponent(code)}&show_permanent=${spFlag}`).then(r=>r.text()).then(html=>{
+                try{ window.storyInfoCache[cacheKey] = html; var tmp = document.createElement('div'); tmp.innerHTML = html; var stats = tmp.querySelector('.stats-flex-main'); if (stats) { var existing = panel.querySelector('.stats-flex-main'); if (existing) existing.parentNode.replaceChild(stats, existing); } }catch(e){}
+            });
+        } catch(e) {}
+    });
+
     // modular/standard/expert panels (infos-<type>-<code>) -> fetch with modular=code and villain empty
-    ['infos-modular-','infos-standard-','infos-expert-'].forEach(function(prefix){ document.querySelectorAll('[id^="'+prefix+'"]').forEach(function(panel){ if (panel.style.display === 'none') return; var code = panel.id.replace(prefix,''); fetch(`/combined-stats?modular=${encodeURIComponent(code)}&show_permanent=${spFlag}`).then(r=>r.text()).then(html=>{ try{ var tmp = document.createElement('div'); tmp.innerHTML = html; var stats = tmp.querySelector('.stats-flex-main'); if (stats) { var existing = panel.querySelector('.stats-flex-main'); if (existing) existing.parentNode.replaceChild(stats, existing); } }catch(e){} }); }); });
+    ['infos-modular-','infos-standard-','infos-expert-'].forEach(function(prefix){
+        document.querySelectorAll('[id^="'+prefix+'"]').forEach(function(panel){
+            try {
+                if (panel.style.display === 'none') return;
+                var code = panel.id.replace(prefix,'');
+                var cacheKey = prefix + code;
+                if (!force && window.storyInfoCache[cacheKey]) {
+                    try { var tmp = document.createElement('div'); tmp.innerHTML = window.storyInfoCache[cacheKey]; var stats = tmp.querySelector('.stats-flex-main'); if (stats) { var existing = panel.querySelector('.stats-flex-main'); if (existing) existing.parentNode.replaceChild(stats, existing); } } catch(e) {}
+                    return;
+                }
+                fetch(`/combined-stats?modular=${encodeURIComponent(code)}&show_permanent=${spFlag}`).then(r=>r.text()).then(html=>{
+                    try{ window.storyInfoCache[cacheKey] = html; var tmp = document.createElement('div'); tmp.innerHTML = html; var stats = tmp.querySelector('.stats-flex-main'); if (stats) { var existing = panel.querySelector('.stats-flex-main'); if (existing) existing.parentNode.replaceChild(stats, existing); } }catch(e){}
+                });
+            } catch(e) {}
+        });
+    });
 
 }
 document.addEventListener('DOMContentLoaded', function() {
