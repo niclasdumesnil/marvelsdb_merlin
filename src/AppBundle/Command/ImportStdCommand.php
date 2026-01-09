@@ -45,6 +45,12 @@ class ImportStdCommand extends ContainerAwareCommand
 				InputOption::VALUE_NONE,
 				'Only player cards'
 			);
+		$this->addOption(
+				'skip-scenario',
+				null,
+				InputOption::VALUE_NONE,
+				'Skip importing scenarios (scenario.json)'
+			);
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output)
@@ -180,22 +186,26 @@ class ImportStdCommand extends ContainerAwareCommand
 		$output->writeln("Done.");
 
 		// scenarios (fanmade)
-		$output->writeln("Importing Scenarios...");
-		$scenariosFileInfo = $this->getFileInfo($path, 'scenario.json');
-		$imported = $this->importScenariosJsonFile($scenariosFileInfo);
-		if(count($imported)) {
-			if ($this->output) $this->output->writeln("Imported/Updated scenarios count: " . count($imported));
-			foreach($imported as $sc) {
-				try { $this->output->writeln(" - " . ($sc->getCode() ? $sc->getCode() : $sc->getTitle())); } catch(\Exception $e) {}
+		if (!$input->getOption('skip-scenario')) {
+			$output->writeln("Importing Scenarios...");
+			$scenariosFileInfo = $this->getFileInfo($path, 'scenario.json');
+			$imported = $this->importScenariosJsonFile($scenariosFileInfo);
+			if(count($imported)) {
+				if ($this->output) $this->output->writeln("Imported/Updated scenarios count: " . count($imported));
+				foreach($imported as $sc) {
+					try { $this->output->writeln(" - " . ($sc->getCode() ? $sc->getCode() : $sc->getTitle())); } catch(\Exception $e) {}
+				}
+				$question = new ConfirmationQuestion("Do you confirm? (Y/n) ", true);
+				if(!$helper->ask($input, $output, $question)) {
+					die();
+				}
 			}
-			$question = new ConfirmationQuestion("Do you confirm? (Y/n) ", true);
-			if(!$helper->ask($input, $output, $question)) {
-				die();
-			}
+			$this->em->flush();
+			$this->loadCollection('Scenario');
+			$output->writeln("Done.");
+		} else {
+			$output->writeln("Skipping Scenarios import (skip-scenario option provided).");
 		}
-		$this->em->flush();
-		$this->loadCollection('Scenario');
-		$output->writeln("Done.");
 
 		$output->writeln("Importing CardsetTypes fanmade...");
 		$cardsettypesFileInfo = $this->getFileInfo($path, 'settypes_fanmade.json');
