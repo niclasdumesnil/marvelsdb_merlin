@@ -1044,6 +1044,12 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 			if($isMandatory) {
 				throw new \Exception("Missing key [$key] in ".json_encode($data));
 			} else {
+				// For most optional keys we treat absence as null (no value provided).
+				// However, for 'environment' we want to treat a totally missing key
+				// as "do not manage/update" (leave existing value untouched).
+				if ($key === 'environment') {
+					return;
+				}
 				$data[$key] = null;
 			}
 		}

@@ -77,7 +77,7 @@ AppBundle\Entity\Pack:
             nullable: true
         environment:
             type: text
-            nullable: false            
+            nullable: true
     uniqueConstraints:
         pack_code_idx:
             columns: [code]
