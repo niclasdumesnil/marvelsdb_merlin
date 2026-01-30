@@ -527,11 +527,13 @@ class ImportStdCommand extends ContainerAwareCommand
 		foreach($list as $data)
 		{
 			$type = $this->getEntityFromData('AppBundle\\Entity\\Cardset', $data, [
-					'code',
-					'name'
+				'code',
+				'name'
 			], [
 				'card_set_type_code'
-			], []);
+			], [
+				'parent_code'
+			]);
 			if($type) {
 				$result[] = $type;
 				$this->em->persist($type);
