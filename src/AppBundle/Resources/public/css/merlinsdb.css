@@ -1077,3 +1077,11 @@ ul.creator-list > li {
     border-color: #0b3d91;
     color: #fff;
 }
+.special-hero-sets > div {
+	display: flex;
+	flex-direction: column;
+	background-color: rgba(240,240,240, 1);
+	border-radius: 5px;
+	padding: 0.8rem;
+	margin-top: 0.5rem;
+}
