@@ -535,23 +535,38 @@ class CardsData
 		} else {
 			$cardinfo['url'] = $this->router->generate('cards_zoom', array('card_code' => $card->getCode()), UrlGeneratorInterface::ABSOLUTE_URL);
 		}
-		$imageurl = $this->assets_helper->getUrl('bundles/cards/'.$card->getCode().'.png');
-		$imagepath= $this->rootDir . '/../web' . preg_replace('/\?.*/', '', $imageurl);
-		if(file_exists($imagepath)) {
-			$cardinfo['imagesrc'] = $imageurl;
+		// Prefer images inside a language subdirectory matching the active locale (EN/FR),
+		// falling back to the root bundles/cards/ directory when not present.
+		$lc = $locale ? strtolower($locale) : '';
+		if ($lc === 'fr' || $lc === 'fr_fr' || $lc === 'qc') {
+			$langDir = 'FR';
 		} else {
-			$imageurl = $this->assets_helper->getUrl('bundles/cards/'.$card->getCode().'.jpg');
-			$imagepath= $this->rootDir . '/../web' . preg_replace('/\?.*/', '', $imageurl);
-			if(file_exists($imagepath)) {
+			$langDir = 'EN';
+		}
+
+		$candidatePaths = [];
+		// Try language-specific folder first (include common variants)
+		$candidatePaths[] = 'bundles/cards/'.$langDir.'/'.$card->getCode().'.webp';
+		$candidatePaths[] = 'bundles/cards/'.$langDir.'/'.$card->getCode().'.png';
+		$candidatePaths[] = 'bundles/cards/'.$langDir.'/'.$card->getCode().'.jpg';
+		$candidatePaths[] = 'bundles/cards/'.$langDir.'/'.$card->getCode().'a.webp';
+		$candidatePaths[] = 'bundles/cards/'.$langDir.'/'.$card->getCode().'a.png';
+		$candidatePaths[] = 'bundles/cards/'.$langDir.'/'.$card->getCode().'a.jpg';
+		// Then try root folder fallbacks
+		$candidatePaths[] = 'bundles/cards/'.$card->getCode().'.webp';
+		$candidatePaths[] = 'bundles/cards/'.$card->getCode().'.png';
+		$candidatePaths[] = 'bundles/cards/'.$card->getCode().'.jpg';
+		$candidatePaths[] = 'bundles/cards/'.$card->getCode().'a.webp';
+		$candidatePaths[] = 'bundles/cards/'.$card->getCode().'a.png';
+		$candidatePaths[] = 'bundles/cards/'.$card->getCode().'a.jpg';
+
+		$cardinfo['imagesrc'] = null;
+		foreach ($candidatePaths as $p) {
+			$imageurl = $this->assets_helper->getUrl($p);
+			$imagepath = $this->rootDir . '/../web' . preg_replace('/\?.*/', '', $imageurl);
+			if (file_exists($imagepath)) {
 				$cardinfo['imagesrc'] = $imageurl;
-			} else {
-				$imageurl = $this->assets_helper->getUrl('bundles/cards/'.$card->getCode().'a.jpg');
-				$imagepath= $this->rootDir . '/../web' . preg_replace('/\?.*/', '', $imageurl);
-				if(file_exists($imagepath)) {
-					$cardinfo['imagesrc'] = $imageurl;
-				} else {
-					$cardinfo['imagesrc'] = null;
-				}
+				break;
 			}
 		}
 
@@ -563,20 +578,24 @@ class CardsData
 		}
 
 		if(isset($cardinfo['double_sided']) && $cardinfo['double_sided']) {
-			$imageurl = $this->assets_helper->getUrl('bundles/cards/'.$card->getCode().'b.png');
-			$imagepath= $this->rootDir . '/../web' . preg_replace('/\?.*/', '', $imageurl);
-			if ( file_exists($imagepath)){
-				$cardinfo['backimagesrc'] = $imageurl;
-			}else {
-				$imageurl = $this->assets_helper->getUrl('bundles/cards/'.$card->getCode().'b.jpg');
-				$imagepath= $this->rootDir . '/../web' . preg_replace('/\?.*/', '', $imageurl);
-				if ( file_exists($imagepath)){
+			// Prefer language-specific back image folder as well
+			$backCandidates = [];
+			$backCandidates[] = 'bundles/cards/'.$langDir.'/'.$card->getCode().'b.webp';
+			$backCandidates[] = 'bundles/cards/'.$langDir.'/'.$card->getCode().'b.png';
+			$backCandidates[] = 'bundles/cards/'.$langDir.'/'.$card->getCode().'b.jpg';
+			$backCandidates[] = 'bundles/cards/'.$card->getCode().'b.webp';
+			$backCandidates[] = 'bundles/cards/'.$card->getCode().'b.png';
+			$backCandidates[] = 'bundles/cards/'.$card->getCode().'b.jpg';
+			$cardinfo['backimagesrc'] = null;
+			foreach ($backCandidates as $p) {
+				$imageurl = $this->assets_helper->getUrl($p);
+				$imagepath = $this->rootDir . '/../web' . preg_replace('/\?.*/', '', $imageurl);
+				if (file_exists($imagepath)) {
 					$cardinfo['backimagesrc'] = $imageurl;
-				}else {
-					$cardinfo['backimagesrc'] = null;
+					break;
 				}
 			}
-		}else {
+		} else {
 			$cardinfo['backimagesrc'] = null;
 			$cardinfo['double_sided'] = false;
 		}
@@ -644,6 +663,7 @@ class CardsData
 		$cardinfo['theme'] = $card->getPack()->getTheme() ?? "Marvel";
 		$cardinfo['visibility'] = $card->getPack()->getVisibility() ?? "true";
 		$cardinfo['language'] = $card->getPack()->getLanguage() ?? "en"; // Ajouté ici
+		$cardinfo['pack_year'] = ($card->getPack() && $card->getPack()->getDateRelease()) ? $card->getPack()->getDateRelease()->format('Y') : '';
 		// include pack environment for API / client convenience
 		try {
 			$env = $card->getPack()->getEnvironment();

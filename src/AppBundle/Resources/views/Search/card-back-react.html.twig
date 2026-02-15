@@ -1,0 +1,42 @@
+{#
+  card-back-react.html.twig
+  
+  Twig wrapper that mounts the React CardBack component.
+  Serializes the card data to JSON and creates a mount point container.
+  
+  Only renders the mount point if the card is double-sided.
+#}
+
+{% if card.double_sided %}
+    {% set prefer_webp_only_flag = app.user is defined and app.user.isNewUI %}
+
+    {% set card_json = {
+        'id': card.id,
+        'code': card.code,
+        'name': card.name,
+        'subname': card.subname|default(''),
+        'url': card.url,
+        'back_name': card.back_name|default(''),
+        'faction_code': card.faction_code,
+        'faction_name': card.faction_name,
+        'faction2_code': card.faction2_code|default(null),
+        'faction2_name': card.faction2_name|default(null),
+        'type_code': card.type_code,
+        'type_name': card.type_name,
+        'stage': card.stage|default(null),
+        'is_unique': card.is_unique|default(false),
+        'back_text': card.back_text|default(''),
+        'back_flavor': card.back_flavor|default(''),
+        'backimagesrc': (card.backimagesrc|default('') is not empty) ? card.backimagesrc : (prefer_webp_only_flag ? ('/bundles/cards/' ~ card.code ~ '.webp') : ''),
+        'double_sided': card.double_sided|default(false),
+        'available': card.available|default(true),
+        'spoiler': card.spoiler|default(false),
+    } %}
+
+    <div
+        data-react-component="CardBack"
+        data-card="{{ card_json|json_encode|e('html_attr') }}"
+        data-show-spoilers="{{ show_spoilers|default(false) ? 'true' : 'false' }}"
+        data-prefer-webp-only="{{ app.user is defined and app.user.isNewUI ? 'true' : 'false' }}"
+    ></div>
+{% endif %}

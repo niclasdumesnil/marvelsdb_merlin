@@ -879,7 +879,14 @@ class SearchController extends Controller
 		}
 
 		// attention si $s="short", $cards est un tableau à 2 niveaux au lieu de 1 seul
-		return $this->render('AppBundle:Search:display-'.$view.'.html.twig', array(
+		// If the user has NewUI enabled and we're rendering single-card view, use the React-only template.
+		$user = $this->getUser();
+		$template = 'AppBundle:Search:display-' . $view . '.html.twig';
+		if ($view === 'card' && $user && method_exists($user, 'isNewUI') && $user->isNewUI()) {
+			$template = 'AppBundle:Search:display-card-react.html.twig';
+		}
+
+		return $this->render($template, array(
 			"view" => $view,
 			"decks" => $decks,
 			"sort" => $sort,
