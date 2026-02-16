@@ -183,6 +183,7 @@ export default function CardFront({ card, showSpoilers, locale, langDir, preferW
               card={card.linked_card}
               showSpoilers={showSpoilers}
               locale={locale}
+              langDir={langDir}
               preferWebpOnly={preferWebpOnly}
             />
           </>
@@ -219,7 +220,7 @@ function CardContent({ card, showSpoilers }) {
  * Renders a linked "back" card inside the same panel layout.
  * This mirrors CardBack.jsx but doesn't require `double_sided`.
  */
-function CardLinkedBack({ card, showSpoilers, locale, preferWebpOnly }) {
+function CardLinkedBack({ card, showSpoilers, locale, langDir, preferWebpOnly }) {
   const spoilerClass = card.spoiler && !showSpoilers ? 'mc-spoiler' : '';
   const borderClass = getBorderClass(card.faction_code);
   const headerClass = getHeaderClass(card.faction_code, card.type_code);
@@ -311,7 +312,7 @@ function CardLinkedBack({ card, showSpoilers, locale, preferWebpOnly }) {
 
             <div className="tw-relative tw-mb-8">
               <div className="tw-absolute -tw-inset-2 tw-border tw-border-slate-800 tw-rounded-3xl" />
-              <div className="tw-relative tw-rounded tw-overflow-hidden tw-border tw-border-slate-700 shadow-2xl">
+              <div className="tw-relative tw-rounded-3xl tw-overflow-hidden tw-border tw-border-slate-700 shadow-2xl">
                 {(card.backimagesrc || card.imagesrc) && (
                   <ImageWithWebp
                     id={`card-image-${card.id}-back`}

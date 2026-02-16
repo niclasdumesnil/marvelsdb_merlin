@@ -23,6 +23,8 @@ export default function CardPromo({ card, locale }) {
   const pathParts = imagesrc.split('/');
   const filename = pathParts[pathParts.length - 1];
   const basePath = pathParts.slice(0, -1).join('/');
+  // parent of language folder, e.g. "/bundles/cards" when imagesrc is "/bundles/cards/EN/15002.webp"
+  const parentBase = pathParts.slice(0, -2).join('/');
 
   // probe helpers
   const probeWithFetch = async (url) => {
@@ -61,6 +63,12 @@ export default function CardPromo({ card, locale }) {
       const all = readCache();
       if (all && all[card.code] && all[card.code].map) {
         setChosenSrcMap(all[card.code].map || {});
+      }
+    } catch (e) { /* ignore */ }
+    // merge server-provided promo availability (if any)
+    try {
+      if (card.promo_urls) {
+        setChosenSrcMap((p) => ({ ...(p || {}), ...(card.promo_urls || {}) }));
       }
     } catch (e) { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,35 +118,45 @@ export default function CardPromo({ card, locale }) {
     if (loadingDirs[dir]) return; // already probing
     setLoadingDirs((p) => ({ ...p, [dir]: true }));
 
-    const candidateWebp = `${basePath}/${dir}/${filename}`.replace(/\.(jpe?g|png)$/i, '.webp');
-    const candidateOrig = `${basePath}/${dir}/${filename}`;
+    // Try paths in this order:
+    // 1) top-level promo dir (e.g. /bundles/cards/promo-FR/filename)
+    // 2) lang-specific subfolder (e.g. /bundles/cards/EN/promo-FR/filename)
+    const candidates = [
+      `${parentBase}/${dir}/${filename}`,
+      `${basePath}/${dir}/${filename}`,
+    ];
 
-    // try HEAD for webp
-    let ok = null;
-    try { ok = await probeWithFetch(candidateWebp); } catch (e) { ok = null; }
-    if (ok === true) {
-      const map = { ...chosenSrcMap, [dir]: candidateWebp };
-      setChosenSrcMap(map); writeCache(card.code, map); setLoadingDirs((p) => { const np = { ...p }; delete np[dir]; return np; });
-      activatePromo(dir, candidateWebp);
-      return;
-    }
+    for (const cand of candidates) {
+      const candidateWebp = cand.replace(/\.(jpe?g|png)$/i, '.webp');
+      const candidateOrig = cand;
 
-    // try image probe of original promo path
-    const probeOrig = await probeWithImage(candidateOrig);
-    if (probeOrig) {
-      const map = { ...chosenSrcMap, [dir]: candidateOrig };
-      setChosenSrcMap(map); writeCache(card.code, map); setLoadingDirs((p) => { const np = { ...p }; delete np[dir]; return np; });
-      activatePromo(dir, candidateOrig);
-      return;
-    }
+      // try HEAD for webp
+      let ok = null;
+      try { ok = await probeWithFetch(candidateWebp); } catch (e) { ok = null; }
+      if (ok === true) {
+        const map = { ...chosenSrcMap, [dir]: candidateWebp };
+        setChosenSrcMap(map); writeCache(card.code, map); setLoadingDirs((p) => { const np = { ...p }; delete np[dir]; return np; });
+        activatePromo(dir, candidateWebp);
+        return;
+      }
 
-    // fallback: try webp via Image
-    const probeWebp = await probeWithImage(candidateWebp);
-    if (probeWebp) {
-      const map = { ...chosenSrcMap, [dir]: candidateWebp };
-      setChosenSrcMap(map); writeCache(card.code, map); setLoadingDirs((p) => { const np = { ...p }; delete np[dir]; return np; });
-      activatePromo(dir, candidateWebp);
-      return;
+      // try image probe of original promo path
+      const probeOrig = await probeWithImage(candidateOrig);
+      if (probeOrig) {
+        const map = { ...chosenSrcMap, [dir]: candidateOrig };
+        setChosenSrcMap(map); writeCache(card.code, map); setLoadingDirs((p) => { const np = { ...p }; delete np[dir]; return np; });
+        activatePromo(dir, candidateOrig);
+        return;
+      }
+
+      // fallback: try webp via Image
+      const probeWebp = await probeWithImage(candidateWebp);
+      if (probeWebp) {
+        const map = { ...chosenSrcMap, [dir]: candidateWebp };
+        setChosenSrcMap(map); writeCache(card.code, map); setLoadingDirs((p) => { const np = { ...p }; delete np[dir]; return np; });
+        activatePromo(dir, candidateWebp);
+        return;
+      }
     }
 
     setLoadingDirs((p) => { const np = { ...p }; delete np[dir]; return np; });

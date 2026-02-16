@@ -24,24 +24,15 @@ function mountAllCards() {
     try {
       const card = JSON.parse(container.getAttribute('data-card'));
       const showSpoilers = container.getAttribute('data-show-spoilers') === 'true';
-      // Allow forcing locale via client URL param `?force_locale=fr` when server didn't provide it
-      let forcedLocale = container.getAttribute('data-forced-locale');
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlForced = urlParams.get('force_locale');
-        if ((!forcedLocale || forcedLocale === '') && urlForced) forcedLocale = urlForced;
-      } catch (e) {
-        // ignore URLSearchParams errors in older browsers
-      }
 
-      const locale = forcedLocale && forcedLocale !== '' ? forcedLocale : (container.getAttribute('data-locale') || 'en');
-      // Derive langDir from forcedLocale if present, otherwise use server-provided langdir
-      const langDir = (forcedLocale && forcedLocale !== '') ? (forcedLocale.toUpperCase() === 'FR' ? 'FR' : 'EN') : (container.getAttribute('data-langdir') || '');
+      // Use only the server-provided locale (no forced override via URL)
+      const locale = container.getAttribute('data-locale') || 'en';
+      const langDir = container.getAttribute('data-langdir') || '';
 
       const preferWebpOnly = container.getAttribute('data-prefer-webp-only') === 'true';
 
       const root = createRoot(container);
-      console.debug('[CardMount] mounting CardFront', { id: card.id, locale, langDir, forcedLocale, preferWebpOnly });
+      console.debug('[CardMount] mounting CardFront', { id: card.id, locale, langDir, preferWebpOnly });
       root.render(
         <CardFront card={card} showSpoilers={showSpoilers} locale={locale} langDir={langDir} preferWebpOnly={preferWebpOnly} />
       );

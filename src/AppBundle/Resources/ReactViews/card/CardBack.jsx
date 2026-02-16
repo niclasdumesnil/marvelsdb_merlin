@@ -107,10 +107,10 @@ export default function CardBack({ card, showSpoilers, preferWebpOnly }) {
       <div className={`tw-flex-shrink-0 tw-text-center tw-p-8 tw-flex tw-flex-col ${spoilerClass}`}>
         {(card.backimagesrc || card.imagesrc) && (
           <ImageWithWebp
-            id={`card-image-${card.id}`}
+            id={`card-image-${card.id}-back`}
             src={card.backimagesrc || card.imagesrc}
             alt={card.name}
-            className="mc-card-image"
+            className="tw-relative tw-rounded-3xl tw-overflow-hidden tw-border tw-border-slate-700 shadow-2xl"
             preferWebpOnly={preferWebpOnly}
           />
         )}

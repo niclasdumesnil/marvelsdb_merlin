@@ -7,11 +7,25 @@ import { getBorderClass } from '../utils/factionUtils.js';
 export default function CardText({ card, showSpoilers }) {
   if (!card.text) return null;
   const spoilerClass = card.spoiler && !showSpoilers ? 'mc-spoiler' : '';
+  // Format wiki links [[...]], inline icons like [X], and convert newlines to paragraphs
+  function formatText(raw) {
+    if (!raw) return '';
+    let text = raw;
+    // Replace [[Name]] with bold/italic card-traits (matching legacy format)
+    text = text.replace(/\[\[([^\]]+)\]\]/g, '<b class="card-traits"><i>$1</i></b>');
+    // Replace [ICON] tokens with span.icon-ICON
+    text = text.replace(/\[(\w+)\]/g, '<span title="$1" class="icon-$1" />');
+    // Newlines -> paragraph breaks
+    text = text.split('\n').join('</p><p>');
+    return '<p>' + text + '</p>';
+  }
+
+  const html = formatText(card.text || card.real_text || '');
 
   return (
     <div className={spoilerClass}>
       <div className={`mc-card-text ${getBorderClass(card.faction_code)}`}>
-        <div dangerouslySetInnerHTML={{ __html: card.text }} />
+        <div dangerouslySetInnerHTML={{ __html: html }} />
         <SchemeIcons card={card} />
       </div>
       <BoostIcons card={card} />
