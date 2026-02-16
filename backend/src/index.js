@@ -86,8 +86,14 @@ app.get(['/card/:code.html', '/card/:code'], async (req, res, next) => {
     const card = serializeCard(row, { api: true, linkedCard, duplicatedBy });
     // ensure card id is present for client-side features (promo buttons reference `card.id`)
     card.id = row.id;
+    // Precompute available promo image URLs so the client doesn't need to probe.
+    // Determine langDir based on the card's pack language (server-side asset availability).
+    // This prevents the client from switching to FR image paths when the card only
+    // has EN assets available.
+    const langDir = (card.language && card.language.toLowerCase().startsWith('fr')) ? 'FR' : 'EN';
 
-    
+    // Choose the locale we expose to the client: prefer the card's pack language, then Accept-Language.
+    const clientLocale = card.language || urlLocale;
 
     // Precompute available promo image URLs so the client doesn't need to probe.
     try {
@@ -130,14 +136,6 @@ app.get(['/card/:code.html', '/card/:code'], async (req, res, next) => {
     } catch (e) {
       // ignore promo detection errors
     }
-
-    // Determine langDir based on the card's pack language (server-side asset availability).
-    // This prevents the client from switching to FR image paths when the card only
-    // has EN assets available.
-    const langDir = (card.language && card.language.toLowerCase().startsWith('fr')) ? 'FR' : 'EN';
-
-    // Choose the locale we expose to the client: prefer the card's pack language, then Accept-Language.
-    const clientLocale = card.language || urlLocale;
 
     // If prefer_webp_only is requested, try to point to webp bundles but
     // fall back to EN or the previously resolved image when missing.
