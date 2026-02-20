@@ -15,7 +15,7 @@ class DeckReqHelper
 	* @param string $text
 	* @return Array
 	*/
-	public function parseString($test) {
+	public function parseString($text) {
 		
 		$return_requirements = [];
 		// seperate based on commas
