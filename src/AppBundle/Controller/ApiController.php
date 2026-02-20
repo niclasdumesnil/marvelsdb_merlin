@@ -73,7 +73,8 @@ class ApiController extends Controller
 					"total" => $max,
 					"url" => $this->get('router')->generate('cards_list', array('pack_code' => $pack->getCode()), UrlGeneratorInterface::ABSOLUTE_URL),
 					"id" => $pack->getId(),
-					"pack_type"=> $pack-> getPackType(), 
+					"pack_type"=> $pack->getPackType() ? $pack->getPackType()->getCode() : null,
+					"pack_type_name"=> $pack->getPackTypeName(),
 					"status" => $pack->getStatus() ?? "Official", // valeur par défaut
 					"creator" => $pack->getCreator() ?? "FFG", // valeur par défaut
 					"theme" => $pack->getTheme() ?? "Marvel", // valeur par défaut
