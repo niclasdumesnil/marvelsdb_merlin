@@ -58,8 +58,6 @@ app.get('/health', async (req, res) => {
 
 // Serve built React bundle and styles for card views
 app.use('/react', express.static(path.resolve(__dirname, '../../web/react')));
-// Serve site CSS used by Symfony templates so Node pages match Symfony styling
-app.use('/css', express.static(path.resolve(__dirname, '../../web/css')));
 
 // Add a simple HTML view that mounts the React card components
 // This runs before the API routes so visiting /card/:code returns the React HTML
@@ -195,63 +193,14 @@ app.get(['/card/:code.html', '/card/:code'], async (req, res, next) => {
 
     const html = `<!doctype html>
 <html lang="en">
-    <head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Card ${card.code}</title>
-    <!-- Include site-wide styles (same as Symfony) -->
-    <link rel="stylesheet" href="/css/app_bootstrap_1.css">
-    <link rel="stylesheet" href="/bundles/app/css/merlinsdb.css">
-    <link rel="stylesheet" href="/css/app_style_2.css">
-    <link rel="stylesheet" href="/css/app_icons_3.css">
-    <link rel="stylesheet" href="/css/app_languages_4.css">
-    <!-- Card-specific bundled CSS -->
     <link rel="stylesheet" href="/react/css/card.css">
-    <!-- Inline shim: ensure font and icon scoping match Symfony behaviour -->
-    <style>
-      /* Keep card names white like the Symfony page */
-      .card-name { color: #fff !important; }
-
-      /* Apply the panel/game font to common text elements only (avoid using
-         the universal selector which would override icon fonts and pseudo
-         elements). Do not use !important so the icon font rules from
-         app_icons_3.css can still win for icon classes. */
-      .mc-card-panel,
-      .mc-card-panel h1,
-      .mc-card-panel h2,
-      .mc-card-panel h3,
-      .mc-card-panel p,
-      .mc-card-panel div,
-      .mc-card-panel a,
-      .mc-card-panel li,
-      .mc-card-panel span {
-        font-family: "Marvel Champions", "Open Sans", Arial, sans-serif;
-      }
-
-      /* Respect the application's icon font defined in /css/app_icons_3.css
-         which registers 'marvel-icons'. Re-assert it here for any icon
-         classes to be safe, but using the same family name so the glyphs
-         render correctly. */
-      [class^="icon-"],
-      [class*=" icon-"],
-      .icon,
-      .mc-icon,
-      .icon-unique {
-        font-family: 'marvel-icons' !important;
-        speak: none;
-        font-style: normal;
-        font-weight: normal;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-    </style>
   </head>
   <body>
-    <div id="wrapper">
-      <div class="main white container">
-        <div data-react-component="CardFront" data-card="${cardJson}" data-show-spoilers="${showSpoilers ? 'true' : 'false'}" data-locale="${clientLocale}" data-langdir="${langDir}" data-prefer-webp-only="${preferWebpOnly ? 'true' : 'false'}"></div>
-      </div>
-    </div>
+    <div data-react-component="CardFront" data-card="${cardJson}" data-show-spoilers="${showSpoilers ? 'true' : 'false'}" data-locale="${clientLocale}" data-langdir="${langDir}" data-prefer-webp-only="${preferWebpOnly ? 'true' : 'false'}"></div>
     ${backJson ? `<div data-react-component="CardBack" data-card="${backJson}" data-show-spoilers="${showSpoilers ? 'true' : 'false'}" data-prefer-webp-only="${preferWebpOnly ? 'true' : 'false'}"></div>` : ''}
     <script>
       // Temporary debug hook: capture runtime errors and show them in-page

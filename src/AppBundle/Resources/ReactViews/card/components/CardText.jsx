@@ -13,9 +13,8 @@ export default function CardText({ card, showSpoilers }) {
     let text = raw;
     // Replace [[Name]] with bold/italic card-traits (matching legacy format)
     text = text.replace(/\[\[([^\]]+)\]\]/g, '<b class="card-traits"><i>$1</i></b>');
-    // Replace [ICON] tokens with a properly-closed span and include the
-    // base "icon" class so CSS rules targeting ".icon" apply consistently.
-    text = text.replace(/\[(\w+)\]/g, '<span title="$1" class="icon icon-$1"></span>');
+    // Replace [ICON] tokens with span.icon-ICON
+    text = text.replace(/\[(\w+)\]/g, '<span title="$1" class="icon-$1" />');
     // Newlines -> paragraph breaks
     text = text.split('\n').join('</p><p>');
     return '<p>' + text + '</p>';
