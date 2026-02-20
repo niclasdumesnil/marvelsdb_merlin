@@ -55,7 +55,8 @@ class DeckReqHelper
 							$return_requirements[$type][$param1] = [
 								"min" => $param2,
 								"max" => $param3
-							]
+							];
+							break;
 						}
 						default:{
 							$return_requirements[$type][] = $param1;
