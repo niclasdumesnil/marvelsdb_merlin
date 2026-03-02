@@ -338,6 +338,14 @@ class ImportStdCommand extends ContainerAwareCommand
 				if (isset($new_card['flavor'])) {
 					$new_card_data['flavor'] = $new_card['flavor'];
 				}
+				// Preserve alt_art flag from the duplicate JSON if present
+				if (array_key_exists('alt_art', $new_card)) {
+					$new_card_data['alt_art'] = $new_card['alt_art'];
+				} elseif (array_key_exists('alt-art', $new_card)) {
+					$new_card_data['alt_art'] = $new_card['alt-art'];
+				} elseif (array_key_exists('altArt', $new_card)) {
+					$new_card_data['alt_art'] = $new_card['altArt'];
+				}
 				$new_cards = [];
 				$new_cards[] = $new_card_data;
 				$duplicates_added = $this->importCardsFromJsonData($new_cards);
@@ -894,6 +902,18 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 		$result = [];
 
 		foreach($cardsData as $cardData) {
+			// Normalize keys and defaults: accept 'alt-art', 'alt_art' and 'altArt'
+			if (array_key_exists('alt-art', $cardData) && !array_key_exists('alt_art', $cardData)) {
+				$cardData['alt_art'] = $cardData['alt-art'];
+			}
+			if (array_key_exists('altArt', $cardData) && !array_key_exists('alt_art', $cardData)) {
+				$cardData['alt_art'] = $cardData['altArt'];
+			}
+			if (!array_key_exists('alt_art', $cardData)) {
+				// default to false when absent
+				$cardData['alt_art'] = false;
+			}
+
 			// If the JSON doesn't include a subtype but the card belongs to a pack
 			// whose pack type is 'nemesis', set subtype_code to 'nemesis' here
 			// so the created Card entity gets the proper subtype link.
@@ -948,6 +968,7 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 				'is_unique',
 				'hidden',
 				'permanent',
+				'alt_art',
 				'errata',
 				'octgn_id'
 

@@ -86,6 +86,11 @@ class User extends BaseUser
     private $isNewUI = false;
 
     /**
+     * @var boolean
+     */
+    private $isAdmin = false;
+
+    /**
      * @var string
      */
     private $ownedPacks;
@@ -489,6 +494,30 @@ class User extends BaseUser
     public function getisNewUI()
     {
         return $this->isNewUI;
+    }
+
+    /**
+     * Set isAdmin
+     *
+     * @param boolean $isAdmin
+     *
+     * @return User
+     */
+    public function setIsAdmin($isAdmin)
+    {
+        $this->isAdmin = $isAdmin;
+
+        return $this;
+    }
+
+    /**
+     * Get isAdmin
+     *
+     * @return boolean
+     */
+    public function getIsAdmin()
+    {
+        return $this->isAdmin;
     }
 
     /**

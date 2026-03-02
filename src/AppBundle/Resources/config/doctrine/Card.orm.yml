@@ -304,6 +304,12 @@ AppBundle\Entity\Card:
             type: boolean
             nullable: true
             column: attack_star
+        altArt:
+            type: boolean
+            nullable: false
+            column: alt_art
+            options:
+                default: false
         thwartStar:
             type: boolean
             nullable: true

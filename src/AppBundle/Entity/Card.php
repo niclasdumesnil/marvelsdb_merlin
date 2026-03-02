@@ -41,7 +41,8 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 			'card_set',
 			'set_position',
 			'is_unique',
-			'meta'
+			'meta',
+			'alt_art'
 		];
 
 		$externalFields = [
@@ -479,6 +480,11 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 	 * @var string
 	 */
 	private $octgnId;
+
+	/**
+	 * @var boolean
+	 */
+	private $altArt = false;
 
 	/**
 	 * @var \Doctrine\Common\Collections\Collection
@@ -1509,6 +1515,30 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 		} else {
 			return $this->octgnId;
 		}
+	}
+
+	/**
+	 * Set altArt
+	 *
+	 * @param boolean $altArt
+	 *
+	 * @return Card
+	 */
+	public function setAltArt($altArt)
+	{
+		$this->altArt = (bool) $altArt;
+
+		return $this;
+	}
+
+	/**
+	 * Get altArt
+	 *
+	 * @return boolean
+	 */
+	public function getAltArt()
+	{
+		return $this->altArt;
 	}
 
 	/**

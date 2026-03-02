@@ -125,6 +125,12 @@ AppBundle\Entity\User:
             column: is_new_ui
             options:
                 default: false
+        isAdmin:
+            type: boolean
+            nullable: false
+            column: is_admin
+            options:
+                default: false
         ownedPacks:
             type: string
             length: 512
