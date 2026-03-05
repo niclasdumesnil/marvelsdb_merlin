@@ -40,8 +40,13 @@ class BuilderController extends Controller
 
 		foreach($heroes as $hero){
 			$deck_requirements = $this->get('deck_validation_helper')->parseReqString($hero->getDeckRequirements());
-			$unique_key = $hero->getCardSet()->getCode();
-			$pack_id = $hero->getPack()->getId();
+			$cardSet = $hero->getCardSet();
+			if (!$cardSet) {
+				continue;
+			}
+			$unique_key = $cardSet->getCode();
+			$pack = $hero->getPack();
+			$pack_id = $pack ? $pack->getId() : null;
 			$hero_meta = json_decode($hero->getMeta());
 
 			if (!$hero_meta) {
