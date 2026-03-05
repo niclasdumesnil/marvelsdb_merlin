@@ -478,7 +478,11 @@ class SocialController extends Controller
 		$heroes = [];
 		$user = $this->getUser();
 		foreach($all_heroes as $hero) {
-			$unique_key = $hero->getCardSet()->getCode();
+			$cardSet = $hero->getCardSet();
+			if (!$cardSet) {
+				continue;
+			}
+			$unique_key = $cardSet->getCode();
 			if (!$hero->getMeta()) {
 				continue;
 			}
@@ -486,7 +490,7 @@ class SocialController extends Controller
 				continue;
 			}
 			$pack = $hero->getPack();
-			$is_visible = $pack->getVisibility();
+			$is_visible = $pack ? $pack->getVisibility() : null;
 
 			// N'ajoute pas le héros si visibility == false
 			if ($is_visible !== "false") {

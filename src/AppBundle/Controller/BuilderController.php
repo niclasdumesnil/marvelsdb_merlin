@@ -814,13 +814,17 @@ class BuilderController extends Controller
 		$unique_heroes = [];
 		$heroes = [];
 		foreach($all_heroes as $hero) {
-			$unique_key = $hero->getCardSet()->getCode();
+			$cardSet = $hero->getCardSet();
+			if (!$cardSet) {
+				continue;
+			}
+			$unique_key = $cardSet->getCode();
 			if (isset($unique_heroes[$unique_key]) || !$hero->getMeta()) {
 				continue;
 			}
 			$pack = $hero->getPack();
-			$is_visible = $pack->getVisibility();
-			$is_donator = $user->getDonation();
+			$is_visible = $pack ? $pack->getVisibility() : null;
+			$is_donator = $user ? $user->getDonation() : 0;
 
 			// Ajoute le héros si le pack est visible (true), ou si invisible (false) mais donateur
 			if ($is_visible !== "false") {
