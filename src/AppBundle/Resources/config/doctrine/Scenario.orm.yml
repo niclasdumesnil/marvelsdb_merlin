@@ -41,3 +41,6 @@ AppBundle\Entity\Scenario:
       column: date_creation
       type: datetime
       nullable: false
+    visibility:
+      type: boolean
+      nullable: false

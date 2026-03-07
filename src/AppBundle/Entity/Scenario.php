@@ -27,12 +27,17 @@ class Scenario
     private $difficulty;
     private $text;
     private $creator;
+    private $visibility;
     private $dateCreation;
 
     public function __construct()
     {
         $this->dateCreation = new \DateTime();
+        $this->visibility = false;
     }
+
+    public function setVisibility($v) { $this->visibility = (bool)$v; return $this; }
+    public function getVisibility() { return $this->visibility; }
 
     public function getId() { return $this->id; }
 

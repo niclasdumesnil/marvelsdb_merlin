@@ -557,34 +557,72 @@ class ImportStdCommand extends ContainerAwareCommand
 		$result = [];
 
 		$list = $this->getDataFromFile($fileinfo);
-		foreach($list as $data)
-		{
-			// Build a stable code for scenario: villainSetCode + slug(title)
+		// Performance: preload existing scenario codes to avoid repeated DB queries
+		$existingCodes = [];
+		try {
+			$rows = $this->em->getConnection()->fetchAll('SELECT code FROM scenario');
+			$codes = [];
+			if (is_array($rows)) {
+				foreach ($rows as $r) {
+					if (is_array($r)) {
+						if (isset($r['code'])) $codes[] = $r['code'];
+						else $codes[] = reset($r);
+					}
+				}
+			}
+			if (is_array($codes)) $existingCodes = array_flip($codes);
+		} catch (\Exception $e) {
+			$existingCodes = [];
+		}
+
+		// Disable SQL logger to reduce overhead during import
+		try {
+			$this->em->getConnection()->getConfiguration()->setSQLLogger(null);
+		} catch (\Exception $e) {}
+
+		$batchSize = 50;
+		$i = 0;
+		foreach ($list as $data) {
 			$villain = isset($data['villain_set_code']) ? $data['villain_set_code'] : null;
 			$title = isset($data['title']) ? $data['title'] : null;
 			$slug = '';
 			if ($title) {
-				$slug = preg_replace('/[^a-z0-9]+/','-',strtolower(trim(iconv('UTF-8','ASCII//TRANSLIT',$title))));
+				$slug = preg_replace('/[^a-z0-9]+/', '-', strtolower(trim(iconv('UTF-8', 'ASCII//TRANSLIT', $title))));
 				$slug = trim($slug, '-');
 			}
-			$code = $villain ? ($villain.($slug?'-'.$slug:'')) : ($slug?:null);
+			$code = $villain ? ($villain . ($slug ? '-' . $slug : '')) : ($slug ?: null);
 
-			// Ensure unique code if collision
 			$baseCode = $code;
 			$counter = 1;
-			while ($code && $this->em->getRepository('AppBundle:Scenario')->findOneBy(['code' => $code])) {
-				$code = $baseCode . '-' . $counter;
-				$counter++;
-			}
-
 			$scenario = null;
 			if ($code) {
+				// Try to find an existing scenario with the original code first
 				$scenario = $this->em->getRepository('AppBundle:Scenario')->findOneBy(['code' => $code]);
+				if (!$scenario) {
+					// Only generate a unique code if the original code is already reserved
+					while ($code && isset($existingCodes[$code])) {
+						$code = $baseCode . '-' . $counter;
+						$counter++;
+					}
+					if ($code) {
+						$scenario = $this->em->getRepository('AppBundle:Scenario')->findOneBy(['code' => $code]);
+					}
+				}
 			}
+			$wasExisting = false;
 			if (!$scenario) {
 				$scenario = new \AppBundle\Entity\Scenario();
 				if ($code) $scenario->setCode($code);
+			} else {
+				$wasExisting = true;
 			}
+			// Capture previous values for diagnostic logging
+			$prevVisibility = null;
+			$prevCreator = null;
+			try {
+				$prevVisibility = $scenario->getVisibility();
+				$prevCreator = $scenario->getCreator();
+			} catch (\Exception $e) { }
 
 			if (isset($data['villain_set_code'])) $scenario->setVillainSetCode($data['villain_set_code']);
 			if (isset($data['title'])) $scenario->setTitle($data['title']);
@@ -593,9 +631,57 @@ class ImportStdCommand extends ContainerAwareCommand
 			if (isset($data['difficulty'])) $scenario->setDifficulty($data['difficulty']);
 			if (array_key_exists('text', $data)) $scenario->setText($data['text']);
 			if (isset($data['creator'])) $scenario->setCreator($data['creator']);
+			if (array_key_exists('visibility', $data)) {
+				$vis = $data['visibility'];
+				$v = false;
+				if (is_bool($vis)) {
+					$v = $vis;
+				} elseif (is_numeric($vis)) {
+					$v = ((int)$vis) !== 0;
+				} elseif (is_string($vis)) {
+					$lower = strtolower(trim($vis));
+					$v = ($lower === 'true' || $lower === '1' || $lower === 'yes');
+				} else {
+					$v = (bool)$vis;
+				}
+				$scenario->setVisibility((bool)$v);
+			} else {
+				$scenario->setVisibility(false);
+			}
+			// Diagnostic logging: report if record existed and any change to visibility/creator
+			if ($this->output) {
+				if ($wasExisting) {
+					$this->output->writeln(sprintf("Found existing scenario: %s (creator=%s visibility=%s)", $scenario->getCode(), $prevCreator === null ? 'null' : $prevCreator, $prevVisibility === null ? 'null' : ($prevVisibility ? '1' : '0')));
+				} else {
+					$this->output->writeln(sprintf("Creating new scenario: %s", $scenario->getCode()));
+				}
+				if ($prevVisibility !== null && $prevVisibility !== $scenario->getVisibility()) {
+					$this->output->writeln(sprintf(" - visibility: %s => %s", ($prevVisibility ? '1' : '0'), ($scenario->getVisibility() ? '1' : '0')));
+				}
+				if ($prevCreator !== null && $prevCreator !== $scenario->getCreator()) {
+					$this->output->writeln(sprintf(" - creator: %s => %s", $prevCreator, $scenario->getCreator()));
+				}
+			}
 
 			$result[] = $scenario;
 			$this->em->persist($scenario);
+
+			if ($code) $existingCodes[$code] = true;
+
+			$i++;
+			if ($this->output) $this->output->writeln('Processing scenario: ' . ($code ?: ($title ?: '(no id)')));
+
+			if ($i % $batchSize === 0) {
+				$this->em->flush();
+				$this->em->clear();
+			}
+		}
+
+		// flush remaining
+		try {
+			$this->em->flush();
+		} catch (\Exception $e) {
+			// swallow to allow caller to handle
 		}
 
 		return $result;
@@ -606,14 +692,13 @@ class ImportStdCommand extends ContainerAwareCommand
 		$result = [];
 
 		$list = $this->getDataFromFile($fileinfo);
-		foreach($list as $data)
-		{
+		foreach ($list as $data) {
 			$type = $this->getEntityFromData('AppBundle\\Entity\\Campaign', $data, [
-						'code',
-						'name',
-						'size'
-					], [], ['creator', 'position']);
-			if($type) {
+				'code',
+				'name',
+				'size'
+			], [], ['creator', 'position']);
+			if ($type) {
 				$result[] = $type;
 				$this->em->persist($type);
 			}

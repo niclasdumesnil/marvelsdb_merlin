@@ -29,3 +29,5 @@ tools/marvelcdb_1_12.tsv
 tools/marvelcdb_1_300.tsv
 tools/marvelcdb_1_32000 .csv
 tools/marvelcdb_50000_51000.csv
+tools/fix_import_slug.py
+tools/fix_import_slug_v2.py
