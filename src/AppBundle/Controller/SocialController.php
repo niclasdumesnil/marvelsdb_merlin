@@ -598,8 +598,9 @@ class SocialController extends Controller
 			$decklist = $iterator->current();
 			$hero = $decklist->getCharacter();
 	
-			// Exclure si visibilité false
-			if ($hero->getPack()->GetVisibility() !="false") {
+			// Exclude if pack is marked not visible. Use Pack::isVisible() to handle legacy values.
+			$pack = $hero->getPack();
+			if ($pack && $pack->isVisible()) {
 				$decklists[] = [
 					'hero_meta' => json_decode($hero->getMeta()),
 					'faction' => $hero->getFaction(),

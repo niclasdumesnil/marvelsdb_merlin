@@ -158,6 +158,11 @@ class Decklist extends \AppBundle\Model\ExportableDeck implements \JsonSerializa
     private $slots;
 
     /**
+     * @var \Doctrine\Common\Collections\Collection
+     */
+    private $sideSlots;
+
+    /**
      * @var string
      */
     private $tags;
@@ -223,6 +228,7 @@ class Decklist extends \AppBundle\Model\ExportableDeck implements \JsonSerializa
     public function __construct()
     {
         $this->slots = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->sideSlots = new \Doctrine\Common\Collections\ArrayCollection();
         $this->comments = new \Doctrine\Common\Collections\ArrayCollection();
         $this->successors = new \Doctrine\Common\Collections\ArrayCollection();
         $this->children = new \Doctrine\Common\Collections\ArrayCollection();
@@ -609,6 +615,40 @@ class Decklist extends \AppBundle\Model\ExportableDeck implements \JsonSerializa
     public function getSlots()
     {
         return new \AppBundle\Model\SlotCollectionDecorator($this->slots);
+    }
+
+    /**
+     * Add sideSlot
+     *
+     * @param \AppBundle\Entity\Sidedecklistslot $sideSlot
+     *
+     * @return Decklist
+     */
+    public function addSideSlot(\AppBundle\Entity\Sidedecklistslot $sideSlot)
+    {
+        $this->sideSlots[] = $sideSlot;
+
+        return $this;
+    }
+
+    /**
+     * Remove sideSlot
+     *
+     * @param \AppBundle\Entity\Sidedecklistslot $sideSlot
+     */
+    public function removeSideSlot(\AppBundle\Entity\Sidedecklistslot $sideSlot)
+    {
+        $this->sideSlots->removeElement($sideSlot);
+    }
+
+    /**
+     * Get sideSlots
+     *
+     * @return \AppBundle\Model\SlotCollectionInterface
+     */
+    public function getSideSlots()
+    {
+        return new \AppBundle\Model\SlotCollectionDecorator($this->sideSlots);
     }
 
     /**

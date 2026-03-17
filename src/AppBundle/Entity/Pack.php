@@ -417,6 +417,22 @@ class Pack implements \Gedmo\Translatable\Translatable, \Serializable
         return $this->visibility;
     }
 
+    /**
+     * Returns true when the pack should be considered visible/public.
+     * Handles legacy values stored as boolean, numeric or string ("false", 0, false).
+     *
+     * @return bool
+     */
+    public function isVisible()
+    {
+        if ($this->visibility === null) return true;
+        if ($this->visibility === false) return false;
+        if ($this->visibility === 0) return false;
+        $v = (string) $this->visibility;
+        if ($v === '' || strtolower($v) === 'false' || $v === '0') return false;
+        return true;
+    }
+
 
     /**
      * Add card

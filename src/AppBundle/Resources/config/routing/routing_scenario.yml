@@ -3,3 +3,11 @@ scenario_index:
     methods: [GET]
     defaults:
         _controller: AppBundle:Default:scenarioIndex
+
+scenario_show:
+    path: /{scenario_id}
+    methods: [GET]
+    defaults:
+        _controller: AppBundle:Default:scenarioShow
+    requirements:
+        scenario_id: '\\d+'

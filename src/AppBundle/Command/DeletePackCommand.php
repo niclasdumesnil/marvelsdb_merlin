@@ -53,19 +53,61 @@ class DeletePackCommand extends ContainerAwareCommand
                 $todelete->setDuplicateOf(null);
                 $em->flush();
             }
+            // detach linked cards (cards that link to this one)
             $linked = $card->getLinkedFrom();
-            foreach($dupes as $i => $todelete) {
+            foreach($linked as $i => $todelete) {
                 $todelete->setLinkedTo(null);
                 $em->flush();
             }
             $card->setLinkedTo(null);
             $em->flush();
         }
+        // Remove references and then remove cards
         foreach($cards as $index => $card) {
-            $em->remove($card);
-            $em->flush();
+            $cid = $card->getId();
+
+            // Remove decks that use this card as their character
+            $characterDecks = $em->getRepository('AppBundle:Deck')->findBy(['character' => $cid]);
+            foreach($characterDecks as $d) {
+                $output->writeln("Removing character Deck " . $d->getId());
+                $em->remove($d);
+            }
+
+            // Remove decklists that use this card as their character
+            $characterDecklists = $em->getRepository('AppBundle:Decklist')->findBy(['character' => $cid]);
+            foreach($characterDecklists as $dl) {
+                $output->writeln("Removing Decklist " . $dl->getId());
+                $em->remove($dl);
+            }
+
+            // Delete raw slot rows that reference this card (faster and avoids loading large collections)
+            try {
+                $dbh->executeUpdate('DELETE FROM deckslot WHERE card_id = ?', [$cid]);
+                $dbh->executeUpdate('DELETE FROM sidedeckslot WHERE card_id = ?', [$cid]);
+                $dbh->executeUpdate('DELETE FROM decklistslot WHERE card_id = ?', [$cid]);
+                $dbh->executeUpdate('DELETE FROM sidedecklistslot WHERE card_id = ?', [$cid]);
+
+                // Delete reviewcomments for reviews attached to this card, then delete the reviews
+                $dbh->executeUpdate('DELETE rc FROM reviewcomment rc JOIN review r ON rc.review_id = r.id WHERE r.card_id = ?', [$cid]);
+                $dbh->executeUpdate('DELETE FROM review WHERE card_id = ?', [$cid]);
+            } catch (\Exception $e) {
+                // If direct SQL delete fails, continue and let ORM handle remaining references
+                $output->writeln("Warning: raw deletion of related rows failed for card {$cid}: " . $e->getMessage());
+            }
+
+            // Finally remove the card entity using a managed reference (handles detached objects)
+            $managedCard = $em->getReference('AppBundle:Card', $cid);
+            $em->remove($managedCard);
+            // flush in moderate batches to avoid memory spikes
+            if (($index % 20) === 0) {
+                $em->flush();
+                $em->clear();
+            }
         }
-        $em->remove($pack);
+        // final flush after loop
+        $em->flush();
+        // Remove pack using a managed reference in case it's detached
+        $em->remove($em->getReference('AppBundle:Pack', $pack->getId()));
         $em->flush();
 
         $output->writeln("Deleted all associated decks");

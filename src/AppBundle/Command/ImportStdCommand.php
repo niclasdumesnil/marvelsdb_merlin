@@ -203,6 +203,14 @@ class ImportStdCommand extends ContainerAwareCommand
 			$this->em->flush();
 			$this->loadCollection('Scenario');
 			$output->writeln("Done.");
+			// The scenario import batches em->clear() calls which detach all previously
+			// loaded entities. Reload the collections that cards depend on so they use
+			// managed entities during the card import flush.
+			$this->loadCollection('Faction');
+			$this->collections['Faction2'] = $this->collections['Faction'];
+			$this->loadCollection('Type');
+			$this->loadCollection('Subtype');
+			$this->loadCollection('Packtype');
 		} else {
 			$output->writeln("Skipping Scenarios import (skip-scenario option provided).");
 		}
@@ -583,14 +591,21 @@ class ImportStdCommand extends ContainerAwareCommand
 		$batchSize = 50;
 		$i = 0;
 		foreach ($list as $data) {
-			$villain = isset($data['villain_set_code']) ? $data['villain_set_code'] : null;
-			$title = isset($data['title']) ? $data['title'] : null;
-			$slug = '';
-			if ($title) {
-				$slug = preg_replace('/[^a-z0-9]+/', '-', strtolower(trim(iconv('UTF-8', 'ASCII//TRANSLIT', $title))));
-				$slug = trim($slug, '-');
+			// If an explicit numeric scenario_id is provided, use it to build a stable code
+			// e.g. scenario-123 so imports can be idempotent and referenceable.
+			$code = null;
+			if (isset($data['scenario_id']) && is_numeric($data['scenario_id'])) {
+				$code = 'scenario-' . intval($data['scenario_id']);
+			} else {
+				$villain = isset($data['villain_set_code']) ? $data['villain_set_code'] : null;
+				$title = isset($data['title']) ? $data['title'] : null;
+				$slug = '';
+				if ($title) {
+					$slug = preg_replace('/[^a-z0-9]+/', '-', strtolower(trim(iconv('UTF-8', 'ASCII//TRANSLIT', $title))));
+					$slug = trim($slug, '-');
+				}
+				$code = $villain ? ($villain . ($slug ? '-' . $slug : '')) : ($slug ?: null);
 			}
-			$code = $villain ? ($villain . ($slug ? '-' . $slug : '')) : ($slug ?: null);
 
 			$baseCode = $code;
 			$counter = 1;

@@ -670,8 +670,30 @@ class BuilderController extends Controller
 
 	}
 
-	public function viewAction ($deck_id)
+	public function viewAction ($deck_id, Request $request)
 	{
+		/* If a deck_name query parameter is supplied (new app links),
+		   try to resolve it to a published Decklist and redirect there. */
+		$deck_name = $request->query->get('deck_name');
+		if ($deck_name) {
+			$em = $this->getDoctrine()->getManager();
+			$slug = $this->get('texts')->slugify($deck_name);
+			try {
+				$qb = $em->getRepository('AppBundle:Decklist')->createQueryBuilder('dl');
+				$qb->where('dl.nameCanonical LIKE :slug');
+				$qb->setParameter('slug', '%'.$slug.'%');
+				$qb->setMaxResults(1);
+				$decklist = $qb->getQuery()->getOneOrNullResult();
+				if ($decklist) {
+					return $this->redirect($this->generateUrl('decklist_detail', [
+						'decklist_id' => $decklist->getId(),
+						'decklist_name' => $decklist->getNameCanonical()
+					]));
+				}
+			} catch (\Exception $e) {
+				// ignore lookup errors and continue to normal deck view
+			}
+		}
 		$deck = $this->getDoctrine()->getManager()->getRepository('AppBundle:Deck')->find($deck_id);
 
 		if(!$deck) {
@@ -828,14 +850,11 @@ class BuilderController extends Controller
 				continue;
 			}
 			$pack = $hero->getPack();
-			$is_visible = $pack ? $pack->getVisibility() : null;
 			$is_donator = $user ? $user->getDonation() : 0;
 
-			// Ajoute le héros si le pack est visible (true), ou si invisible (false) mais donateur
-			if ($is_visible !== "false") {
-				$unique_heroes[$unique_key] = true;
-				$heroes[] = $hero;
-			} else if ($is_donator == 1) {
+			// Add the hero if the pack is visible, or if it's not visible but the user is a donator
+			$visible = $pack ? $pack->isVisible() : true;
+			if ($visible || $is_donator == 1) {
 				$unique_heroes[$unique_key] = true;
 				$heroes[] = $hero;
 			}

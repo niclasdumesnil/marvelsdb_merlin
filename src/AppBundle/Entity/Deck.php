@@ -68,30 +68,44 @@ class Deck extends \AppBundle\Model\ExportableDeck implements \JsonSerializable
 			
 		// recreating the versions with the variation info, starting from $preversion
 		$preversion = $cards;
-		foreach ( $savedChanges as $change ) {
-			$variation = json_decode ( $change->getVariation(), TRUE );
-			$row = [
-					'variation' => $variation,
-					'is_saved' => $change->getIsSaved(),
-					'version' => $change->getVersion(),
-					'content' => $preversion,
-					'date_creation' => $change->getDateCreation()->format('c'),
-			];
-			array_unshift ( $snapshots, $row );
-				
-			// applying variation to create 'next' (older) preversion
-			foreach ( $variation[0] as $code => $qty ) {
-				if (isset($preversion[$code])){
-					$preversion[$code] = $preversion[$code] - $qty;
-					if ($preversion[$code] == 0) unset ( $preversion[$code] );
-				}
-			}
-			foreach ( $variation[1] as $code => $qty ) {
-				if (! isset ( $preversion[$code] )) $preversion[$code] = 0;
-				$preversion[$code] = $preversion[$code] + $qty;
-			}
-			ksort ( $preversion );
-		}
+        foreach ( $savedChanges as $change ) {
+            $variation = json_decode ( $change->getVariation(), TRUE );
+            // defensive: skip malformed variations that are not the expected [removed, added] arrays
+            if (!is_array($variation) || !isset($variation[0]) || !isset($variation[1]) || !is_array($variation[0]) || !is_array($variation[1])) {
+                // still expose the raw variation in the history row for debugging, but don't attempt to apply it
+                $row = [
+                    'variation' => $variation,
+                    'is_saved' => $change->getIsSaved(),
+                    'version' => $change->getVersion(),
+                    'content' => $preversion,
+                    'date_creation' => $change->getDateCreation()->format('c'),
+                ];
+                array_unshift($snapshots, $row);
+                continue;
+            }
+
+            $row = [
+                    'variation' => $variation,
+                    'is_saved' => $change->getIsSaved(),
+                    'version' => $change->getVersion(),
+                    'content' => $preversion,
+                    'date_creation' => $change->getDateCreation()->format('c'),
+            ];
+            array_unshift ( $snapshots, $row );
+                
+            // applying variation to create 'next' (older) preversion
+            foreach ( $variation[0] as $code => $qty ) {
+                if (isset($preversion[$code])){
+                    $preversion[$code] = $preversion[$code] - $qty;
+                    if ($preversion[$code] == 0) unset ( $preversion[$code] );
+                }
+            }
+            foreach ( $variation[1] as $code => $qty ) {
+                if (! isset ( $preversion[$code] )) $preversion[$code] = 0;
+                $preversion[$code] = $preversion[$code] + $qty;
+            }
+            ksort ( $preversion );
+        }
 			
 		// add last know version with empty diff
 		$row = [
@@ -105,31 +119,44 @@ class Deck extends \AppBundle\Model\ExportableDeck implements \JsonSerializable
 			
 		// recreating the snapshots with the variation info, starting from $postversion
 		$postversion = $cards;
-		foreach ( $unsavedChanges as $change ) {
-			$variation = json_decode ( $change->getVariation(), TRUE );
-			$row = [
-					'variation' => $variation,
-					'is_saved' => $change->getIsSaved(),
-					'version' => $change->getVersion(),
-					'date_creation' => $change->getDateCreation()->format('c'),
-			];
-				
-			// applying variation to postversion
-			foreach ( $variation[0] as $code => $qty ) {
-				if (! isset ( $postversion[$code] )) $postversion[$code] = 0;
-				$postversion[$code] = $postversion[$code] + $qty;
-			}
-			foreach ( $variation[1] as $code => $qty ) {
-				if (! isset ( $postversion[$code] )) $postversion[$code] = 0;
-				$postversion[$code] = $postversion[$code] - $qty;
-				if ($postversion[$code] == 0) unset ( $postversion[$code] );
-			}
-			ksort ( $postversion );
-				
-			// add postversion with variation that lead to it
-			$row['content'] = $postversion;
-			array_push ( $snapshots, $row );
-		}
+        foreach ($unsavedChanges as $change ) {
+            $variation = json_decode ( $change->getVariation(), TRUE );
+            // defensive: skip applying malformed variations
+            if (!is_array($variation) || !isset($variation[0]) || !isset($variation[1]) || !is_array($variation[0]) || !is_array($variation[1])) {
+                $row = [
+                        'variation' => $variation,
+                        'is_saved' => $change->getIsSaved(),
+                        'version' => $change->getVersion(),
+                        'date_creation' => $change->getDateCreation()->format('c'),
+                ];
+                $row['content'] = $postversion;
+                array_push($snapshots, $row);
+                continue;
+            }
+
+            $row = [
+                    'variation' => $variation,
+                    'is_saved' => $change->getIsSaved(),
+                    'version' => $change->getVersion(),
+                    'date_creation' => $change->getDateCreation()->format('c'),
+            ];
+                
+            // applying variation to postversion
+            foreach ( $variation[0] as $code => $qty ) {
+                if (! isset ( $postversion[$code] )) $postversion[$code] = 0;
+                $postversion[$code] = $postversion[$code] + $qty;
+            }
+            foreach ( $variation[1] as $code => $qty ) {
+                if (! isset ( $postversion[$code] )) $postversion[$code] = 0;
+                $postversion[$code] = $postversion[$code] - $qty;
+                if ($postversion[$code] == 0) unset ( $postversion[$code] );
+            }
+            ksort ( $postversion );
+                
+            // add postversion with variation that lead to it
+            $row['content'] = $postversion;
+            array_push ( $snapshots, $row );
+        }
 		
 		return $snapshots;
 	}
@@ -263,6 +290,11 @@ class Deck extends \AppBundle\Model\ExportableDeck implements \JsonSerializable
     /**
      * @var \Doctrine\Common\Collections\Collection
      */
+    private $sideSlots;
+
+    /**
+     * @var \Doctrine\Common\Collections\Collection
+     */
     private $children;
 
     /**
@@ -296,6 +328,7 @@ class Deck extends \AppBundle\Model\ExportableDeck implements \JsonSerializable
     public function __construct()
     {
         $this->slots = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->sideSlots = new \Doctrine\Common\Collections\ArrayCollection();
         $this->children = new \Doctrine\Common\Collections\ArrayCollection();
         $this->changes = new \Doctrine\Common\Collections\ArrayCollection();
         $this->minorVersion = 0;
@@ -561,6 +594,40 @@ class Deck extends \AppBundle\Model\ExportableDeck implements \JsonSerializable
     public function getSlots()
     {
         return new \AppBundle\Model\SlotCollectionDecorator($this->slots);
+    }
+
+    /**
+     * Add sideSlot
+     *
+     * @param \AppBundle\Entity\Sidedeckslot $sideSlot
+     *
+     * @return Deck
+     */
+    public function addSideSlot(\AppBundle\Entity\Sidedeckslot $sideSlot)
+    {
+        $this->sideSlots[] = $sideSlot;
+
+        return $this;
+    }
+
+    /**
+     * Remove sideSlot
+     *
+     * @param \AppBundle\Entity\Sidedeckslot $sideSlot
+     */
+    public function removeSideSlot(\AppBundle\Entity\Sidedeckslot $sideSlot)
+    {
+        $this->sideSlots->removeElement($sideSlot);
+    }
+
+    /**
+     * Get sideSlots
+     *
+     * @return \AppBundle\Model\SlotCollectionInterface
+     */
+    public function getSideSlots()
+    {
+        return new \AppBundle\Model\SlotCollectionDecorator($this->sideSlots);
     }
 
     /**
