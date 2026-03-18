@@ -1,0 +1,41 @@
+AppBundle\Entity\CardTranslation:
+    type: entity
+    table: card_translation
+    fields:
+        id:
+            type: integer
+            id: true
+            generator:
+                strategy: AUTO
+        locale:
+            type: string
+            length: 8
+            nullable: false
+        code:
+            type: string
+            length: 255
+            nullable: false
+        name:
+            type: string
+            length: 1024
+            nullable: true
+        subname:
+            type: string
+            length: 1024
+            nullable: true
+        text:
+            type: text
+            nullable: true
+        traits:
+            type: string
+            length: 255
+            nullable: true
+        flavor:
+            type: text
+            nullable: true
+        errata:
+            type: text
+            nullable: true
+    uniqueConstraints:
+        locale_code_idx:
+            columns: [ locale, code ]
