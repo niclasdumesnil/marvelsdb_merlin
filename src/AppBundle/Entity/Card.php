@@ -42,7 +42,8 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 			'set_position',
 			'is_unique',
 			'meta',
-			'alt_art'
+			'alt_art',
+			'creator'
 		];
 
 		$externalFields = [
@@ -229,6 +230,11 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 	private $id;
 
 	/**
+	 * @var string
+	 */
+	private $creator;
+
+	/**
 	 * @var integer
 	 */
 	private $position;
@@ -298,6 +304,30 @@ class Card implements \Gedmo\Translatable\Translatable, \Serializable
 	 * @var \DateTime
 	 */
 	private $dateUpdate;
+
+	/**
+	 * Set creator
+	 *
+	 * @param string $creator
+	 *
+	 * @return Card
+	 */
+	public function setCreator($creator)
+	{
+		$this->creator = $creator;
+
+		return $this;
+	}
+
+	/**
+	 * Get creator
+	 *
+	 * @return string
+	 */
+	public function getCreator()
+	{
+		return $this->creator;
+	}
 
 	/**
 	 * @var integer

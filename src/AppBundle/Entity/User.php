@@ -96,6 +96,26 @@ class User extends BaseUser
     private $ownedPacks;
 
     /**
+     * @var integer
+     */
+    private $isShareCollection = 0;
+
+    /**
+     * @var integer
+     */
+    private $showIconAspect = 0;
+
+    /**
+     * @var integer
+     */
+    private $showArchetype = 0;
+
+    /**
+     * @var string
+     */
+    private $showTheme;
+
+    /**
      * @var \Doctrine\Common\Collections\Collection
      */
     private $decks;
@@ -325,6 +345,102 @@ class User extends BaseUser
      */
     public function getOwnedPacks() {
         return $this->ownedPacks;
+    }
+
+    /**
+     * Set isShareCollection
+     *
+     * @param integer $isShareCollection
+     *
+     * @return User
+     */
+    public function setIsShareCollection($isShareCollection)
+    {
+        $this->isShareCollection = (int)$isShareCollection;
+
+        return $this;
+    }
+
+    /**
+     * Get isShareCollection
+     *
+     * @return integer
+     */
+    public function getIsShareCollection()
+    {
+        return $this->isShareCollection;
+    }
+
+    /**
+     * Set showIconAspect
+     *
+     * @param integer $showIconAspect
+     *
+     * @return User
+     */
+    public function setShowIconAspect($showIconAspect)
+    {
+        $this->showIconAspect = (int)$showIconAspect;
+
+        return $this;
+    }
+
+    /**
+     * Get showIconAspect
+     *
+     * @return integer
+     */
+    public function getShowIconAspect()
+    {
+        return $this->showIconAspect;
+    }
+
+    /**
+     * Set showArchetype
+     *
+     * @param integer $showArchetype
+     *
+     * @return User
+     */
+    public function setShowArchetype($showArchetype)
+    {
+        $this->showArchetype = (int)$showArchetype;
+
+        return $this;
+    }
+
+    /**
+     * Get showArchetype
+     *
+     * @return integer
+     */
+    public function getShowArchetype()
+    {
+        return $this->showArchetype;
+    }
+
+    /**
+     * Set showTheme
+     *
+     * @param string $showTheme (JSON encoded array of {Theme,boolean} pairs)
+     *
+     * @return User
+     */
+    public function setShowTheme($showTheme)
+    {
+        $this->showTheme = $showTheme;
+
+        return $this;
+    }
+
+    /**
+     * Get showTheme
+     *
+     * @return string
+     */
+    public function getShowTheme()
+    {
+        return $this->showTheme;
     }
 
 

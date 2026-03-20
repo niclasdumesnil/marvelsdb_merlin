@@ -12,7 +12,9 @@ class Cardset implements \Gedmo\Translatable\Translatable, \Serializable
                 'code' => $this->code,
                 'name' => $this->name,
                 'cardset_type' => $this->cardset_type ? $this->cardset_type->getCode() : null,
-                 'parentCode' => $this->parentCode
+                'parentCode' => $this->parentCode,
+                'creator' => isset($this->creator) ? $this->creator : null,
+                'status' => isset($this->status) ? $this->status : null
         ];
     }
     
@@ -43,6 +45,16 @@ class Cardset implements \Gedmo\Translatable\Translatable, \Serializable
      * @var string
      */
     private $parentCode;
+
+    /**
+     * @var string
+     */
+    private $creator;
+
+    /**
+     * @var string
+     */
+    private $status;
 
     /**
      * @var \Doctrine\Common\Collections\Collection
@@ -211,5 +223,53 @@ class Cardset implements \Gedmo\Translatable\Translatable, \Serializable
     public function getParentCode()
     {
         return $this->parentCode;
+    }
+
+    /**
+     * Set creator
+     *
+     * @param string $creator
+     *
+     * @return Cardset
+     */
+    public function setCreator($creator)
+    {
+        $this->creator = $creator;
+
+        return $this;
+    }
+
+    /**
+     * Get creator
+     *
+     * @return string
+     */
+    public function getCreator()
+    {
+        return $this->creator;
+    }
+
+    /**
+     * Set visibility
+     *
+     * @param string $visibility
+     *
+     * @return Cardset
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    /**
+     * Get status
+     *
+     * @return string
+     */
+    public function getStatus()
+    {
+        return $this->status;
     }
 }

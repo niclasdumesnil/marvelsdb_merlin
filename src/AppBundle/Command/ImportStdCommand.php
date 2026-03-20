@@ -548,7 +548,9 @@ class ImportStdCommand extends ContainerAwareCommand
 			], [
 				'card_set_type_code'
 			], [
-				'parent_code'
+				'parent_code',
+				'creator',
+				'status'
 			]);
 			if($type) {
 				$result[] = $type;
@@ -1071,6 +1073,7 @@ protected function importCampaignlistsJsonFile(\SplFileInfo $fileinfo)
 				'alt_art',
 				'errata',
 				'octgn_id'
+				,'creator'
 
 			]);
 			if($card) {

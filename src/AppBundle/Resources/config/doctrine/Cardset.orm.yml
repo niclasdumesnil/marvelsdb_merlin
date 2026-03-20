@@ -38,6 +38,14 @@ AppBundle\Entity\Cardset:
             length: 255
             nullable: true
             column: parent_code
+        creator:
+            type: string
+            length: 255
+            nullable: true
+        status:
+            type: string
+            length: 255
+            nullable: true
     uniqueConstraints:
         encounter_code_idx:
             columns: [ code ]

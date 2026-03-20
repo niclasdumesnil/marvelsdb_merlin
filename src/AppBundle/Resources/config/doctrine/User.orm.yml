@@ -135,3 +135,25 @@ AppBundle\Entity\User:
             type: string
             length: 512
             nullable: true
+        isShareCollection:
+            type: integer
+            nullable: false
+            column: is_share_collection
+            options:
+                default: 0
+        showIconAspect:
+            type: integer
+            nullable: false
+            column: show_icon_aspect
+            options:
+                default: 0
+        showArchetype:
+            type: integer
+            nullable: false
+            column: show_archetype
+            options:
+                default: 0
+        showTheme:
+            type: text
+            nullable: true
+            column: show_theme

@@ -262,6 +262,10 @@ AppBundle\Entity\Card:
             type: string
             length: 255
             nullable: true
+        creator:
+            type: string
+            length: 255
+            nullable: true
         isUnique:
             type: boolean
             nullable: false
