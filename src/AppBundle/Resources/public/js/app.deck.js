@@ -1066,7 +1066,7 @@ deck.get_problem = function get_problem() {
 	var requiredSize = 40;
 	// Special case: hero with code '202901a' requires at least 46 cards
 	if (hero && hero.code === '202901a') {
-		requiredSize = 46;
+		requiredSize = 45;
 	}
 	if (deck.get_draw_deck_size() < requiredSize) {
 		return 'too_few_cards';
