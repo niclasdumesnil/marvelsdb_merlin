@@ -44,7 +44,7 @@ class ImportEntityTranslationsCommand extends ContainerAwareCommand
             'fields' => ['name'],
         ],
         'subtypes'  => [
-            'table'  => 'subtype',
+            'table'  => 'Subtype',
             'class'  => 'AppBundle\\Entity\\Subtype',
             'fields' => ['name'],
         ],
@@ -54,13 +54,13 @@ class ImportEntityTranslationsCommand extends ContainerAwareCommand
             'fields' => ['name'],
         ],
         'packtypes' => [
-            'table'  => 'packtype',
+            'table'  => 'Packtype',
             'class'  => 'AppBundle\\Entity\\Packtype',
             'fields' => ['name'],
         ],
-        // JSON file is "sets.json" but the entity/table is "cardset"
+        // JSON file is "sets.json" but the entity/table is "Cardset"
         'sets'      => [
-            'table'  => 'cardset',
+            'table'  => 'Cardset',
             'class'  => 'AppBundle\\Entity\\Cardset',
             'fields' => ['name'],
         ],
