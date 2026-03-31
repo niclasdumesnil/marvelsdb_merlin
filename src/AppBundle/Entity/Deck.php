@@ -777,6 +777,34 @@ class Deck extends \AppBundle\Model\ExportableDeck implements \JsonSerializable
      */
     public function getLastPack()
     {
+        // If lastPack is not set, try to infer it from the cards present in the deck
+        if ($this->lastPack === null) {
+            $candidate = null;
+            foreach ($this->slots as $slot) {
+                $card = $slot->getCard();
+                if (!$card) continue;
+                $pack = $card->getPack();
+                if (!$pack) continue;
+                // prefer pack with a known release date; choose the most recent release
+                $packDate = $pack->getDateRelease();
+                if ($candidate === null) {
+                    $candidate = $pack;
+                    continue;
+                }
+                $candDate = $candidate->getDateRelease();
+                if ($packDate instanceof \DateTime && $candDate instanceof \DateTime) {
+                    if ($packDate > $candDate) {
+                        $candidate = $pack;
+                    }
+                } elseif ($packDate instanceof \DateTime && !($candDate instanceof \DateTime)) {
+                    $candidate = $pack;
+                }
+            }
+            if ($candidate !== null) {
+                $this->lastPack = $candidate;
+            }
+        }
+
         return $this->lastPack;
     }
 

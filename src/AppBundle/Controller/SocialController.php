@@ -58,7 +58,7 @@ class SocialController extends Controller
 		}
 
 		$lastPack = $deck->getLastPack();
-		if(!$lastPack->getDateRelease() || $lastPack->getDateRelease() > new \DateTime()) {
+		if(!$lastPack || !$lastPack->getDateRelease() || $lastPack->getDateRelease() > new \DateTime()) {
 			$this->get('session')->getFlashBag()->set('error', "You cannot publish this deck yet, because it has unreleased cards.");
 			return $this->redirect($this->generateUrl('deck_view', [ 'deck_id' => $deck->getId() ]));
 		}

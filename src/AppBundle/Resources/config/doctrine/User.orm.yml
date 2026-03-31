@@ -157,3 +157,45 @@ AppBundle\Entity\User:
             type: text
             nullable: true
             column: show_theme
+        showLegacySchOrder:
+            type: integer
+            nullable: true
+            column: show_legacy_sch_order
+            options:
+                default: 0
+        showTagDefault:
+            type: integer
+            nullable: false
+            column: show_tag_default
+            options:
+                default: 1
+        printFaction:
+            type: integer
+            nullable: false
+            column: print_faction
+            options:
+                default: 1
+        printType:
+            type: integer
+            nullable: false
+            column: print_type
+            options:
+                default: 1
+        printTag:
+            type: integer
+            nullable: false
+            column: print_tag
+            options:
+                default: 1
+        printSide:
+            type: integer
+            nullable: false
+            column: print_side
+            options:
+                default: 0
+        showCurrentOnlyDefault:
+            type: integer
+            nullable: false
+            column: show_current_only_default
+            options:
+                default: 0

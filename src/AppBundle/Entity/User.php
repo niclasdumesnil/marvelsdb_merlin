@@ -116,6 +116,41 @@ class User extends BaseUser
     private $showTheme;
 
     /**
+     * @var integer
+     */
+    private $showLegacySchOrder;
+
+    /**
+     * @var integer
+     */
+    private $showTagDefault;
+
+    /**
+     * @var integer
+     */
+    private $printFaction;
+
+    /**
+     * @var integer
+     */
+    private $printType;
+
+    /**
+     * @var integer
+     */
+    private $printTag;
+
+    /**
+     * @var integer
+     */
+    private $printSide;
+
+    /**
+     * @var integer
+     */
+    private $showCurrentOnlyDefault;
+
+    /**
      * @var \Doctrine\Common\Collections\Collection
      */
     private $decks;
@@ -443,6 +478,173 @@ class User extends BaseUser
         return $this->showTheme;
     }
 
+    /**
+     * Set showLegacySchOrder
+     *
+     * @param integer $showLegacySchOrder
+     *
+     * @return User
+     */
+    public function setShowLegacySchOrder($showLegacySchOrder)
+    {
+        $this->showLegacySchOrder = $showLegacySchOrder;
+
+        return $this;
+    }
+
+    /**
+     * Get showLegacySchOrder
+     *
+     * @return integer
+     */
+    public function getShowLegacySchOrder()
+    {
+        return $this->showLegacySchOrder;
+    }
+
+    /**
+     * Set showTagDefault
+     *
+     * @param integer $showTagDefault
+     *
+     * @return User
+     */
+    public function setShowTagDefault($showTagDefault)
+    {
+        $this->showTagDefault = $showTagDefault;
+
+        return $this;
+    }
+
+    /**
+     * Get showTagDefault
+     *
+     * @return integer
+     */
+    public function getShowTagDefault()
+    {
+        return $this->showTagDefault;
+    }
+
+    /**
+     * Set printFaction
+     *
+     * @param integer $printFaction
+     *
+     * @return User
+     */
+    public function setPrintFaction($printFaction)
+    {
+        $this->printFaction = $printFaction;
+
+        return $this;
+    }
+
+    /**
+     * Get printFaction
+     *
+     * @return integer
+     */
+    public function getPrintFaction()
+    {
+        return $this->printFaction;
+    }
+
+    /**
+     * Set printType
+     *
+     * @param integer $printType
+     *
+     * @return User
+     */
+    public function setPrintType($printType)
+    {
+        $this->printType = $printType;
+
+        return $this;
+    }
+
+    /**
+     * Get printType
+     *
+     * @return integer
+     */
+    public function getPrintType()
+    {
+        return $this->printType;
+    }
+
+    /**
+     * Set printTag
+     *
+     * @param integer $printTag
+     *
+     * @return User
+     */
+    public function setPrintTag($printTag)
+    {
+        $this->printTag = $printTag;
+
+        return $this;
+    }
+
+    /**
+     * Get printTag
+     *
+     * @return integer
+     */
+    public function getPrintTag()
+    {
+        return $this->printTag;
+    }
+
+    /**
+     * Set printSide
+     *
+     * @param integer $printSide
+     *
+     * @return User
+     */
+    public function setPrintSide($printSide)
+    {
+        $this->printSide = $printSide;
+
+        return $this;
+    }
+
+    /**
+     * Get printSide
+     *
+     * @return integer
+     */
+    public function getPrintSide()
+    {
+        return $this->printSide;
+    }
+
+    /**
+     * Set showCurrentOnlyDefault
+     *
+     * @param integer $showCurrentOnlyDefault
+     *
+     * @return User
+     */
+    public function setShowCurrentOnlyDefault($showCurrentOnlyDefault)
+    {
+        $this->showCurrentOnlyDefault = $showCurrentOnlyDefault;
+
+        return $this;
+    }
+
+    /**
+     * Get showCurrentOnlyDefault
+     *
+     * @return integer
+     */
+    public function getShowCurrentOnlyDefault()
+    {
+        return $this->showCurrentOnlyDefault;
+    }
 
     /**
      * Set isNotifAuthor
