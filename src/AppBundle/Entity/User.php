@@ -151,6 +151,17 @@ class User extends BaseUser
     private $showCurrentOnlyDefault;
 
     /**
+     * @var \DateTime
+     */
+    private $lastActiveAt;
+
+    /**
+     * JSON-encoded visual options (text)
+     * @var string
+     */
+    private $visual_options;
+
+    /**
      * @var \Doctrine\Common\Collections\Collection
      */
     private $decks;
@@ -644,6 +655,109 @@ class User extends BaseUser
     public function getShowCurrentOnlyDefault()
     {
         return $this->showCurrentOnlyDefault;
+    }
+
+    /**
+     * Set lastActiveAt
+     *
+     * @param \DateTime|null $lastActiveAt
+     *
+     * @return User
+     */
+    public function setLastActiveAt($lastActiveAt)
+    {
+        $this->lastActiveAt = $lastActiveAt;
+
+        return $this;
+    }
+
+    /**
+     * Get lastActiveAt
+     *
+     * @return \DateTime|null
+     */
+    public function getLastActiveAt()
+    {
+        return $this->lastActiveAt;
+    }
+
+    /**
+     * Set visual options JSON string
+     *
+     * @param string $visualOptionsJson
+     * @return User
+     */
+    public function setVisualOptions($visualOptionsJson)
+    {
+        $this->visual_options = $visualOptionsJson;
+        return $this;
+    }
+
+    /**
+     * Get visual options JSON string
+     *
+     * @return string|null
+     */
+    public function getVisualOptions()
+    {
+        return $this->visual_options;
+    }
+
+    /**
+     * Get a specific visual option by key (returns default if not set)
+     *
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public function getVisualOption($key, $default = null)
+    {
+        $json = $this->visual_options;
+        if (empty($json)) return $default;
+        $data = json_decode($json, true);
+        if (!is_array($data)) return $default;
+        return array_key_exists($key, $data) ? $data[$key] : $default;
+    }
+
+    /**
+     * Set a specific visual option key and persist as JSON string
+     *
+     * @param string $key
+     * @param mixed $value
+     * @return User
+     */
+    public function setVisualOption($key, $value)
+    {
+        $json = $this->visual_options;
+        $data = [];
+        if (!empty($json)) {
+            $decoded = json_decode($json, true);
+            if (is_array($decoded)) $data = $decoded;
+        }
+        $data[$key] = $value;
+        $this->visual_options = json_encode($data);
+        return $this;
+    }
+
+    /**
+     * Convenience accessor for enhanced_decklistview option
+     * @return int
+     */
+    public function getEnhancedDecklistview()
+    {
+        $v = $this->getVisualOption('enhanced_decklistview', 0);
+        return (int)$v;
+    }
+
+    /**
+     * Convenience setter for enhanced_decklistview
+     * @param int $val
+     * @return User
+     */
+    public function setEnhancedDecklistview($val)
+    {
+        $this->setVisualOption('enhanced_decklistview', (int)$val);
+        return $this;
     }
 
     /**

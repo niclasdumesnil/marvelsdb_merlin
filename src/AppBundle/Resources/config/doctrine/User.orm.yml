@@ -199,3 +199,13 @@ AppBundle\Entity\User:
             column: show_current_only_default
             options:
                 default: 0
+        lastActiveAt:
+            type: datetime
+            nullable: true
+            column: last_active_at
+        visual_options:
+            type: text
+            nullable: false
+            column: visual_options
+            options:
+                default: '{"enhanced_decklistview":0}'
